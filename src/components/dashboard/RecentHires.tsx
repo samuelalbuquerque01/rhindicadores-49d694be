@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { ChartCard } from "./ChartCard";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const recentHires = [
   {
+    id: "1",
     name: "Ana Carolina Silva",
     role: "Desenvolvedora Frontend",
     department: "Tecnologia",
@@ -11,6 +13,7 @@ const recentHires = [
     initials: "AS",
   },
   {
+    id: "2",
     name: "Pedro Henrique Lima",
     role: "Analista Financeiro",
     department: "Financeiro",
@@ -18,6 +21,7 @@ const recentHires = [
     initials: "PL",
   },
   {
+    id: "3",
     name: "Mariana Costa",
     role: "Designer UX/UI",
     department: "Marketing",
@@ -25,6 +29,7 @@ const recentHires = [
     initials: "MC",
   },
   {
+    id: "4",
     name: "Lucas Oliveira",
     role: "Vendedor Sênior",
     department: "Comercial",
@@ -32,6 +37,7 @@ const recentHires = [
     initials: "LO",
   },
   {
+    id: "5",
     name: "Juliana Fernandes",
     role: "Analista de RH",
     department: "RH",
@@ -50,6 +56,8 @@ const departmentColors: Record<string, string> = {
 };
 
 export function RecentHires() {
+  const navigate = useNavigate();
+
   return (
     <ChartCard
       title="Contratações Recentes"
@@ -59,7 +67,8 @@ export function RecentHires() {
         {recentHires.map((hire, index) => (
           <div
             key={index}
-            className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate(`/employee/${hire.id}`)}
+            className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
