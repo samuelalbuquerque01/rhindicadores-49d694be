@@ -7,6 +7,7 @@ import { GenderChart } from "@/components/dashboard/GenderChart";
 import { AbsenceChart } from "@/components/dashboard/AbsenceChart";
 import { RecentHires } from "@/components/dashboard/RecentHires";
 import { PayrollSummary } from "@/components/dashboard/PayrollSummary";
+import { AddEmployeeModal } from "@/components/dashboard/AddEmployeeModal";
 
 const Index = () => {
   return (
@@ -15,13 +16,16 @@ const Index = () => {
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Dashboard de RH
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Indicadores e métricas do Departamento Pessoal
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Dashboard de RH
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Indicadores e métricas do Departamento Pessoal
+            </p>
+          </div>
+          <AddEmployeeModal />
         </div>
 
         {/* KPI Cards */}
