@@ -14,7 +14,453 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      afastamentos: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          dias_afastados: number | null
+          id: string
+          observacoes: string | null
+          tipo: string
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          dias_afastados?: number | null
+          id?: string
+          observacoes?: string | null
+          tipo: string
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          dias_afastados?: number | null
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamentos_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colaboradores: {
+        Row: {
+          cargo: string
+          cpf: string | null
+          created_at: string
+          custo_mensal: number | null
+          data_admissao: string
+          data_desligamento: string | null
+          data_nascimento: string | null
+          departamento: string
+          email: string | null
+          filial_id: string | null
+          genero: string | null
+          id: string
+          is_lider: boolean | null
+          nome: string
+          salario_base: number | null
+          status: string | null
+          telefone: string | null
+          tipo_colaborador: string
+          updated_at: string
+        }
+        Insert: {
+          cargo: string
+          cpf?: string | null
+          created_at?: string
+          custo_mensal?: number | null
+          data_admissao: string
+          data_desligamento?: string | null
+          data_nascimento?: string | null
+          departamento: string
+          email?: string | null
+          filial_id?: string | null
+          genero?: string | null
+          id?: string
+          is_lider?: boolean | null
+          nome: string
+          salario_base?: number | null
+          status?: string | null
+          telefone?: string | null
+          tipo_colaborador: string
+          updated_at?: string
+        }
+        Update: {
+          cargo?: string
+          cpf?: string | null
+          created_at?: string
+          custo_mensal?: number | null
+          data_admissao?: string
+          data_desligamento?: string | null
+          data_nascimento?: string | null
+          departamento?: string
+          email?: string | null
+          filial_id?: string | null
+          genero?: string | null
+          id?: string
+          is_lider?: boolean | null
+          nome?: string
+          salario_base?: number | null
+          status?: string | null
+          telefone?: string | null
+          tipo_colaborador?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaboradores_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratacoes: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          data_contratacao: string
+          filial_id: string | null
+          id: string
+          observacoes: string | null
+          salario_inicial: number | null
+          tipo_contratacao: string | null
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_contratacao: string
+          filial_id?: string | null
+          id?: string
+          observacoes?: string | null
+          salario_inicial?: number | null
+          tipo_contratacao?: string | null
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_contratacao?: string
+          filial_id?: string | null
+          id?: string
+          observacoes?: string | null
+          salario_inicial?: number | null
+          tipo_contratacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratacoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      desligamentos: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          custo_rescisao: number | null
+          data_desligamento: string
+          id: string
+          motivo: string
+          observacoes: string | null
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          custo_rescisao?: number | null
+          data_desligamento: string
+          id?: string
+          motivo: string
+          observacoes?: string | null
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          custo_rescisao?: number | null
+          data_desligamento?: string
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desligamentos_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evento_participacoes: {
+        Row: {
+          colaborador_id: string | null
+          compareceu: boolean | null
+          confirmou_presenca: boolean | null
+          created_at: string
+          evento_id: string | null
+          id: string
+        }
+        Insert: {
+          colaborador_id?: string | null
+          compareceu?: boolean | null
+          confirmou_presenca?: boolean | null
+          created_at?: string
+          evento_id?: string | null
+          id?: string
+        }
+        Update: {
+          colaborador_id?: string | null
+          compareceu?: boolean | null
+          confirmou_presenca?: boolean | null
+          created_at?: string
+          evento_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_participacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evento_participacoes_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eventos: {
+        Row: {
+          capacidade: number | null
+          created_at: string
+          data_evento: string
+          descricao: string | null
+          filial_id: string | null
+          id: string
+          nome: string
+          tipo: string | null
+        }
+        Insert: {
+          capacidade?: number | null
+          created_at?: string
+          data_evento: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome: string
+          tipo?: string | null
+        }
+        Update: {
+          capacidade?: number | null
+          created_at?: string
+          data_evento?: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filiais: {
+        Row: {
+          ativo: boolean | null
+          cidade: string | null
+          codigo: string
+          created_at: string
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cidade?: string | null
+          codigo: string
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cidade?: string | null
+          codigo?: string
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lideres_formados: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          data_formacao: string
+          id: string
+          nivel: string | null
+          observacoes: string | null
+          programa_lideranca: string | null
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_formacao: string
+          id?: string
+          nivel?: string | null
+          observacoes?: string | null
+          programa_lideranca?: string | null
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          data_formacao?: string
+          id?: string
+          nivel?: string | null
+          observacoes?: string | null
+          programa_lideranca?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lideres_formados_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treinamento_participacoes: {
+        Row: {
+          certificado_emitido: boolean | null
+          colaborador_id: string | null
+          created_at: string
+          id: string
+          nota_avaliacao: number | null
+          participou: boolean | null
+          treinamento_id: string | null
+        }
+        Insert: {
+          certificado_emitido?: boolean | null
+          colaborador_id?: string | null
+          created_at?: string
+          id?: string
+          nota_avaliacao?: number | null
+          participou?: boolean | null
+          treinamento_id?: string | null
+        }
+        Update: {
+          certificado_emitido?: boolean | null
+          colaborador_id?: string | null
+          created_at?: string
+          id?: string
+          nota_avaliacao?: number | null
+          participou?: boolean | null
+          treinamento_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treinamento_participacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treinamento_participacoes_treinamento_id_fkey"
+            columns: ["treinamento_id"]
+            isOneToOne: false
+            referencedRelation: "treinamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treinamentos: {
+        Row: {
+          carga_horaria: number | null
+          created_at: string
+          data_realizacao: string
+          descricao: string | null
+          filial_id: string | null
+          id: string
+          nome: string
+          tipo: string | null
+          vagas_totais: number
+        }
+        Insert: {
+          carga_horaria?: number | null
+          created_at?: string
+          data_realizacao: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome: string
+          tipo?: string | null
+          vagas_totais?: number
+        }
+        Update: {
+          carga_horaria?: number | null
+          created_at?: string
+          data_realizacao?: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome?: string
+          tipo?: string | null
+          vagas_totais?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treinamentos_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
