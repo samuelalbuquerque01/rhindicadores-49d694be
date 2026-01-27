@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building } from "lucide-react";
+import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building, GraduationCap } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
@@ -14,10 +14,13 @@ import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
+import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
+import { EventosList } from "@/components/dashboard/EventosList";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
 import { useContratacaoStats } from "@/hooks/useContratacoes";
+import { useTreinamentosStats } from "@/hooks/useTreinamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
@@ -28,6 +31,7 @@ const Index = () => {
   const { data: turnoverStats } = useTurnoverStats(filialId);
   const { data: absenteismoStats } = useAbsenteismoStats(filialId);
   const { data: contratacaoStats } = useContratacaoStats(filialId);
+  const { data: treinamentosStats } = useTreinamentosStats(filialId);
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,16 +86,16 @@ const Index = () => {
         {/* Secondary KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
           <StatCard
+            title="Treinamentos"
+            value={treinamentosStats?.totalTreinamentos || 0}
+            subtitle={`Taxa: ${treinamentosStats?.taxaParticipacao || 0}%`}
+            icon={<GraduationCap className="h-5 w-5" />}
+          />
+          <StatCard
             title="Novas Contratações"
             value={contratacaoStats?.novasContratacoes || 0}
             subtitle="Este mês"
             icon={<TrendingUp className="h-5 w-5" />}
-          />
-          <StatCard
-            title="Desligamentos"
-            value={turnoverStats?.totalDesligamentos || 0}
-            subtitle="Últimos 12 meses"
-            icon={<UserMinus className="h-5 w-5" />}
           />
           <StatCard
             title="Líderes"
@@ -113,6 +117,7 @@ const Index = () => {
             <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
             <TabsTrigger value="geral">Visão Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
+            <TabsTrigger value="eventos">Eventos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
             <TabsTrigger value="estagiarios">Estagiários</TabsTrigger>
           </TabsList>
@@ -144,12 +149,20 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="treinamentos" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <TreinamentoChart filialId={selectedFilial} />
-              <EventosChart filialId={selectedFilial} />
+              <div className="lg:col-span-2">
+                <TreinamentosList filialId={selectedFilial} />
+              </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <LideresChart filialId={selectedFilial} />
+          </TabsContent>
+
+          <TabsContent value="eventos" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <EventosChart filialId={selectedFilial} />
+              <div className="lg:col-span-2">
+                <EventosList filialId={selectedFilial} />
+              </div>
             </div>
           </TabsContent>
 

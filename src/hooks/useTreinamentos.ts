@@ -105,10 +105,77 @@ export function useCreateParticipacao() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
       toast.success("Participação registrada!");
     },
     onError: (error) => {
       toast.error("Erro ao registrar participação: " + error.message);
+    },
+  });
+}
+
+export function useTreinamentoParticipacoes(treinamentoId?: string) {
+  return useQuery({
+    queryKey: ["treinamento-participacoes", treinamentoId],
+    queryFn: async () => {
+      let query = supabase
+        .from("treinamento_participacoes")
+        .select("*, colaborador:colaboradores(id, nome), treinamento:treinamentos(*)");
+      
+      if (treinamentoId) {
+        query = query.eq("treinamento_id", treinamentoId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!treinamentoId,
+  });
+}
+
+export function useUpdateParticipacao() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; participou?: boolean; nota_avaliacao?: number }) => {
+      const { error } = await supabase
+        .from("treinamento_participacoes")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
+      toast.success("Participação atualizada!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar participação: " + error.message);
+    },
+  });
+}
+
+export function useDeleteParticipacao() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("treinamento_participacoes")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
+      toast.success("Participação removida!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover participação: " + error.message);
     },
   });
 }
