@@ -105,10 +105,77 @@ export function useCreateEventoParticipacao() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
       toast.success("Participação registrada!");
     },
     onError: (error) => {
       toast.error("Erro ao registrar participação: " + error.message);
+    },
+  });
+}
+
+export function useEventoParticipacoes(eventoId?: string) {
+  return useQuery({
+    queryKey: ["evento-participacoes", eventoId],
+    queryFn: async () => {
+      let query = supabase
+        .from("evento_participacoes")
+        .select("*, colaborador:colaboradores(id, nome), evento:eventos(*)");
+      
+      if (eventoId) {
+        query = query.eq("evento_id", eventoId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!eventoId,
+  });
+}
+
+export function useUpdateEventoParticipacao() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; confirmou_presenca?: boolean; compareceu?: boolean }) => {
+      const { error } = await supabase
+        .from("evento_participacoes")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
+      toast.success("Participação atualizada!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar participação: " + error.message);
+    },
+  });
+}
+
+export function useDeleteEventoParticipacao() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("evento_participacoes")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
+      toast.success("Participação removida!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover participação: " + error.message);
     },
   });
 }
