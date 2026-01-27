@@ -96,3 +96,52 @@ export function useCreateColaborador() {
     },
   });
 }
+
+export function useUpdateColaborador() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...colaborador }: Partial<Colaborador> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("colaboradores")
+        .update(colaborador)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as Colaborador;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
+      toast.success("Colaborador atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar colaborador: " + error.message);
+    },
+  });
+}
+
+export function useDeleteColaborador() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("colaboradores")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
+      toast.success("Colaborador excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir colaborador: " + error.message);
+    },
+  });
+}

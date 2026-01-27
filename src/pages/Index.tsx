@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, UserMinus, Clock, DollarSign, TrendingUp, Briefcase, Building } from "lucide-react";
+import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
@@ -13,6 +13,7 @@ import { NovasContratacoesCard } from "@/components/dashboard/NovasContratacoesC
 import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
+import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
@@ -27,15 +28,6 @@ const Index = () => {
   const { data: turnoverStats } = useTurnoverStats(filialId);
   const { data: absenteismoStats } = useAbsenteismoStats(filialId);
   const { data: contratacaoStats } = useContratacaoStats(filialId);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 1,
-    }).format(value).replace("R$", "R$ ");
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,7 +55,7 @@ const Index = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Total de Colaboradores"
             value={colaboradoresStats?.ativos || 0}
@@ -84,13 +76,6 @@ const Index = () => {
             subtitle="Taxa de ausências (30 dias)"
             icon={<Clock className="h-6 w-6" />}
             variant="warning"
-          />
-          <StatCard
-            title="Custo de Pessoal"
-            value={formatCurrency(colaboradoresStats?.custoTotal || 0)}
-            subtitle="Custo mensal total"
-            icon={<DollarSign className="h-6 w-6" />}
-            variant="info"
           />
         </div>
 
@@ -123,13 +108,18 @@ const Index = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="geral" className="w-full">
+        <Tabs defaultValue="colaboradores" className="w-full">
           <TabsList className="mb-6">
+            <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
             <TabsTrigger value="geral">Visão Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
             <TabsTrigger value="estagiarios">Estagiários</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="colaboradores" className="space-y-6">
+            <ColaboradoresList filialId={selectedFilial} />
+          </TabsContent>
 
           <TabsContent value="geral" className="space-y-6">
             {/* Charts Row 1 */}
