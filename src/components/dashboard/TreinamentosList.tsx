@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useTreinamentos, useTreinamentoParticipacoes, useCreateParticipacao, useUpdateParticipacao, useDeleteParticipacao } from "@/hooks/useTreinamentos";
 import { useColaboradores } from "@/hooks/useColaboradores";
+import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { TreinamentoForm } from "@/components/forms/TreinamentoForm";
 import { Treinamento } from "@/types/database";
 import { format } from "date-fns";
@@ -43,6 +44,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
     filialId === "all" ? undefined : filialId
   );
   const { data: colaboradores } = useColaboradores({ status: "Ativo" });
+  const { data: participacaoAnual } = useParticipacaoAnual();
   const createParticipacao = useCreateParticipacao();
   const updateParticipacao = useUpdateParticipacao();
   const deleteParticipacao = useDeleteParticipacao();
@@ -110,6 +112,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
               onAddParticipante={handleAddParticipante}
               onToggleParticipou={handleToggleParticipou}
               onRemoveParticipante={handleRemoveParticipante}
+              participacaoAnual={participacaoAnual || {}}
             />
           ))
         )}
@@ -128,6 +131,7 @@ interface TreinamentoItemProps {
   onAddParticipante: (treinamentoId: string) => void;
   onToggleParticipou: (id: string, participou: boolean) => void;
   onRemoveParticipante: (id: string) => void;
+  participacaoAnual: Record<string, any>;
 }
 
 function TreinamentoItem({
@@ -140,6 +144,7 @@ function TreinamentoItem({
   onAddParticipante,
   onToggleParticipou,
   onRemoveParticipante,
+  participacaoAnual,
 }: TreinamentoItemProps) {
   const { data: participacoes } = useTreinamentoParticipacoes(
     isExpanded ? treinamento.id : undefined
@@ -221,45 +226,78 @@ function TreinamentoItem({
                   <TableRow>
                     <TableHead>Colaborador</TableHead>
                     <TableHead className="text-center">Participou</TableHead>
+                    <TableHead className="text-center">% Anual Treinamentos</TableHead>
+                    <TableHead className="text-center">% Anual Eventos</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {participacoes.map((p: any) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">
-                        {p.colaborador?.nome || "—"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant={p.participou ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => onToggleParticipou(p.id, p.participou)}
-                        >
-                          {p.participou ? (
-                            <>
-                              <Check className="h-4 w-4 mr-1" />
-                              Sim
-                            </>
-                          ) : (
-                            <>
-                              <X className="h-4 w-4 mr-1" />
-                              Não
-                            </>
-                          )}
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onRemoveParticipante(p.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {participacoes.map((p: any) => {
+                    const stats = participacaoAnual[p.colaborador_id];
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">
+                          {p.colaborador?.nome || "—"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant={p.participou ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onToggleParticipou(p.id, p.participou)}
+                          >
+                            {p.participou ? (
+                              <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Sim
+                              </>
+                            ) : (
+                              <>
+                                <X className="h-4 w-4 mr-1" />
+                                Não
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Progress 
+                              value={stats?.treinamentos_percentual || 0} 
+                              className="w-16 h-2" 
+                            />
+                            <span className="text-sm font-medium min-w-[3rem]">
+                              {stats?.treinamentos_percentual || 0}%
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            ({stats?.treinamentos_participou || 0}/{stats?.treinamentos_total || 0})
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Progress 
+                              value={stats?.eventos_percentual || 0} 
+                              className="w-16 h-2" 
+                            />
+                            <span className="text-sm font-medium min-w-[3rem]">
+                              {stats?.eventos_percentual || 0}%
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            ({stats?.eventos_compareceu || 0}/{stats?.eventos_total || 0})
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onRemoveParticipante(p.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             ) : (
