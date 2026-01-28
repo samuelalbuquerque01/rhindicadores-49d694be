@@ -16,6 +16,7 @@ import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { EventosList } from "@/components/dashboard/EventosList";
+import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
@@ -115,6 +116,7 @@ const Index = () => {
         <Tabs defaultValue="colaboradores" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
+            <TabsTrigger value="participacao">Participação</TabsTrigger>
             <TabsTrigger value="geral">Visão Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="eventos">Eventos</TabsTrigger>
@@ -124,6 +126,10 @@ const Index = () => {
 
           <TabsContent value="colaboradores" className="space-y-6">
             <ColaboradoresList filialId={selectedFilial} />
+          </TabsContent>
+
+          <TabsContent value="participacao" className="space-y-6">
+            <ParticipacaoColaboradorChart filialId={selectedFilial} />
           </TabsContent>
 
           <TabsContent value="geral" className="space-y-6">
