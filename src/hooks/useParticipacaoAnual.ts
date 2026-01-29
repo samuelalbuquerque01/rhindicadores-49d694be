@@ -19,40 +19,42 @@ export function useParticipacaoAnual(ano?: number) {
   return useQuery({
     queryKey: ["participacao-anual", currentYear],
     queryFn: async () => {
-      // Fetch all training participations for the year
+      // Fetch all training participations for the year (only from finalized trainings)
       const { data: treinamentoParticipacoes, error: treinamentoError } = await supabase
         .from("treinamento_participacoes")
         .select(`
           colaborador_id,
           participou,
-          treinamento:treinamentos(data_realizacao)
+          treinamento:treinamentos(data_realizacao, finalizado)
         `)
         .not("colaborador_id", "is", null);
 
       if (treinamentoError) throw treinamentoError;
 
-      // Fetch all event participations for the year
+      // Fetch all event participations for the year (only from finalized events)
       const { data: eventoParticipacoes, error: eventoError } = await supabase
         .from("evento_participacoes")
         .select(`
           colaborador_id,
           compareceu,
           confirmou_presenca,
-          evento:eventos(data_evento)
+          evento:eventos(data_evento, finalizado)
         `)
         .not("colaborador_id", "is", null);
 
       if (eventoError) throw eventoError;
 
-      // Filter by year and calculate stats
+      // Filter by year and only include finalized events/trainings
       const treinamentosDoAno = treinamentoParticipacoes?.filter((p: any) => {
         const data = p.treinamento?.data_realizacao;
-        return data && data >= startOfYear && data <= endOfYear;
+        const finalizado = p.treinamento?.finalizado;
+        return data && data >= startOfYear && data <= endOfYear && finalizado === true;
       }) || [];
 
       const eventosDoAno = eventoParticipacoes?.filter((p: any) => {
         const data = p.evento?.data_evento;
-        return data && data >= startOfYear && data <= endOfYear;
+        const finalizado = p.evento?.finalizado;
+        return data && data >= startOfYear && data <= endOfYear && finalizado === true;
       }) || [];
 
       // Group by colaborador
