@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GraduationCap, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X } from "lucide-react";
+import { GraduationCap, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useTreinamentos, useTreinamentoParticipacoes, useCreateParticipacao, useUpdateParticipacao, useDeleteParticipacao } from "@/hooks/useTreinamentos";
+import { useTreinamentos, useTreinamentoParticipacoes, useCreateParticipacao, useUpdateParticipacao, useDeleteParticipacao, useFinalizarTreinamento, useReabrirTreinamento } from "@/hooks/useTreinamentos";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { TreinamentoForm } from "@/components/forms/TreinamentoForm";
@@ -48,6 +48,8 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
   const createParticipacao = useCreateParticipacao();
   const updateParticipacao = useUpdateParticipacao();
   const deleteParticipacao = useDeleteParticipacao();
+  const finalizarTreinamento = useFinalizarTreinamento();
+  const reabrirTreinamento = useReabrirTreinamento();
 
   const handleAddParticipante = async (treinamentoId: string) => {
     if (!selectedColaborador) return;
@@ -67,6 +69,14 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
 
   const handleRemoveParticipante = async (id: string) => {
     await deleteParticipacao.mutateAsync(id);
+  };
+
+  const handleFinalizar = async (id: string) => {
+    await finalizarTreinamento.mutateAsync(id);
+  };
+
+  const handleReabrir = async (id: string) => {
+    await reabrirTreinamento.mutateAsync(id);
   };
 
   if (isLoading) {
@@ -112,6 +122,8 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
               onAddParticipante={handleAddParticipante}
               onToggleParticipou={handleToggleParticipou}
               onRemoveParticipante={handleRemoveParticipante}
+              onFinalizar={handleFinalizar}
+              onReabrir={handleReabrir}
               participacaoAnual={participacaoAnual || {}}
             />
           ))
@@ -122,7 +134,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
 }
 
 interface TreinamentoItemProps {
-  treinamento: Treinamento;
+  treinamento: Treinamento & { finalizado?: boolean };
   isExpanded: boolean;
   onToggle: () => void;
   colaboradores: any[];
@@ -131,6 +143,8 @@ interface TreinamentoItemProps {
   onAddParticipante: (treinamentoId: string) => void;
   onToggleParticipou: (id: string, participou: boolean) => void;
   onRemoveParticipante: (id: string) => void;
+  onFinalizar: (id: string) => void;
+  onReabrir: (id: string) => void;
   participacaoAnual: Record<string, any>;
 }
 
@@ -144,6 +158,8 @@ function TreinamentoItem({
   onAddParticipante,
   onToggleParticipou,
   onRemoveParticipante,
+  onFinalizar,
+  onReabrir,
   participacaoAnual,
 }: TreinamentoItemProps) {
   const { data: participacoes } = useTreinamentoParticipacoes(
@@ -163,19 +179,27 @@ function TreinamentoItem({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
-      <div className="border rounded-lg">
+      <div className={`border rounded-lg ${treinamento.finalizado ? 'border-green-500/50 bg-green-50/30 dark:bg-green-950/20' : ''}`}>
         <CollapsibleTrigger asChild>
           <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h4 className="font-medium">{treinamento.nome}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(treinamento.data_realizacao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    {treinamento.carga_horaria && ` • ${treinamento.carga_horaria}h`}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{treinamento.nome}</h4>
+                      {treinamento.finalizado && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Finalizado
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(treinamento.data_realizacao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {treinamento.carga_horaria && ` • ${treinamento.carga_horaria}h`}
+                    </p>
+                  </div>
                 </div>
-              </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <div className="flex items-center gap-2">
@@ -195,29 +219,61 @@ function TreinamentoItem({
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
-            {/* Add participant */}
-            <div className="flex gap-2">
-              <Select value={selectedColaborador} onValueChange={onSelectColaborador}>
-                <SelectTrigger className="flex-1 bg-background">
-                  <SelectValue placeholder="Selecionar colaborador..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {availableColaboradores.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                size="sm" 
-                onClick={() => onAddParticipante(treinamento.id)}
-                disabled={!selectedColaborador}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Adicionar
-              </Button>
+            {/* Finalize button */}
+            <div className="flex justify-end gap-2">
+              {treinamento.finalizado ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReabrir(treinamento.id);
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reabrir Treinamento
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFinalizar(treinamento.id);
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Finalizar Treinamento
+                </Button>
+              )}
             </div>
+
+            {/* Add participant */}
+            {!treinamento.finalizado && (
+              <div className="flex gap-2">
+                <Select value={selectedColaborador} onValueChange={onSelectColaborador}>
+                  <SelectTrigger className="flex-1 bg-background">
+                    <SelectValue placeholder="Selecionar colaborador..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {availableColaboradores.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  size="sm" 
+                  onClick={() => onAddParticipante(treinamento.id)}
+                  disabled={!selectedColaborador}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar
+                </Button>
+              </div>
+            )}
 
             {/* Participants table */}
             {participacoes && participacoes.length > 0 ? (
@@ -244,6 +300,7 @@ function TreinamentoItem({
                             variant={p.participou ? "default" : "outline"}
                             size="sm"
                             onClick={() => onToggleParticipou(p.id, p.participou)}
+                            disabled={treinamento.finalizado}
                           >
                             {p.participou ? (
                               <>
@@ -287,13 +344,15 @@ function TreinamentoItem({
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onRemoveParticipante(p.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {!treinamento.finalizado && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onRemoveParticipante(p.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

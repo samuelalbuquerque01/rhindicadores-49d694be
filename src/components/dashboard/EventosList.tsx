@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X } from "lucide-react";
+import { Calendar, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useEventos, useEventoParticipacoes, useCreateEventoParticipacao, useUpdateEventoParticipacao, useDeleteEventoParticipacao } from "@/hooks/useEventos";
+import { useEventos, useEventoParticipacoes, useCreateEventoParticipacao, useUpdateEventoParticipacao, useDeleteEventoParticipacao, useFinalizarEvento, useReabrirEvento } from "@/hooks/useEventos";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { EventoForm } from "@/components/forms/EventoForm";
@@ -48,6 +48,8 @@ export function EventosList({ filialId }: EventosListProps) {
   const createParticipacao = useCreateEventoParticipacao();
   const updateParticipacao = useUpdateEventoParticipacao();
   const deleteParticipacao = useDeleteEventoParticipacao();
+  const finalizarEvento = useFinalizarEvento();
+  const reabrirEvento = useReabrirEvento();
 
   const handleAddParticipante = async (eventoId: string) => {
     if (!selectedColaborador) return;
@@ -71,6 +73,14 @@ export function EventosList({ filialId }: EventosListProps) {
 
   const handleRemoveParticipante = async (id: string) => {
     await deleteParticipacao.mutateAsync(id);
+  };
+
+  const handleFinalizar = async (id: string) => {
+    await finalizarEvento.mutateAsync(id);
+  };
+
+  const handleReabrir = async (id: string) => {
+    await reabrirEvento.mutateAsync(id);
   };
 
   if (isLoading) {
@@ -117,6 +127,8 @@ export function EventosList({ filialId }: EventosListProps) {
               onToggleConfirmou={handleToggleConfirmou}
               onToggleCompareceu={handleToggleCompareceu}
               onRemoveParticipante={handleRemoveParticipante}
+              onFinalizar={handleFinalizar}
+              onReabrir={handleReabrir}
               participacaoAnual={participacaoAnual || {}}
             />
           ))
@@ -127,7 +139,7 @@ export function EventosList({ filialId }: EventosListProps) {
 }
 
 interface EventoItemProps {
-  evento: Evento;
+  evento: Evento & { finalizado?: boolean };
   isExpanded: boolean;
   onToggle: () => void;
   colaboradores: any[];
@@ -137,6 +149,8 @@ interface EventoItemProps {
   onToggleConfirmou: (id: string, confirmou: boolean) => void;
   onToggleCompareceu: (id: string, compareceu: boolean) => void;
   onRemoveParticipante: (id: string) => void;
+  onFinalizar: (id: string) => void;
+  onReabrir: (id: string) => void;
   participacaoAnual: Record<string, any>;
 }
 
@@ -151,6 +165,8 @@ function EventoItem({
   onToggleConfirmou,
   onToggleCompareceu,
   onRemoveParticipante,
+  onFinalizar,
+  onReabrir,
   participacaoAnual,
 }: EventoItemProps) {
   const { data: participacoes } = useEventoParticipacoes(
@@ -186,21 +202,27 @@ function EventoItem({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
-      <div className="border rounded-lg">
+      <div className={`border rounded-lg ${evento.finalizado ? 'border-green-500/50 bg-green-50/30 dark:bg-green-950/20' : ''}`}>
         <CollapsibleTrigger asChild>
           <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium">{evento.nome}</h4>
-                    {getTipoBadge(evento.tipo)}
+                <div className="flex items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{evento.nome}</h4>
+                      {getTipoBadge(evento.tipo)}
+                      {evento.finalizado && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Finalizado
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(evento.data_evento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(evento.data_evento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
                 </div>
-              </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <div className="flex items-center gap-2">
@@ -220,29 +242,61 @@ function EventoItem({
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
-            {/* Add participant */}
-            <div className="flex gap-2">
-              <Select value={selectedColaborador} onValueChange={onSelectColaborador}>
-                <SelectTrigger className="flex-1 bg-background">
-                  <SelectValue placeholder="Selecionar colaborador..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {availableColaboradores.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                size="sm" 
-                onClick={() => onAddParticipante(evento.id)}
-                disabled={!selectedColaborador}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Adicionar
-              </Button>
+            {/* Finalize button */}
+            <div className="flex justify-end gap-2">
+              {evento.finalizado ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReabrir(evento.id);
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reabrir Evento
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFinalizar(evento.id);
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Finalizar Evento
+                </Button>
+              )}
             </div>
+
+            {/* Add participant */}
+            {!evento.finalizado && (
+              <div className="flex gap-2">
+                <Select value={selectedColaborador} onValueChange={onSelectColaborador}>
+                  <SelectTrigger className="flex-1 bg-background">
+                    <SelectValue placeholder="Selecionar colaborador..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {availableColaboradores.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  size="sm" 
+                  onClick={() => onAddParticipante(evento.id)}
+                  disabled={!selectedColaborador}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar
+                </Button>
+              </div>
+            )}
 
             {/* Participants table */}
             {participacoes && participacoes.length > 0 ? (
@@ -270,6 +324,7 @@ function EventoItem({
                             variant={p.confirmou_presenca ? "default" : "outline"}
                             size="sm"
                             onClick={() => onToggleConfirmou(p.id, p.confirmou_presenca)}
+                            disabled={evento.finalizado}
                           >
                             {p.confirmou_presenca ? (
                               <Check className="h-4 w-4" />
@@ -283,6 +338,7 @@ function EventoItem({
                             variant={p.compareceu ? "default" : "outline"}
                             size="sm"
                             onClick={() => onToggleCompareceu(p.id, p.compareceu)}
+                            disabled={evento.finalizado}
                           >
                             {p.compareceu ? (
                               <Check className="h-4 w-4" />
@@ -320,13 +376,15 @@ function EventoItem({
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onRemoveParticipante(p.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {!evento.finalizado && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onRemoveParticipante(p.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

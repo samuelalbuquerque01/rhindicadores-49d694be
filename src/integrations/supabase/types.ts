@@ -264,6 +264,7 @@ export type Database = {
           data_evento: string
           descricao: string | null
           filial_id: string | null
+          finalizado: boolean | null
           id: string
           nome: string
           tipo: string | null
@@ -274,6 +275,7 @@ export type Database = {
           data_evento: string
           descricao?: string | null
           filial_id?: string | null
+          finalizado?: boolean | null
           id?: string
           nome: string
           tipo?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           data_evento?: string
           descricao?: string | null
           filial_id?: string | null
+          finalizado?: boolean | null
           id?: string
           nome?: string
           tipo?: string | null
@@ -424,6 +427,7 @@ export type Database = {
           data_realizacao: string
           descricao: string | null
           filial_id: string | null
+          finalizado: boolean | null
           id: string
           nome: string
           tipo: string | null
@@ -435,6 +439,7 @@ export type Database = {
           data_realizacao: string
           descricao?: string | null
           filial_id?: string | null
+          finalizado?: boolean | null
           id?: string
           nome: string
           tipo?: string | null
@@ -446,6 +451,7 @@ export type Database = {
           data_realizacao?: string
           descricao?: string | null
           filial_id?: string | null
+          finalizado?: boolean | null
           id?: string
           nome?: string
           tipo?: string | null

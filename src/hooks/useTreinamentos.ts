@@ -18,7 +18,55 @@ export function useTreinamentos(filialId?: string) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data as Treinamento[];
+      return data as (Treinamento & { finalizado?: boolean })[];
+    },
+  });
+}
+
+export function useFinalizarTreinamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("treinamentos")
+        .update({ finalizado: true })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Treinamento finalizado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao finalizar treinamento: " + error.message);
+    },
+  });
+}
+
+export function useReabrirTreinamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("treinamentos")
+        .update({ finalizado: false })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Treinamento reaberto!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reabrir treinamento: " + error.message);
     },
   });
 }

@@ -18,7 +18,55 @@ export function useEventos(filialId?: string) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data as Evento[];
+      return data as (Evento & { finalizado?: boolean })[];
+    },
+  });
+}
+
+export function useFinalizarEvento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("eventos")
+        .update({ finalizado: true })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Evento finalizado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao finalizar evento: " + error.message);
+    },
+  });
+}
+
+export function useReabrirEvento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("eventos")
+        .update({ finalizado: false })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Evento reaberto!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reabrir evento: " + error.message);
     },
   });
 }
