@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,8 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateEvento } from "@/hooks/useEventos";
+import { useCreateEvento, useUpdateEvento } from "@/hooks/useEventos";
 import { useFiliais } from "@/hooks/useFiliais";
+import { Evento } from "@/types/database";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(200),
@@ -43,10 +44,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function EventoForm() {
+interface EventoFormProps {
+  evento?: Evento;
+  trigger?: React.ReactNode;
+}
+
+export function EventoForm({ evento, trigger }: EventoFormProps) {
   const [open, setOpen] = useState(false);
   const createEvento = useCreateEvento();
+  const updateEvento = useUpdateEvento();
   const { data: filiais } = useFiliais();
+  const isEditing = !!evento;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,30 +68,57 @@ export function EventoForm() {
     },
   });
 
+  useEffect(() => {
+    if (evento && open) {
+      form.reset({
+        nome: evento.nome,
+        descricao: evento.descricao || "",
+        data_evento: evento.data_evento,
+        filial_id: evento.filial_id || "",
+        tipo: (evento.tipo as "Confraternização" | "Palestra" | "Workshop" | "Integração" | "Outro") || "Confraternização",
+        capacidade: evento.capacidade || 50,
+      });
+    }
+  }, [evento, open, form]);
+
   const onSubmit = async (values: FormValues) => {
-    await createEvento.mutateAsync({
-      ...values,
-      filial_id: values.filial_id || null,
-      tipo: values.tipo || null,
-      capacidade: values.capacidade || null,
-    } as any);
-    form.reset();
+    if (isEditing) {
+      await updateEvento.mutateAsync({
+        id: evento.id,
+        ...values,
+        filial_id: values.filial_id || null,
+        tipo: values.tipo || null,
+        capacidade: values.capacidade || null,
+      } as any);
+    } else {
+      await createEvento.mutateAsync({
+        ...values,
+        filial_id: values.filial_id || null,
+        tipo: values.tipo || null,
+        capacidade: values.capacidade || null,
+      } as any);
+      form.reset();
+    }
     setOpen(false);
   };
+
+  const isPending = createEvento.isPending || updateEvento.isPending;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Evento
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Evento
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] bg-background">
         <DialogHeader>
-          <DialogTitle>Novo Evento</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Evento" : "Novo Evento"}</DialogTitle>
           <DialogDescription>
-            Cadastre um novo evento no sistema.
+            {isEditing ? "Atualize os dados do evento." : "Cadastre um novo evento no sistema."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -195,9 +230,9 @@ export function EventoForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={createEvento.isPending}
+              disabled={isPending}
             >
-              {createEvento.isPending ? "Salvando..." : "Salvar Evento"}
+              {isPending ? "Salvando..." : isEditing ? "Atualizar Evento" : "Salvar Evento"}
             </Button>
           </form>
         </Form>
