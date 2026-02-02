@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw } from "lucide-react";
+import { Calendar, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useEventos, useEventoParticipacoes, useCreateEventoParticipacao, useUpdateEventoParticipacao, useDeleteEventoParticipacao, useFinalizarEvento, useReabrirEvento } from "@/hooks/useEventos";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useEventos, useEventoParticipacoes, useCreateEventoParticipacao, useUpdateEventoParticipacao, useDeleteEventoParticipacao, useFinalizarEvento, useReabrirEvento, useDeleteEvento } from "@/hooks/useEventos";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { EventoForm } from "@/components/forms/EventoForm";
@@ -50,6 +61,7 @@ export function EventosList({ filialId }: EventosListProps) {
   const deleteParticipacao = useDeleteEventoParticipacao();
   const finalizarEvento = useFinalizarEvento();
   const reabrirEvento = useReabrirEvento();
+  const deleteEvento = useDeleteEvento();
 
   const handleAddParticipante = async (eventoId: string) => {
     if (!selectedColaborador) return;
@@ -81,6 +93,10 @@ export function EventosList({ filialId }: EventosListProps) {
 
   const handleReabrir = async (id: string) => {
     await reabrirEvento.mutateAsync(id);
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteEvento.mutateAsync(id);
   };
 
   if (isLoading) {
@@ -129,6 +145,7 @@ export function EventosList({ filialId }: EventosListProps) {
               onRemoveParticipante={handleRemoveParticipante}
               onFinalizar={handleFinalizar}
               onReabrir={handleReabrir}
+              onDelete={handleDelete}
               participacaoAnual={participacaoAnual || {}}
             />
           ))
@@ -151,6 +168,7 @@ interface EventoItemProps {
   onRemoveParticipante: (id: string) => void;
   onFinalizar: (id: string) => void;
   onReabrir: (id: string) => void;
+  onDelete: (id: string) => void;
   participacaoAnual: Record<string, any>;
 }
 
@@ -167,6 +185,7 @@ function EventoItem({
   onRemoveParticipante,
   onFinalizar,
   onReabrir,
+  onDelete,
   participacaoAnual,
 }: EventoItemProps) {
   const { data: participacoes } = useEventoParticipacoes(
@@ -242,34 +261,73 @@ function EventoItem({
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
-            {/* Finalize button */}
-            <div className="flex justify-end gap-2">
-              {evento.finalizado ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onReabrir(evento.id);
-                  }}
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reabrir Evento
-                </Button>
-              ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onFinalizar(evento.id);
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Finalizar Evento
-                </Button>
-              )}
+            {/* Action buttons */}
+            <div className="flex justify-between">
+              <div className="flex gap-2">
+                <EventoForm 
+                  evento={evento}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                  }
+                />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Evento</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o evento "{evento.nome}"? 
+                        Esta ação não pode ser desfeita e todas as participações serão removidas.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onDelete(evento.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex gap-2">
+                {evento.finalizado ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReabrir(evento.id);
+                    }}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reabrir Evento
+                  </Button>
+                ) : (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFinalizar(evento.id);
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Finalizar Evento
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Add participant */}

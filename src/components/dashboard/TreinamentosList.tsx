@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GraduationCap, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw } from "lucide-react";
+import { GraduationCap, Users, ChevronDown, ChevronUp, Plus, Trash2, Check, X, CheckCircle2, RotateCcw, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useTreinamentos, useTreinamentoParticipacoes, useCreateParticipacao, useUpdateParticipacao, useDeleteParticipacao, useFinalizarTreinamento, useReabrirTreinamento } from "@/hooks/useTreinamentos";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useTreinamentos, useTreinamentoParticipacoes, useCreateParticipacao, useUpdateParticipacao, useDeleteParticipacao, useFinalizarTreinamento, useReabrirTreinamento, useDeleteTreinamento } from "@/hooks/useTreinamentos";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { TreinamentoForm } from "@/components/forms/TreinamentoForm";
@@ -50,6 +61,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
   const deleteParticipacao = useDeleteParticipacao();
   const finalizarTreinamento = useFinalizarTreinamento();
   const reabrirTreinamento = useReabrirTreinamento();
+  const deleteTreinamento = useDeleteTreinamento();
 
   const handleAddParticipante = async (treinamentoId: string) => {
     if (!selectedColaborador) return;
@@ -77,6 +89,10 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
 
   const handleReabrir = async (id: string) => {
     await reabrirTreinamento.mutateAsync(id);
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteTreinamento.mutateAsync(id);
   };
 
   if (isLoading) {
@@ -124,6 +140,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
               onRemoveParticipante={handleRemoveParticipante}
               onFinalizar={handleFinalizar}
               onReabrir={handleReabrir}
+              onDelete={handleDelete}
               participacaoAnual={participacaoAnual || {}}
             />
           ))
@@ -145,6 +162,7 @@ interface TreinamentoItemProps {
   onRemoveParticipante: (id: string) => void;
   onFinalizar: (id: string) => void;
   onReabrir: (id: string) => void;
+  onDelete: (id: string) => void;
   participacaoAnual: Record<string, any>;
 }
 
@@ -160,6 +178,7 @@ function TreinamentoItem({
   onRemoveParticipante,
   onFinalizar,
   onReabrir,
+  onDelete,
   participacaoAnual,
 }: TreinamentoItemProps) {
   const { data: participacoes } = useTreinamentoParticipacoes(
@@ -219,34 +238,73 @@ function TreinamentoItem({
 
         <CollapsibleContent>
           <div className="border-t p-4 space-y-4">
-            {/* Finalize button */}
-            <div className="flex justify-end gap-2">
-              {treinamento.finalizado ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onReabrir(treinamento.id);
-                  }}
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reabrir Treinamento
-                </Button>
-              ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onFinalizar(treinamento.id);
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Finalizar Treinamento
-                </Button>
-              )}
+            {/* Action buttons */}
+            <div className="flex justify-between">
+              <div className="flex gap-2">
+                <TreinamentoForm 
+                  treinamento={treinamento}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                  }
+                />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Treinamento</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o treinamento "{treinamento.nome}"? 
+                        Esta ação não pode ser desfeita e todas as participações serão removidas.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onDelete(treinamento.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex gap-2">
+                {treinamento.finalizado ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReabrir(treinamento.id);
+                    }}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reabrir Treinamento
+                  </Button>
+                ) : (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFinalizar(treinamento.id);
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Finalizar Treinamento
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Add participant */}

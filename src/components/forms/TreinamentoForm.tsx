@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,8 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateTreinamento } from "@/hooks/useTreinamentos";
+import { useCreateTreinamento, useUpdateTreinamento } from "@/hooks/useTreinamentos";
 import { useFiliais } from "@/hooks/useFiliais";
+import { Treinamento } from "@/types/database";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(200),
@@ -44,10 +45,17 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function TreinamentoForm() {
+interface TreinamentoFormProps {
+  treinamento?: Treinamento;
+  trigger?: React.ReactNode;
+}
+
+export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) {
   const [open, setOpen] = useState(false);
   const createTreinamento = useCreateTreinamento();
+  const updateTreinamento = useUpdateTreinamento();
   const { data: filiais } = useFiliais();
+  const isEditing = !!treinamento;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,29 +70,56 @@ export function TreinamentoForm() {
     },
   });
 
+  useEffect(() => {
+    if (treinamento && open) {
+      form.reset({
+        nome: treinamento.nome,
+        descricao: treinamento.descricao || "",
+        data_realizacao: treinamento.data_realizacao,
+        carga_horaria: treinamento.carga_horaria || 8,
+        filial_id: treinamento.filial_id || "",
+        tipo: (treinamento.tipo as "Presencial" | "Online" | "Híbrido") || "Presencial",
+        vagas_totais: treinamento.vagas_totais || 20,
+      });
+    }
+  }, [treinamento, open, form]);
+
   const onSubmit = async (values: FormValues) => {
-    await createTreinamento.mutateAsync({
-      ...values,
-      filial_id: values.filial_id || null,
-      tipo: values.tipo || null,
-    } as any);
-    form.reset();
+    if (isEditing) {
+      await updateTreinamento.mutateAsync({
+        id: treinamento.id,
+        ...values,
+        filial_id: values.filial_id || null,
+        tipo: values.tipo || null,
+      } as any);
+    } else {
+      await createTreinamento.mutateAsync({
+        ...values,
+        filial_id: values.filial_id || null,
+        tipo: values.tipo || null,
+      } as any);
+      form.reset();
+    }
     setOpen(false);
   };
+
+  const isPending = createTreinamento.isPending || updateTreinamento.isPending;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Treinamento
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Treinamento
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] bg-background">
         <DialogHeader>
-          <DialogTitle>Novo Treinamento</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Treinamento" : "Novo Treinamento"}</DialogTitle>
           <DialogDescription>
-            Cadastre um novo treinamento no sistema.
+            {isEditing ? "Atualize os dados do treinamento." : "Cadastre um novo treinamento no sistema."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -207,9 +242,9 @@ export function TreinamentoForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={createTreinamento.isPending}
+              disabled={isPending}
             >
-              {createTreinamento.isPending ? "Salvando..." : "Salvar Treinamento"}
+              {isPending ? "Salvando..." : isEditing ? "Atualizar Treinamento" : "Salvar Treinamento"}
             </Button>
           </form>
         </Form>

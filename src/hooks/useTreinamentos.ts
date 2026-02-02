@@ -227,3 +227,59 @@ export function useDeleteParticipacao() {
     },
   });
 }
+
+export function useUpdateTreinamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Treinamento>) => {
+      const { error } = await supabase
+        .from("treinamentos")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      toast.success("Treinamento atualizado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar treinamento: " + error.message);
+    },
+  });
+}
+
+export function useDeleteTreinamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // First delete all participations
+      const { error: participacoesError } = await supabase
+        .from("treinamento_participacoes")
+        .delete()
+        .eq("treinamento_id", id);
+      
+      if (participacoesError) throw participacoesError;
+      
+      // Then delete the treinamento
+      const { error } = await supabase
+        .from("treinamentos")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Treinamento excluído!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir treinamento: " + error.message);
+    },
+  });
+}

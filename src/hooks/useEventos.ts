@@ -227,3 +227,59 @@ export function useDeleteEventoParticipacao() {
     },
   });
 }
+
+export function useUpdateEvento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & Partial<Evento>) => {
+      const { error } = await supabase
+        .from("eventos")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      toast.success("Evento atualizado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar evento: " + error.message);
+    },
+  });
+}
+
+export function useDeleteEvento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // First delete all participations
+      const { error: participacoesError } = await supabase
+        .from("evento_participacoes")
+        .delete()
+        .eq("evento_id", id);
+      
+      if (participacoesError) throw participacoesError;
+      
+      // Then delete the evento
+      const { error } = await supabase
+        .from("eventos")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
+      toast.success("Evento excluído!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir evento: " + error.message);
+    },
+  });
+}
