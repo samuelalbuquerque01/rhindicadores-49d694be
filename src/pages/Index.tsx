@@ -8,12 +8,12 @@ import { AbsenteismoDetailChart } from "@/components/dashboard/AbsenteismoDetail
 import { ColaboradoresChart } from "@/components/dashboard/ColaboradoresChart";
 import { LideresChart } from "@/components/dashboard/LideresChart";
 import { EventosChart } from "@/components/dashboard/EventosChart";
-import { EstagiariosCard } from "@/components/dashboard/EstagiariosCard";
 import { NovasContratacoesCard } from "@/components/dashboard/NovasContratacoesCard";
 import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
+import { ColaboradoresStatusList } from "@/components/dashboard/ColaboradoresStatusList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { EventosList } from "@/components/dashboard/EventosList";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
@@ -186,9 +186,8 @@ const Index = () => {
               <TurnoverChart filialId={selectedFilial} />
               <AbsenteismoDetailChart filialId={selectedFilial} />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <NovasContratacoesCard filialId={selectedFilial} />
-            </div>
+            <ColaboradoresStatusList filialId={selectedFilial} />
+            <NovasContratacoesCard filialId={selectedFilial} />
           </TabsContent>
 
         </Tabs>
