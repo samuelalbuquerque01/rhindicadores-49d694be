@@ -36,21 +36,41 @@ import { EditColaboradorModal } from "./EditColaboradorModal";
 
 interface ColaboradoresListProps {
   filialId?: string;
+  tipoFilter?: "CLT" | "Estagiário" | "PJ";
 }
 
-export function ColaboradoresList({ filialId }: ColaboradoresListProps) {
+export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: ColaboradoresListProps) {
   const [search, setSearch] = useState("");
-  const [tipoFilter, setTipoFilter] = useState<string>("all");
+  const [subTipoFilter, setSubTipoFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editingColaborador, setEditingColaborador] = useState<Colaborador | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: colaboradores, isLoading } = useColaboradores({
+  // Determine which tipos to filter based on prop
+  const getTipoColaboradorFilter = () => {
+    if (propTipoFilter === "CLT") {
+      return subTipoFilter === "all" ? undefined : subTipoFilter;
+    }
+    if (propTipoFilter === "Estagiário") {
+      return "Estagiário";
+    }
+    if (propTipoFilter === "PJ") {
+      return "PJ";
+    }
+    return subTipoFilter === "all" ? undefined : subTipoFilter;
+  };
+
+  const { data: allColaboradores, isLoading } = useColaboradores({
     filialId: filialId === "all" ? undefined : filialId,
-    tipoColaborador: tipoFilter === "all" ? undefined : tipoFilter,
+    tipoColaborador: getTipoColaboradorFilter(),
     status: statusFilter === "all" ? undefined : statusFilter,
     search: search || undefined,
   });
+
+  // Filter CLT types if propTipoFilter is CLT
+  const colaboradores = propTipoFilter === "CLT" && subTipoFilter === "all"
+    ? allColaboradores?.filter(c => c.tipo_colaborador === "CLT Administrativo" || c.tipo_colaborador === "CLT Corpo Clínico")
+    : allColaboradores;
   const { data: filiais } = useFiliais();
   const deleteColaborador = useDeleteColaborador();
 
@@ -90,12 +110,19 @@ export function ColaboradoresList({ filialId }: ColaboradoresListProps) {
     return filiais?.find(f => f.id === filialId)?.nome || "-";
   };
 
+  const getTitle = () => {
+    if (propTipoFilter === "CLT") return "Colaboradores CLT";
+    if (propTipoFilter === "Estagiário") return "Estagiários";
+    if (propTipoFilter === "PJ") return "Colaboradores PJ";
+    return "Colaboradores Cadastrados";
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Colaboradores Cadastrados
+          {getTitle()}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -110,18 +137,18 @@ export function ColaboradoresList({ filialId }: ColaboradoresListProps) {
               className="pl-10"
             />
           </div>
-          <Select value={tipoFilter} onValueChange={setTipoFilter}>
-            <SelectTrigger className="w-full sm:w-48 bg-background">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover">
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              <SelectItem value="CLT Administrativo">CLT Administrativo</SelectItem>
-              <SelectItem value="CLT Corpo Clínico">CLT Corpo Clínico</SelectItem>
-              <SelectItem value="PJ">PJ</SelectItem>
-              <SelectItem value="Estagiário">Estagiário</SelectItem>
-            </SelectContent>
-          </Select>
+          {propTipoFilter === "CLT" && (
+            <Select value={subTipoFilter} onValueChange={setSubTipoFilter}>
+              <SelectTrigger className="w-full sm:w-48 bg-background">
+                <SelectValue placeholder="Tipo CLT" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">Todos CLT</SelectItem>
+                <SelectItem value="CLT Administrativo">CLT Administrativo</SelectItem>
+                <SelectItem value="CLT Corpo Clínico">CLT Corpo Clínico</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-40 bg-background">
               <SelectValue placeholder="Status" />
