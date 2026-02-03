@@ -44,6 +44,8 @@ const formSchema = z.object({
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
   status: z.enum(["Ativo", "Inativo", "Afastado", "Férias"]),
   is_lider: z.boolean(),
+  salario_base: z.coerce.number().min(0).optional(),
+  custo_mensal: z.coerce.number().min(0).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -76,6 +78,8 @@ export function EditColaboradorModal({
       data_admissao: "",
       status: "Ativo",
       is_lider: false,
+      salario_base: 0,
+      custo_mensal: 0,
     },
   });
 
@@ -94,6 +98,8 @@ export function EditColaboradorModal({
         data_admissao: colaborador.data_admissao,
         status: colaborador.status as any,
         is_lider: colaborador.is_lider,
+        salario_base: colaborador.salario_base || 0,
+        custo_mensal: colaborador.custo_mensal || 0,
       });
     }
   }, [colaborador, form]);
@@ -324,6 +330,34 @@ export function EditColaboradorModal({
                     </FormItem>
                   )}
                 />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="salario_base"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Salário Base (R$)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="custo_mensal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Custo Mensal (R$)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
 
