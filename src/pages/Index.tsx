@@ -114,18 +114,27 @@ const Index = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="colaboradores" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
+          <TabsList className="mb-6 flex-wrap">
+            <TabsTrigger value="colaboradores">CLT</TabsTrigger>
+            <TabsTrigger value="estagiarios">Estagiários</TabsTrigger>
+            <TabsTrigger value="pj">PJ</TabsTrigger>
             <TabsTrigger value="participacao">Participação</TabsTrigger>
             <TabsTrigger value="geral">Visão Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="eventos">Eventos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
-            <TabsTrigger value="estagiarios">Estagiários</TabsTrigger>
           </TabsList>
 
           <TabsContent value="colaboradores" className="space-y-6">
-            <ColaboradoresList filialId={selectedFilial} />
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="CLT" />
+          </TabsContent>
+
+          <TabsContent value="estagiarios" className="space-y-6">
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="Estagiário" />
+          </TabsContent>
+
+          <TabsContent value="pj" className="space-y-6">
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="PJ" />
           </TabsContent>
 
           <TabsContent value="participacao" className="space-y-6">
@@ -182,9 +191,6 @@ const Index = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="estagiarios" className="space-y-6">
-            <EstagiariosCard filialId={selectedFilial} />
-          </TabsContent>
         </Tabs>
       </main>
 
