@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,6 +38,15 @@ const formSchema = z.object({
   data_inicio: z.string().min(1, "Data início é obrigatória"),
   data_fim: z.string().min(1, "Data fim é obrigatória"),
   observacoes: z.string().max(500).optional(),
+}).refine((data) => {
+  // If tipo is "Outro", observacoes is required
+  if (data.tipo === "Outro" && (!data.observacoes || data.observacoes.trim() === "")) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Descrição é obrigatória para afastamentos do tipo 'Outro'",
+  path: ["observacoes"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -58,6 +67,8 @@ export function AfastamentoForm() {
     },
   });
 
+  const tipoSelecionado = form.watch("tipo");
+
   const onSubmit = async (values: FormValues) => {
     await createAfastamento.mutateAsync(values as any);
     form.reset();
@@ -76,7 +87,7 @@ export function AfastamentoForm() {
         <DialogHeader>
           <DialogTitle>Registrar Afastamento</DialogTitle>
           <DialogDescription>
-            Registre um afastamento de colaborador.
+            Registre um afastamento de colaborador. O status principal do colaborador permanecerá inalterado.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -163,9 +174,18 @@ export function AfastamentoForm() {
               name="observacoes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações</FormLabel>
+                  <FormLabel>
+                    Observações {tipoSelecionado === "Outro" && "*"}
+                  </FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Observações adicionais..." {...field} />
+                    <Textarea 
+                      placeholder={
+                        tipoSelecionado === "Outro" 
+                          ? "Descreva o motivo do afastamento (obrigatório)..." 
+                          : "Observações adicionais..."
+                      } 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

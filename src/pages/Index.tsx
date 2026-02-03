@@ -13,7 +13,7 @@ import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
-import { ColaboradoresStatusList } from "@/components/dashboard/ColaboradoresStatusList";
+import { AfastamentosList } from "@/components/dashboard/AfastamentosList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { EventosList } from "@/components/dashboard/EventosList";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
@@ -186,7 +186,7 @@ const Index = () => {
               <TurnoverChart filialId={selectedFilial} />
               <AbsenteismoDetailChart filialId={selectedFilial} />
             </div>
-            <ColaboradoresStatusList filialId={selectedFilial} />
+            <AfastamentosList filialId={selectedFilial} />
             <NovasContratacoesCard filialId={selectedFilial} />
           </TabsContent>
 

@@ -31,8 +31,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useColaboradores, useDeleteColaborador } from "@/hooks/useColaboradores";
 import { useFiliais } from "@/hooks/useFiliais";
+import { useAfastamentosAtivos } from "@/hooks/useAfastamentoAtivo";
 import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
+import { AfastamentoBadge } from "./AfastamentoBadge";
 
 interface ColaboradoresListProps {
   filialId?: string;
@@ -72,6 +74,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
     ? allColaboradores?.filter(c => c.tipo_colaborador === "CLT Administrativo" || c.tipo_colaborador === "CLT Corpo Clínico")
     : allColaboradores;
   const { data: filiais } = useFiliais();
+  const { data: afastamentosAtivos } = useAfastamentosAtivos(filialId === "all" ? undefined : filialId);
   const deleteColaborador = useDeleteColaborador();
 
   const handleDelete = async () => {
@@ -157,8 +160,6 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="Ativo">Ativo</SelectItem>
               <SelectItem value="Inativo">Inativo</SelectItem>
-              <SelectItem value="Afastado">Afastado</SelectItem>
-              <SelectItem value="Férias">Férias</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -181,38 +182,49 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                   <TableHead>Tipo</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Afastamento</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {colaboradores.map((colaborador) => (
-                  <TableRow key={colaborador.id}>
-                    <TableCell className="font-medium">{colaborador.nome}</TableCell>
-                    <TableCell>{colaborador.cargo}</TableCell>
-                    <TableCell>{colaborador.departamento}</TableCell>
-                    <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
-                    <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
-                    <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingColaborador(colaborador)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingId(colaborador.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {colaboradores.map((colaborador) => {
+                  const afastamento = afastamentosAtivos?.get(colaborador.id);
+                  return (
+                    <TableRow key={colaborador.id}>
+                      <TableCell className="font-medium">{colaborador.nome}</TableCell>
+                      <TableCell>{colaborador.cargo}</TableCell>
+                      <TableCell>{colaborador.departamento}</TableCell>
+                      <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
+                      <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
+                      <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
+                      <TableCell>
+                        {afastamento ? (
+                          <AfastamentoBadge afastamento={afastamento} />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingColaborador(colaborador)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeletingId(colaborador.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

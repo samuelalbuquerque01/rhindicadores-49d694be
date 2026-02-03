@@ -27,9 +27,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Clock } from "lucide-react";
 import { useUpdateColaborador } from "@/hooks/useColaboradores";
 import { useFiliais } from "@/hooks/useFiliais";
+import { useAfastamentoAtivoByColaborador } from "@/hooks/useAfastamentoAtivo";
 import { Colaborador } from "@/types/database";
+import { AfastamentoBadge } from "./AfastamentoBadge";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
@@ -42,7 +46,7 @@ const formSchema = z.object({
   filial_id: z.string().optional(),
   tipo_colaborador: z.enum(["CLT Administrativo", "CLT Corpo Clínico", "PJ", "Estagiário"]),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
-  status: z.enum(["Ativo", "Inativo", "Afastado", "Férias"]),
+  status: z.enum(["Ativo", "Inativo"]),
   is_lider: z.boolean(),
   salario_base: z.coerce.number().min(0).optional(),
   custo_mensal: z.coerce.number().min(0).optional(),
@@ -63,6 +67,7 @@ export function EditColaboradorModal({
 }: EditColaboradorModalProps) {
   const updateColaborador = useUpdateColaborador();
   const { data: filiais } = useFiliais();
+  const { data: afastamentoAtivo } = useAfastamentoAtivoByColaborador(colaborador?.id);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -127,6 +132,20 @@ export function EditColaboradorModal({
             Atualize os dados do colaborador.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Afastamento Ativo Alert */}
+        {afastamentoAtivo && (
+          <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-amber-800 dark:text-amber-200">
+              Afastamento Ativo
+            </AlertTitle>
+            <AlertDescription className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <AfastamentoBadge afastamento={afastamentoAtivo} showDates />
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs defaultValue="pessoal" className="w-full">
@@ -256,8 +275,6 @@ export function EditColaboradorModal({
                           <SelectContent className="bg-popover z-50">
                             <SelectItem value="Ativo">Ativo</SelectItem>
                             <SelectItem value="Inativo">Inativo</SelectItem>
-                            <SelectItem value="Afastado">Afastado</SelectItem>
-                            <SelectItem value="Férias">Férias</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
