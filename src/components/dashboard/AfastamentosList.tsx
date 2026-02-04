@@ -20,7 +20,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAfastamentosPorTipo } from "@/hooks/useAfastamentoAtivo";
 import { useFiliais } from "@/hooks/useFiliais";
-import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
 import { AfastamentoBadge } from "./AfastamentoBadge";
 
 interface AfastamentosListProps {
@@ -64,13 +63,10 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Afastamentos Ativos
-          </CardTitle>
-          <AfastamentoForm />
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Afastamentos Ativos
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={tipoSelecionado} onValueChange={setTipoSelecionado}>

@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
+import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AbsenteismoDetailChartProps {
@@ -42,6 +43,7 @@ export function AbsenteismoDetailChart({ filialId }: AbsenteismoDetailChartProps
     <ChartCard
       title="Absenteísmo Detalhado"
       subtitle={`Taxa: ${stats?.taxaAbsenteismo || 0}% | Total: ${stats?.totalDiasAfastados || 0} dias`}
+      action={<AfastamentoForm />}
     >
       <ChartContainer config={chartConfig} className="h-[250px]">
         <BarChart data={chartData}>
