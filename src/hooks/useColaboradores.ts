@@ -77,6 +77,7 @@ export function useCreateColaborador() {
   
   return useMutation({
     mutationFn: async (colaborador: Omit<Colaborador, "id" | "created_at" | "updated_at" | "filial">) => {
+      // Create the collaborator first
       const { data, error } = await supabase
         .from("colaboradores")
         .insert(colaborador)
@@ -84,11 +85,32 @@ export function useCreateColaborador() {
         .single();
       
       if (error) throw error;
-      return data as Colaborador;
+      
+      const newColaborador = data as Colaborador;
+      
+      // Automatically register the hiring record
+      const { error: contratacaoError } = await supabase
+        .from("contratacoes")
+        .insert({
+          colaborador_id: newColaborador.id,
+          filial_id: newColaborador.filial_id,
+          data_contratacao: newColaborador.data_admissao,
+          tipo_contratacao: "Nova contratação",
+          salario_inicial: newColaborador.salario_base,
+        });
+      
+      if (contratacaoError) {
+        console.error("Erro ao registrar contratação:", contratacaoError);
+        // Don't throw - the collaborator was created successfully
+      }
+      
+      return newColaborador;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
       queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["contratacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["contratacao-stats"] });
       toast.success("Colaborador cadastrado com sucesso!");
     },
     onError: (error) => {
