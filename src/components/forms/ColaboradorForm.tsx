@@ -42,6 +42,7 @@ const formSchema = z.object({
   departamento: z.string().min(2, "Departamento é obrigatório").max(100),
   filial_id: z.string().optional(),
   tipo_colaborador: z.enum(["CLT Administrativo", "CLT Corpo Clínico", "PJ", "Estagiário"]),
+  tipo_contratacao: z.enum(["Nova contratação", "Readmissão", "Transferência"]),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
   salario_base: z.coerce.number().min(0).optional(),
   custo_mensal: z.coerce.number().min(0).optional(),
@@ -69,6 +70,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
       departamento: "",
       filial_id: "",
       tipo_colaborador: defaultTipo || "CLT Administrativo",
+      tipo_contratacao: "Nova contratação",
       data_admissao: new Date().toISOString().split("T")[0],
       salario_base: 0,
       custo_mensal: 0,
@@ -76,13 +78,17 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
   });
 
   const onSubmit = async (values: FormValues) => {
+    const { tipo_contratacao, ...colaboradorData } = values;
     await createColaborador.mutateAsync({
-      ...values,
-      status: "Ativo",
-      is_lider: false,
-      filial_id: values.filial_id || null,
-      email: values.email || null,
-      genero: values.genero || null,
+      colaborador: {
+        ...colaboradorData,
+        status: "Ativo",
+        is_lider: false,
+        filial_id: colaboradorData.filial_id || null,
+        email: colaboradorData.email || null,
+        genero: colaboradorData.genero || null,
+      },
+      tipo_contratacao,
     } as any);
     form.reset();
     setOpen(false);
@@ -255,19 +261,43 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="data_admissao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data de Admissão *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="data_admissao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Admissão *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="tipo_contratacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Contratação *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover z-50">
+                            <SelectItem value="Nova contratação">Nova Contratação</SelectItem>
+                            <SelectItem value="Readmissão">Readmissão</SelectItem>
+                            <SelectItem value="Transferência">Transferência</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
