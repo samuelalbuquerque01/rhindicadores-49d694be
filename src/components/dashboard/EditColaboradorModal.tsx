@@ -34,6 +34,7 @@ import { useFiliais } from "@/hooks/useFiliais";
 import { useAfastamentoAtivoByColaborador } from "@/hooks/useAfastamentoAtivo";
 import { Colaborador } from "@/types/database";
 import { AfastamentoBadge } from "./AfastamentoBadge";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
@@ -45,6 +46,7 @@ const formSchema = z.object({
   departamento: z.string().min(2, "Departamento é obrigatório").max(100),
   filial_id: z.string().optional(),
   tipo_colaborador: z.enum(["CLT Administrativo", "CLT Corpo Clínico", "PJ", "Estagiário"]),
+  tipo_contratacao: z.enum(["Nova contratação", "Readmissão", "Transferência"]),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
   status: z.enum(["Ativo", "Inativo"]),
   is_lider: z.boolean(),
@@ -80,6 +82,7 @@ export function EditColaboradorModal({
       departamento: "",
       filial_id: "",
       tipo_colaborador: "CLT Administrativo",
+      tipo_contratacao: "Nova contratação",
       data_admissao: "",
       status: "Ativo",
       is_lider: false,
@@ -90,35 +93,56 @@ export function EditColaboradorModal({
 
   useEffect(() => {
     if (colaborador) {
-      form.reset({
-        nome: colaborador.nome,
-        cpf: colaborador.cpf || "",
-        email: colaborador.email || "",
-        telefone: colaborador.telefone || "",
-        genero: colaborador.genero as any,
-        cargo: colaborador.cargo,
-        departamento: colaborador.departamento,
-        filial_id: colaborador.filial_id || "",
-        tipo_colaborador: colaborador.tipo_colaborador as any,
-        data_admissao: colaborador.data_admissao,
-        status: colaborador.status as any,
-        is_lider: colaborador.is_lider,
-        salario_base: colaborador.salario_base || 0,
-        custo_mensal: colaborador.custo_mensal || 0,
-      });
+      // Fetch contratacao to get tipo_contratacao
+      const fetchContratacao = async () => {
+        const { data } = await supabase
+          .from("contratacoes")
+          .select("tipo_contratacao")
+          .eq("colaborador_id", colaborador.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        
+        form.reset({
+          nome: colaborador.nome,
+          cpf: colaborador.cpf || "",
+          email: colaborador.email || "",
+          telefone: colaborador.telefone || "",
+          genero: colaborador.genero as any,
+          cargo: colaborador.cargo,
+          departamento: colaborador.departamento,
+          filial_id: colaborador.filial_id || "",
+          tipo_colaborador: colaborador.tipo_colaborador as any,
+          tipo_contratacao: (data?.tipo_contratacao as any) || "Nova contratação",
+          data_admissao: colaborador.data_admissao,
+          status: colaborador.status as any,
+          is_lider: colaborador.is_lider,
+          salario_base: colaborador.salario_base || 0,
+          custo_mensal: colaborador.custo_mensal || 0,
+        });
+      };
+      fetchContratacao();
     }
   }, [colaborador, form]);
 
   const onSubmit = async (values: FormValues) => {
     if (!colaborador) return;
 
+    const { tipo_contratacao, ...colaboradorData } = values;
+
     await updateColaborador.mutateAsync({
       id: colaborador.id,
-      ...values,
-      filial_id: values.filial_id || null,
-      email: values.email || null,
-      genero: values.genero || null,
+      ...colaboradorData,
+      filial_id: colaboradorData.filial_id || null,
+      email: colaboradorData.email || null,
+      genero: colaboradorData.genero || null,
     } as any);
+
+    // Update contratacao record
+    await supabase
+      .from("contratacoes")
+      .update({ tipo_contratacao })
+      .eq("colaborador_id", colaborador.id);
 
     onOpenChange(false);
   };
@@ -236,6 +260,43 @@ export function EditColaboradorModal({
               </TabsContent>
 
               <TabsContent value="profissional" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="tipo_contratacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Contratação *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Selecione o tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover z-50">
+                            <SelectItem value="Nova contratação">Nova contratação</SelectItem>
+                            <SelectItem value="Readmissão">Readmissão</SelectItem>
+                            <SelectItem value="Transferência">Transferência</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="data_admissao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Admissão *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
