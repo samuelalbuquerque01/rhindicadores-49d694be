@@ -72,11 +72,16 @@ export function useColaboradoresStats(filialId?: string) {
   });
 }
 
+interface CreateColaboradorParams {
+  colaborador: Omit<Colaborador, "id" | "created_at" | "updated_at" | "filial">;
+  tipo_contratacao: "Nova contratação" | "Readmissão" | "Transferência";
+}
+
 export function useCreateColaborador() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (colaborador: Omit<Colaborador, "id" | "created_at" | "updated_at" | "filial">) => {
+    mutationFn: async ({ colaborador, tipo_contratacao }: CreateColaboradorParams) => {
       // Create the collaborator first
       const { data, error } = await supabase
         .from("colaboradores")
@@ -88,20 +93,19 @@ export function useCreateColaborador() {
       
       const newColaborador = data as Colaborador;
       
-      // Automatically register the hiring record
+      // Register the hiring record with the selected type
       const { error: contratacaoError } = await supabase
         .from("contratacoes")
         .insert({
           colaborador_id: newColaborador.id,
           filial_id: newColaborador.filial_id,
           data_contratacao: newColaborador.data_admissao,
-          tipo_contratacao: "Nova contratação",
+          tipo_contratacao: tipo_contratacao,
           salario_inicial: newColaborador.salario_base,
         });
       
       if (contratacaoError) {
         console.error("Erro ao registrar contratação:", contratacaoError);
-        // Don't throw - the collaborator was created successfully
       }
       
       return newColaborador;
