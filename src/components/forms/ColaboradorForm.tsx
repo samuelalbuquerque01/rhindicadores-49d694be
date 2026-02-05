@@ -233,6 +233,45 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                     )}
                   />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="tipo_contratacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Contratação *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-popover z-50">
+                            <SelectItem value="Nova contratação">Nova Contratação</SelectItem>
+                            <SelectItem value="Readmissão">Readmissão</SelectItem>
+                            <SelectItem value="Transferência">Transferência</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="data_admissao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Admissão *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -256,43 +295,6 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                         <FormControl>
                           <Input placeholder="Ex: RH" {...field} />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="data_admissao"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data de Admissão *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tipo_contratacao"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de Contratação *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="bg-background">
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-popover z-50">
-                            <SelectItem value="Nova contratação">Nova Contratação</SelectItem>
-                            <SelectItem value="Readmissão">Readmissão</SelectItem>
-                            <SelectItem value="Transferência">Transferência</SelectItem>
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
