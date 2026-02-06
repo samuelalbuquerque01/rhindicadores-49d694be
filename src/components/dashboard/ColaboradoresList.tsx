@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Edit2, Trash2, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useColaboradores, useDeleteColaborador } from "@/hooks/useColaboradores";
 import { useFiliais } from "@/hooks/useFiliais";
 import { useAfastamentosAtivos } from "@/hooks/useAfastamentoAtivo";
+import { supabase } from "@/integrations/supabase/client";
 import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
 import { AfastamentoBadge } from "./AfastamentoBadge";
@@ -76,6 +78,42 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
   const { data: filiais } = useFiliais();
   const { data: afastamentosAtivos } = useAfastamentosAtivos(filialId === "all" ? undefined : filialId);
   const deleteColaborador = useDeleteColaborador();
+
+  // Fetch contratacoes to show tipo_contratacao
+  const { data: contratacoes } = useQuery({
+    queryKey: ["contratacoes-map"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contratacoes")
+        .select("colaborador_id, tipo_contratacao")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      
+      // Create a map with the latest contratacao for each colaborador
+      const map = new Map<string, string>();
+      data?.forEach((c) => {
+        if (c.colaborador_id && c.tipo_contratacao && !map.has(c.colaborador_id)) {
+          map.set(c.colaborador_id, c.tipo_contratacao);
+        }
+      });
+      return map;
+    },
+  });
+
+  const getTipoContratacaoBadge = (tipo?: string) => {
+    if (!tipo) return <span className="text-muted-foreground text-sm">-</span>;
+    
+    const colors: Record<string, string> = {
+      "Nova contratação": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
+      "Readmissão": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+      "Transferência": "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300",
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[tipo] || ""}`}>
+        {tipo}
+      </span>
+    );
+  };
 
   const handleDelete = async () => {
     if (deletingId) {
@@ -179,7 +217,8 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                   <TableHead>Nome</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Departamento</TableHead>
-                  <TableHead>Tipo</TableHead>
+                  <TableHead>Vínculo</TableHead>
+                  <TableHead>Contratação</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Afastamento</TableHead>
@@ -195,6 +234,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                       <TableCell>{colaborador.cargo}</TableCell>
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
+                      <TableCell>{getTipoContratacaoBadge(contratacoes?.get(colaborador.id))}</TableCell>
                       <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
