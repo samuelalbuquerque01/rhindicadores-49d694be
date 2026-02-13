@@ -100,7 +100,25 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
     },
   });
 
-  const getTipoContratacaoBadge = (tipo?: string) => {
+  const isNovaContratacao = (dataAdmissao: string) => {
+    const admissao = new Date(dataAdmissao + "T00:00:00");
+    const hoje = new Date();
+    const diffMs = hoje.getTime() - admissao.getTime();
+    const diffDias = diffMs / (1000 * 60 * 60 * 24);
+    return diffDias <= 30;
+  };
+
+  const getTipoContratacaoBadge = (colaborador: Colaborador) => {
+    // Auto-show "Nova contratação" if hired within 30 days
+    if (isNovaContratacao(colaborador.data_admissao)) {
+      return (
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+          Nova contratação
+        </span>
+      );
+    }
+
+    const tipo = contratacoes?.get(colaborador.id);
     if (!tipo) return <span className="text-muted-foreground text-sm">-</span>;
     
     const colors: Record<string, string> = {
@@ -234,7 +252,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                       <TableCell>{colaborador.cargo}</TableCell>
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
-                      <TableCell>{getTipoContratacaoBadge(contratacoes?.get(colaborador.id))}</TableCell>
+                      <TableCell>{getTipoContratacaoBadge(colaborador)}</TableCell>
                       <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
