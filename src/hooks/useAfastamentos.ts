@@ -113,10 +113,64 @@ export function useCreateAfastamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
       queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
       toast.success("Afastamento registrado com sucesso!");
     },
     onError: (error) => {
       toast.error("Erro ao registrar afastamento: " + error.message);
+    },
+  });
+}
+
+export function useUpdateAfastamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; tipo: string; data_inicio: string; data_fim: string; observacoes?: string }) => {
+      const { error } = await supabase
+        .from("afastamentos")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamento-ativo"] });
+      toast.success("Afastamento atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar afastamento: " + error.message);
+    },
+  });
+}
+
+export function useDeleteAfastamento() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("afastamentos")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
+      queryClient.invalidateQueries({ queryKey: ["afastamento-ativo"] });
+      toast.success("Afastamento excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir afastamento: " + error.message);
     },
   });
 }

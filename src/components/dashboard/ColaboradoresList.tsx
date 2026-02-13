@@ -238,8 +238,12 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                       <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
-                        {afastamento ? (
-                          <AfastamentoBadge afastamento={afastamento} />
+                        {afastamento && afastamento.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {afastamento.map((a) => (
+                              <AfastamentoBadge key={a.id} afastamento={a} />
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
                         )}
