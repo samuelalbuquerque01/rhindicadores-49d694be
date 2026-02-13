@@ -62,11 +62,11 @@ export function useAfastamentosAtivos(filialId?: string) {
         );
       }
 
-      // Create a map of colaborador_id -> afastamento for quick lookup
-      const afastamentoMap = new Map<string, AfastamentoAtivo>();
+      // Create a map of colaborador_id -> array of afastamentos (supports multiple per person)
+      const afastamentoMap = new Map<string, AfastamentoAtivo[]>();
       afastamentos.forEach((a) => {
         if (a.colaborador_id) {
-          afastamentoMap.set(a.colaborador_id, {
+          const entry: AfastamentoAtivo = {
             id: a.id,
             colaborador_id: a.colaborador_id,
             tipo: a.tipo,
@@ -74,7 +74,10 @@ export function useAfastamentosAtivos(filialId?: string) {
             data_fim: a.data_fim,
             dias_afastados: a.dias_afastados || 0,
             observacoes: a.observacoes || undefined,
-          });
+          };
+          const existing = afastamentoMap.get(a.colaborador_id) || [];
+          existing.push(entry);
+          afastamentoMap.set(a.colaborador_id, existing);
         }
       });
 
@@ -83,18 +86,14 @@ export function useAfastamentosAtivos(filialId?: string) {
   });
 }
 
-// Get afastamentos filtered by type for Turnover tab
+// Get ALL afastamentos filtered by type for Turnover tab (not just active)
 export function useAfastamentosPorTipo(tipo?: string, filialId?: string) {
   return useQuery({
     queryKey: ["afastamentos-por-tipo", tipo, filialId],
     queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
-
       let query = supabase
         .from("afastamentos")
         .select("*, colaborador:colaboradores(*, filial:filiais(*))")
-        .lte("data_inicio", today)
-        .gte("data_fim", today)
         .order("data_inicio", { ascending: false });
 
       if (tipo && tipo !== "todos") {
