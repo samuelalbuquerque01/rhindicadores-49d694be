@@ -10,6 +10,8 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +59,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
   const [tipoSelecionado, setTipoSelecionado] = useState("todos");
   const [editingAfastamento, setEditingAfastamento] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedObs, setExpandedObs] = useState<Set<string>>(new Set());
 
   const { data: afastamentos, isLoading } = useAfastamentosPorTipo(
     tipoSelecionado,
@@ -210,8 +213,46 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                           <TableCell>
                             {getFilialNome(afastamento.colaborador?.filial_id)}
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate">
-                            {afastamento.observacoes || "-"}
+                          <TableCell className="max-w-[300px]">
+                            {afastamento.observacoes ? (
+                              afastamento.observacoes.length > 60 ? (
+                                <div>
+                                  <span className="whitespace-pre-wrap break-words text-sm">
+                                    {expandedObs.has(afastamento.id)
+                                      ? afastamento.observacoes
+                                      : afastamento.observacoes.slice(0, 60) + "..."}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-auto p-0 ml-1 text-xs text-primary hover:text-primary/80"
+                                    onClick={() => {
+                                      setExpandedObs((prev) => {
+                                        const next = new Set(prev);
+                                        if (next.has(afastamento.id)) {
+                                          next.delete(afastamento.id);
+                                        } else {
+                                          next.add(afastamento.id);
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    {expandedObs.has(afastamento.id) ? (
+                                      <><ChevronUp className="h-3 w-3 inline" /> ver menos</>
+                                    ) : (
+                                      <><ChevronDown className="h-3 w-3 inline" /> ver mais</>
+                                    )}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="whitespace-pre-wrap break-words text-sm">
+                                  {afastamento.observacoes}
+                                </span>
+                              )
+                            ) : (
+                              "-"
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
