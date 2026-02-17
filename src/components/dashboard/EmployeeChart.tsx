@@ -30,7 +30,7 @@ export function EmployeeChart() {
       title="Movimentação de Pessoal"
       subtitle="Contratações e desligamentos ao longo do ano"
     >
-      <div className="h-[300px] w-full">
+      <div className="h-[250px] sm:h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}

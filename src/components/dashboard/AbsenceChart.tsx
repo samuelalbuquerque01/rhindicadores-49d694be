@@ -30,7 +30,7 @@ export function AbsenceChart() {
       title="Taxa de Absenteísmo"
       subtitle="Percentual mensal de ausências"
     >
-      <div className="h-[200px] w-full">
+      <div className="h-[180px] sm:h-[200px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}

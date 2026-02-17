@@ -4,7 +4,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,28 +58,34 @@ export function TurnoverChart({ filialId }: TurnoverChartProps) {
       action={<DesligamentoForm />}
     >
       {chartData.length > 0 ? (
-        <ChartContainer config={chartConfig} className="h-[250px]">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={40}
-              outerRadius={80}
-              paddingAngle={5}
-              dataKey="value"
-              label={({ name, percent }) =>
-                `${name}: ${(percent * 100).toFixed(0)}%`
-              }
-              labelLine={false}
-            >
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <ChartTooltip content={<ChartTooltipContent />} />
-          </PieChart>
-        </ChartContainer>
+        <>
+          <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius="30%"
+                outerRadius="70%"
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {chartData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </PieChart>
+          </ChartContainer>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3">
+            {chartData.map((item, index) => (
+              <div key={item.name} className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                <span className="text-xs text-muted-foreground">{item.name}: {item.value}</span>
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="h-[250px] flex items-center justify-center text-muted-foreground">
           Nenhum desligamento registrado

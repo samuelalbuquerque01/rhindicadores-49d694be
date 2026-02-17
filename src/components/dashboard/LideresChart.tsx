@@ -43,7 +43,7 @@ export function LideresChart({ filialId }: LideresChartProps) {
       subtitle={`Total: ${stats?.total || 0} | Este ano: ${stats?.formadosEsteAno || 0}`}
       action={<LiderForm />}
     >
-      <ChartContainer config={chartConfig} className="h-[250px]">
+      <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
         <BarChart data={chartData}>
           <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
           <YAxis fontSize={12} tickLine={false} axisLine={false} />

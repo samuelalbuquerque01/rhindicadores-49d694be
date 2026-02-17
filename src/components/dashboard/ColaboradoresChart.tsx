@@ -54,24 +54,32 @@ export function ColaboradoresChart({ filialId }: ColaboradoresChartProps) {
       action={<ColaboradorForm />}
     >
       {chartData.length > 0 ? (
-        <ChartContainer config={chartConfig} className="h-[250px]">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              dataKey="value"
-              label={({ name, value }) => `${name}: ${value}`}
-              labelLine={true}
-            >
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <ChartTooltip content={<ChartTooltipContent />} />
-          </PieChart>
-        </ChartContainer>
+        <>
+          <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                outerRadius="70%"
+                dataKey="value"
+              >
+                {chartData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </PieChart>
+          </ChartContainer>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3">
+            {chartData.map((item, index) => (
+              <div key={item.name} className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                <span className="text-xs text-muted-foreground">{item.name}: {item.value}</span>
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="h-[250px] flex items-center justify-center text-muted-foreground">
           Nenhum colaborador cadastrado

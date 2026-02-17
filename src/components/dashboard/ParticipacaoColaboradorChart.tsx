@@ -216,77 +216,85 @@ export function ParticipacaoColaboradorChart({ filialId }: ParticipacaoColaborad
                 Nenhuma participação registrada em {selectedYear}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 50)}>
-                <BarChart
-                  data={chartData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" domain={[0, 100]} unit="%" />
-                  <YAxis dataKey="nome" type="category" width={90} tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-popover border rounded-lg p-3 shadow-lg">
-                            <p className="font-medium mb-2">{data.nomeCompleto}</p>
-                            <div className="space-y-1 text-sm">
-                              <p className="text-primary">
-                                Treinamentos: {data.treinamentosPercent}% ({data.treinamentosParticipou}/{data.treinamentosTotal})
-                              </p>
-                              <p className="text-[hsl(var(--chart-2))]">
-                                Eventos: {data.eventosPercent}% ({data.eventosCompareceu}/{data.eventosTotal})
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="treinamentosPercent" name="Treinamentos %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="eventosPercent" name="Eventos %" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="w-full overflow-x-auto">
+                <div style={{ minWidth: 400, height: Math.max(300, chartData.length * 50) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      layout="vertical"
+                      margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" domain={[0, 100]} unit="%" />
+                      <YAxis dataKey="nome" type="category" width={80} tick={{ fontSize: 11 }} />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-popover border rounded-lg p-3 shadow-lg">
+                                <p className="font-medium mb-2">{data.nomeCompleto}</p>
+                                <div className="space-y-1 text-sm">
+                                  <p className="text-primary">
+                                    Treinamentos: {data.treinamentosPercent}% ({data.treinamentosParticipou}/{data.treinamentosTotal})
+                                  </p>
+                                  <p className="text-[hsl(var(--chart-2))]">
+                                    Eventos: {data.eventosPercent}% ({data.eventosCompareceu}/{data.eventosTotal})
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="treinamentosPercent" name="Treinamentos %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="eventosPercent" name="Eventos %" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             )}
           </TabsContent>
 
           {/* Monthly View - Bar Chart by Month */}
           <TabsContent value="mensal" className="space-y-4">
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={monthlyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-popover border rounded-lg p-3 shadow-lg">
-                          <p className="font-medium mb-2">{data.monthFull}</p>
-                          <div className="space-y-1 text-sm">
-                            <p className="text-primary">
-                              Treinamentos: {data.treinamentos} participações (de {data.totalTreinamentos})
-                            </p>
-                            <p className="text-[hsl(var(--chart-2))]">
-                              Eventos: {data.eventos} presenças (de {data.totalEventos})
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="treinamentos" name="Participações Treinamentos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="eventos" name="Presenças Eventos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="w-full overflow-x-auto">
+              <div style={{ minWidth: 400, height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border rounded-lg p-3 shadow-lg">
+                              <p className="font-medium mb-2">{data.monthFull}</p>
+                              <div className="space-y-1 text-sm">
+                                <p className="text-primary">
+                                  Treinamentos: {data.treinamentos} participações (de {data.totalTreinamentos})
+                                </p>
+                                <p className="text-[hsl(var(--chart-2))]">
+                                  Eventos: {data.eventos} presenças (de {data.totalEventos})
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="treinamentos" name="Participações Treinamentos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="eventos" name="Presenças Eventos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Detailed View - Expandable list */}
