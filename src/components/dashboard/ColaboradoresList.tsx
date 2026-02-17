@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ interface ColaboradoresListProps {
 }
 
 export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: ColaboradoresListProps) {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [subTipoFilter, setSubTipoFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -248,7 +250,14 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                   const afastamento = afastamentosAtivos?.get(colaborador.id);
                   return (
                     <TableRow key={colaborador.id}>
-                      <TableCell className="font-medium">{colaborador.nome}</TableCell>
+                      <TableCell>
+                        <button
+                          className="font-medium text-primary hover:underline text-left"
+                          onClick={() => navigate(`/employee/${colaborador.id}`)}
+                        >
+                          {colaborador.nome}
+                        </button>
+                      </TableCell>
                       <TableCell>{colaborador.cargo}</TableCell>
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
