@@ -19,20 +19,20 @@ export function ChartCard({
   return (
     <div
       className={cn(
-        "stat-card p-6 rounded-xl animate-fade-in",
+        "stat-card p-4 sm:p-6 rounded-xl animate-fade-in min-w-0 overflow-hidden",
         className
       )}
     >
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">{title}</h3>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{subtitle}</p>
           )}
         </div>
-        {action}
+        <div className="shrink-0">{action}</div>
       </div>
-      {children}
+      <div className="w-full min-w-0">{children}</div>
     </div>
   );
 }

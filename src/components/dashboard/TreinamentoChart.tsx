@@ -51,10 +51,10 @@ export function TreinamentoChart({ filialId }: TreinamentoChartProps) {
       subtitle={`${stats?.totalTreinamentos || 0} treinamentos | Taxa: ${stats?.taxaParticipacao || 0}%`}
       action={<TreinamentoForm />}
     >
-      <ChartContainer config={chartConfig} className="h-[250px]">
-        <BarChart data={chartData} layout="vertical">
+      <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
+        <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 10 }}>
           <XAxis type="number" />
-          <YAxis dataKey="name" type="category" width={120} />
+          <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} />
         </BarChart>

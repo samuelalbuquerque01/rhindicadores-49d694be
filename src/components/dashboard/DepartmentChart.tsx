@@ -25,7 +25,7 @@ export function DepartmentChart() {
       title="Colaboradores por Departamento"
       subtitle="Distribuição atual do quadro de funcionários"
     >
-      <div className="h-[300px] w-full">
+      <div className="h-[250px] sm:h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}

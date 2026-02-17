@@ -41,10 +41,10 @@ export function EventosChart({ filialId }: EventosChartProps) {
       subtitle={`${stats?.totalEventos || 0} eventos | Taxa: ${stats?.taxaEngajamento || 0}%`}
       action={<EventoForm />}
     >
-      <ChartContainer config={chartConfig} className="h-[200px]">
-        <BarChart data={chartData} layout="vertical">
+      <ChartContainer config={chartConfig} className="h-[180px] sm:h-[200px] w-full">
+        <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 10 }}>
           <XAxis type="number" />
-          <YAxis dataKey="name" type="category" width={100} />
+          <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]} />
         </BarChart>

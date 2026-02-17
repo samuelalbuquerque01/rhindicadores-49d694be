@@ -45,7 +45,7 @@ export function AbsenteismoDetailChart({ filialId }: AbsenteismoDetailChartProps
       subtitle={`Taxa: ${stats?.taxaAbsenteismo || 0}% | Total: ${stats?.totalDiasAfastados || 0} dias`}
       action={<AfastamentoForm />}
     >
-      <ChartContainer config={chartConfig} className="h-[250px]">
+      <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] w-full">
         <BarChart data={chartData}>
           <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
           <YAxis fontSize={12} tickLine={false} axisLine={false} />
