@@ -124,6 +124,7 @@ const Index = () => {
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="eventos">Eventos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
+            <TabsTrigger value="absenteismo">Absenteísmo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="colaboradores" className="space-y-6">
@@ -184,6 +185,11 @@ const Index = () => {
 
           <TabsContent value="turnover" className="space-y-6">
             <TurnoverModule filialId={selectedFilial} />
+          </TabsContent>
+
+          <TabsContent value="absenteismo" className="space-y-6">
+            <AbsenteismoDetailChart filialId={selectedFilial} />
+            <AfastamentosList filialId={selectedFilial} />
           </TabsContent>
 
         </Tabs>
