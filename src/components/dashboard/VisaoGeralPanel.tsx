@@ -281,7 +281,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : turnoverResumo.chartData.length > 0 ? (
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
+                <BarChart data={turnoverResumo.chartData} layout="vertical" margin={{ left: 12, right: 8 }}>
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={90} />
                   <Tooltip />
@@ -312,7 +312,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
+                  <BarChart data={treinamentosResumo.chartData} layout="vertical" margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={90} />
                     <Tooltip />
@@ -378,7 +378,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
+                  <BarChart data={eventosResumo.chartData} layout="vertical" margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={90} />
                     <Tooltip />
