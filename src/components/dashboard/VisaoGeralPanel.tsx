@@ -3,12 +3,7 @@ import { Users, GraduationCap, CalendarDays, UserMinus, Activity } from "lucide-
 import { StatCard } from "@/components/dashboard/StatCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import {
   useTreinamentos,
@@ -242,13 +237,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : colaboradoresResumo.chartData.length > 0 ? (
             <>
               <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{ value: { label: "Quantidade" } }}
-                  className="h-full w-full"
-                  responsiveHeight={250}
-                  responsiveWidth="100%"
-                  disableAspectRatio
-                >
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
                       data={colaboradoresResumo.chartData}
@@ -261,9 +250,9 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                         <Cell key={`${item.name}-${index}`} fill={item.fill} />
                       ))}
                     </Pie>
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Tooltip />
                   </PieChart>
-                </ChartContainer>
+                </ResponsiveContainer>
               </div>
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
                 {colaboradoresResumo.chartData.map((item) => (
@@ -291,20 +280,14 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <Skeleton className="h-[200px] w-full" />
           ) : turnoverResumo.chartData.length > 0 ? (
             <div className="h-[250px] w-full">
-              <ChartContainer
-                config={{ value: { label: "Quantidade" } }}
-                className="h-full w-full"
-                responsiveHeight={250}
-                responsiveWidth="100%"
-                disableAspectRatio
-              >
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={90} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Tooltip />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} />
                 </BarChart>
-              </ChartContainer>
+              </ResponsiveContainer>
             </div>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -328,20 +311,14 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{ value: { label: "Quantidade" } }}
-                  className="h-full w-full"
-                  responsiveHeight={250}
-                  responsiveWidth="100%"
-                  disableAspectRatio
-                >
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={90} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Tooltip />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} />
                   </BarChart>
-                </ChartContainer>
+                </ResponsiveContainer>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 text-sm">
                 <div className="rounded-lg border border-border/60 p-3 bg-background/70">
@@ -369,20 +346,14 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <Skeleton className="h-[220px] w-full" />
           ) : absenteismoResumo.chartData.length > 0 ? (
             <div className="h-[250px] w-full">
-              <ChartContainer
-                config={{ dias: { label: "Dias" } }}
-                className="h-full w-full"
-                responsiveHeight={250}
-                responsiveWidth="100%"
-                disableAspectRatio
-              >
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={absenteismoResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Tooltip />
                   <Bar dataKey="dias" radius={[4, 4, 0, 0]} />
                 </BarChart>
-              </ChartContainer>
+              </ResponsiveContainer>
             </div>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -406,20 +377,14 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{ value: { label: "Quantidade" } }}
-                  className="h-full w-full"
-                  responsiveHeight={250}
-                  responsiveWidth="100%"
-                  disableAspectRatio
-                >
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={90} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Tooltip />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} />
                   </BarChart>
-                </ChartContainer>
+                </ResponsiveContainer>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 text-sm">
                 <div className="rounded-lg border border-border/60 p-3 bg-background/70">
