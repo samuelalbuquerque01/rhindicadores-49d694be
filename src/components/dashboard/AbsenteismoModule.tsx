@@ -8,7 +8,9 @@ import {
   AlertTriangle,
   Building,
   BarChart3,
+  Edit2,
   Paperclip,
+  Trash2,
   Download,
   ExternalLink,
 } from "lucide-react";
@@ -23,12 +25,24 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AbsenteismoDetailChart } from "./AbsenteismoDetailChart";
 import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
 import { useAbsenteismoAnalytics, AfastamentoCompleto } from "@/hooks/useAbsenteismoAnalytics";
+import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
 import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
+import { EditAfastamentoModal } from "./EditAfastamentoModal";
 import {
   createAfastamentoSignedUrl,
   downloadAfastamentoAnexo,
@@ -46,6 +60,8 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [tipoFilter, setTipoFilter] = useState<string>("all");
   const [selected, setSelected] = useState<AfastamentoCompleto | null>(null);
+  const [editingAfastamento, setEditingAfastamento] = useState<any>(null);
+  const [deleting, setDeleting] = useState<{ id: string; anexo_url?: string | null } | null>(null);
 
   const effectiveFilialId = filialId === "all" ? undefined : filialId;
 
@@ -69,6 +85,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
     .sort((a, b) => b.dias - a.dias);
 
   const { data: setores } = useSetoresDisponiveis();
+  const deleteAfastamento = useDeleteAfastamento();
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -112,6 +129,13 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
       URL.revokeObjectURL(url);
     } catch (error: any) {
       toast.error(`Erro ao baixar anexo: ${error.message}`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleting) {
+      await deleteAfastamento.mutateAsync(deleting);
+      setDeleting(null);
     }
   };
 
@@ -275,6 +299,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                       <TableHead>Retorno</TableHead>
                       <TableHead className="text-right">Dias</TableHead>
                       <TableHead>Anexo</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -299,6 +324,30 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                           ) : (
                             "-"
                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setEditingAfastamento(a);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDeleting({ id: a.id, anexo_url: a.anexo_url });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -398,10 +447,59 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                   Ver perfil completo →
                 </button>
               )}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingAfastamento(selected);
+                    setSelected(null);
+                  }}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setDeleting({ id: selected.id, anexo_url: selected.anexo_url });
+                    setSelected(null);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <EditAfastamentoModal
+        afastamento={editingAfastamento}
+        open={!!editingAfastamento}
+        onOpenChange={(open) => !open && setEditingAfastamento(null)}
+      />
+
+      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O registro será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
