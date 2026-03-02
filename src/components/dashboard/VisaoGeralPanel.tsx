@@ -247,6 +247,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                   className="h-full w-full"
                   responsiveHeight={250}
                   responsiveWidth="100%"
+                  disableAspectRatio
                 >
                   <PieChart>
                     <Pie
@@ -295,6 +296,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                 className="h-full w-full"
                 responsiveHeight={250}
                 responsiveWidth="100%"
+                disableAspectRatio
               >
                 <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis type="number" />
@@ -331,6 +333,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                   className="h-full w-full"
                   responsiveHeight={250}
                   responsiveWidth="100%"
+                  disableAspectRatio
                 >
                   <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
@@ -371,6 +374,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                 className="h-full w-full"
                 responsiveHeight={250}
                 responsiveWidth="100%"
+                disableAspectRatio
               >
                 <BarChart data={absenteismoResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
@@ -407,6 +411,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
                   className="h-full w-full"
                   responsiveHeight={250}
                   responsiveWidth="100%"
+                  disableAspectRatio
                 >
                   <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
                     <XAxis type="number" />
