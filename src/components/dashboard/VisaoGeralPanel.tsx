@@ -104,16 +104,18 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
       return sum + (p.treinamento?.carga_horaria || 0);
     }, 0);
 
+    const chartData = [
+      { name: "Vagas", value: totalVagas, fill: CHART_COLORS[0] },
+      { name: "Participaram", value: totalParticipantes, fill: CHART_COLORS[3] },
+    ].filter((item) => item.value > 0);
+
     return {
       totalTreinamentos,
       totalVagas,
       totalParticipantes,
       taxaConclusao: Math.round(taxaConclusao * 10) / 10,
       horasTotais,
-      chartData: [
-        { name: "Vagas", value: totalVagas, fill: CHART_COLORS[0] },
-        { name: "Participaram", value: totalParticipantes, fill: CHART_COLORS[3] },
-      ],
+      chartData,
     };
   }, [treinamentos, treinamentosParticipacoes]);
 
@@ -124,15 +126,17 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
     const taxaComparecimento =
       totalConfirmados > 0 ? (totalPresentes / totalConfirmados) * 100 : 0;
 
+    const chartData = [
+      { name: "Confirmados", value: totalConfirmados, fill: CHART_COLORS[0] },
+      { name: "Presentes", value: totalPresentes, fill: CHART_COLORS[4] },
+    ].filter((item) => item.value > 0);
+
     return {
       totalEventos,
       totalConfirmados,
       totalPresentes,
       taxaComparecimento: Math.round(taxaComparecimento * 10) / 10,
-      chartData: [
-        { name: "Confirmados", value: totalConfirmados, fill: CHART_COLORS[0] },
-        { name: "Presentes", value: totalPresentes, fill: CHART_COLORS[4] },
-      ],
+      chartData,
     };
   }, [eventos, eventosParticipacoes]);
 
@@ -237,25 +241,29 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <Skeleton className="h-[200px] w-full" />
           ) : colaboradoresResumo.chartData.length > 0 ? (
             <>
-              <ChartContainer
-                config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full aspect-auto"
-              >
-                <PieChart>
-                  <Pie
-                    data={colaboradoresResumo.chartData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="70%"
-                    dataKey="value"
-                  >
-                    {colaboradoresResumo.chartData.map((item, index) => (
-                      <Cell key={`${item.name}-${index}`} fill={item.fill} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ChartContainer>
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{ value: { label: "Quantidade" } }}
+                  className="h-full w-full"
+                  responsiveHeight={250}
+                  responsiveWidth="100%"
+                >
+                  <PieChart>
+                    <Pie
+                      data={colaboradoresResumo.chartData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="70%"
+                      dataKey="value"
+                    >
+                      {colaboradoresResumo.chartData.map((item, index) => (
+                        <Cell key={`${item.name}-${index}`} fill={item.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </div>
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
                 {colaboradoresResumo.chartData.map((item) => (
                   <div key={item.name} className="flex items-center gap-1.5">
@@ -281,17 +289,21 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           {turnoverLoading ? (
             <Skeleton className="h-[200px] w-full" />
           ) : turnoverResumo.chartData.length > 0 ? (
-            <ChartContainer
-              config={{ value: { label: "Quantidade" } }}
-              className="h-[180px] sm:h-[200px] w-full aspect-auto"
-            >
-              <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={90} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ChartContainer>
+            <div className="h-[250px] w-full">
+              <ChartContainer
+                config={{ value: { label: "Quantidade" } }}
+                className="h-full w-full"
+                responsiveHeight={250}
+                responsiveWidth="100%"
+              >
+                <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={90} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground">
               Sem dados
@@ -307,19 +319,27 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
         >
           {isTreinamentosLoading ? (
             <Skeleton className="h-[220px] w-full" />
+          ) : treinamentosResumo.chartData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+              Sem dados
+            </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
-              <ChartContainer
-                config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full aspect-auto"
-              >
-                <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={90} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ChartContainer>
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{ value: { label: "Quantidade" } }}
+                  className="h-full w-full"
+                  responsiveHeight={250}
+                  responsiveWidth="100%"
+                >
+                  <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={90} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </div>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 text-sm">
                 <div className="rounded-lg border border-border/60 p-3 bg-background/70">
                   <p className="text-xs text-muted-foreground">Total realizados</p>
@@ -345,17 +365,21 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           {afastamentosLoading || colaboradoresLoading ? (
             <Skeleton className="h-[220px] w-full" />
           ) : absenteismoResumo.chartData.length > 0 ? (
-            <ChartContainer
-              config={{ dias: { label: "Dias" } }}
-              className="h-[180px] sm:h-[200px] w-full aspect-auto"
-            >
-              <BarChart data={absenteismoResumo.chartData} margin={{ left: 12, right: 8 }}>
-                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="dias" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
+            <div className="h-[250px] w-full">
+              <ChartContainer
+                config={{ dias: { label: "Dias" } }}
+                className="h-full w-full"
+                responsiveHeight={250}
+                responsiveWidth="100%"
+              >
+                <BarChart data={absenteismoResumo.chartData} margin={{ left: 12, right: 8 }}>
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="dias" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground">
               Sem dados
@@ -371,19 +395,27 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
         >
           {isEventosLoading ? (
             <Skeleton className="h-[200px] w-full" />
+          ) : eventosResumo.chartData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+              Sem dados
+            </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
-              <ChartContainer
-                config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full aspect-auto"
-              >
-                <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={90} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ChartContainer>
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{ value: { label: "Quantidade" } }}
+                  className="h-full w-full"
+                  responsiveHeight={250}
+                  responsiveWidth="100%"
+                >
+                  <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={90} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </div>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 text-sm">
                 <div className="rounded-lg border border-border/60 p-3 bg-background/70">
                   <p className="text-xs text-muted-foreground">Total eventos</p>
