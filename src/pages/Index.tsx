@@ -1,16 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building, GraduationCap } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
-import { TurnoverChart } from "@/components/dashboard/TurnoverChart";
 import { TurnoverModule } from "@/components/dashboard/TurnoverModule";
-import { AbsenteismoDetailChart } from "@/components/dashboard/AbsenteismoDetailChart";
 import { AbsenteismoModule } from "@/components/dashboard/AbsenteismoModule";
-import { ColaboradoresChart } from "@/components/dashboard/ColaboradoresChart";
-import { LideresChart } from "@/components/dashboard/LideresChart";
 import { EventosChart } from "@/components/dashboard/EventosChart";
-import { NovasContratacoesCard } from "@/components/dashboard/NovasContratacoesCard";
 import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
@@ -23,10 +18,10 @@ import { EventosList } from "@/components/dashboard/EventosList";
 import { EventosParticipacaoTable } from "@/components/dashboard/EventosParticipacaoTable";
 import { EventosInsightsCard } from "@/components/dashboard/EventosInsightsCard";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
+import { VisaoGeralPanel } from "@/components/dashboard/VisaoGeralPanel";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
-import { useAbsenteismoAnalytics } from "@/hooks/useAbsenteismoAnalytics";
 import { useContratacaoStats } from "@/hooks/useContratacoes";
 import { useTreinamentosStats } from "@/hooks/useTreinamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,24 +33,8 @@ const Index = () => {
   const { data: colaboradoresStats } = useColaboradoresStats(filialId);
   const { data: turnoverStats } = useTurnoverStats(filialId);
   const { data: absenteismoStats } = useAbsenteismoStats(filialId);
-  const { data: absenteismoGeral, isLoading: absenteismoGeralLoading } = useAbsenteismoAnalytics({
-    filialId,
-  });
   const { data: contratacaoStats } = useContratacaoStats(filialId);
   const { data: treinamentosStats } = useTreinamentosStats(filialId);
-
-  const absenteismoAfastamentos = absenteismoGeral?.afastamentos ?? [];
-  const absenteismoTopSetores = useMemo(() => {
-    if (!absenteismoAfastamentos.length) return [];
-    const map: Record<string, number> = {};
-    absenteismoAfastamentos.forEach((a) => {
-      const setor = a.departamento || "-";
-      map[setor] = (map[setor] || 0) + (a.dias_afastados || 0);
-    });
-    return Object.entries(map)
-      .map(([setor, dias]) => ({ setor, dias }))
-      .sort((a, b) => b.dias - a.dias);
-  }, [absenteismoAfastamentos]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,31 +145,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="geral" className="space-y-6">
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ColaboradoresChart filialId={selectedFilial} />
-              <LideresChart filialId={selectedFilial} />
-            </div>
-
-            {/* Charts Row 2 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <TurnoverChart filialId={selectedFilial} />
-              <div className="lg:col-span-2">
-              <AbsenteismoDetailChart
-                afastamentos={absenteismoAfastamentos}
-                taxaAbsenteismo={absenteismoGeral?.taxaAbsenteismo || 0}
-                totalDias={absenteismoGeral?.totalDias || 0}
-                topSetores={absenteismoTopSetores}
-                isLoading={absenteismoGeralLoading}
-              />
-              </div>
-            </div>
-
-            {/* Charts Row 3 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <EventosChart filialId={selectedFilial} />
-              <NovasContratacoesCard filialId={selectedFilial} />
-            </div>
+            <VisaoGeralPanel filialId={selectedFilial} />
           </TabsContent>
 
           <TabsContent value="treinamentos" className="space-y-6">
