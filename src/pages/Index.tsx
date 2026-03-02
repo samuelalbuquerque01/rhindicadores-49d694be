@@ -6,6 +6,7 @@ import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
 import { TurnoverChart } from "@/components/dashboard/TurnoverChart";
 import { TurnoverModule } from "@/components/dashboard/TurnoverModule";
 import { AbsenteismoDetailChart } from "@/components/dashboard/AbsenteismoDetailChart";
+import { AbsenteismoModule } from "@/components/dashboard/AbsenteismoModule";
 import { ColaboradoresChart } from "@/components/dashboard/ColaboradoresChart";
 import { LideresChart } from "@/components/dashboard/LideresChart";
 import { EventosChart } from "@/components/dashboard/EventosChart";
@@ -188,8 +189,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="absenteismo" className="space-y-6">
-            <AbsenteismoDetailChart filialId={selectedFilial} />
-            <AfastamentosList filialId={selectedFilial} />
+            <AbsenteismoModule filialId={selectedFilial} />
           </TabsContent>
 
         </Tabs>
