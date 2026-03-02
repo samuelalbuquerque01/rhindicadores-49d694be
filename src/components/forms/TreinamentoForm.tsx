@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -35,12 +34,12 @@ import { Treinamento } from "@/types/database";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(200),
-  descricao: z.string().max(500).optional(),
-  data_realizacao: z.string().min(1, "Data é obrigatória"),
-  carga_horaria: z.coerce.number().min(1, "Carga horária é obrigatória").max(1000),
+  setor_alvo: z.string().min(2, "Setor alvo e obrigatorio").max(120),
+  responsavel: z.string().min(2, "Responsavel e obrigatorio").max(120),
+  data_realizacao: z.string().min(1, "Data e obrigatoria"),
+  carga_horaria: z.coerce.number().min(1, "Duracao e obrigatoria").max(1000),
   filial_id: z.string().optional(),
-  tipo: z.enum(["Presencial", "Online", "Híbrido"]).optional(),
-  vagas_totais: z.coerce.number().min(1, "Vagas é obrigatório").max(1000),
+  vagas_totais: z.coerce.number().min(1, "Vagas e obrigatorio").max(1000),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -61,11 +60,11 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
-      descricao: "",
+      setor_alvo: "",
+      responsavel: "",
       data_realizacao: new Date().toISOString().split("T")[0],
       carga_horaria: 8,
       filial_id: "",
-      tipo: "Presencial",
       vagas_totais: 20,
     },
   });
@@ -74,11 +73,11 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
     if (treinamento && open) {
       form.reset({
         nome: treinamento.nome,
-        descricao: treinamento.descricao || "",
+        setor_alvo: treinamento.setor_alvo || "",
+        responsavel: treinamento.responsavel || "",
         data_realizacao: treinamento.data_realizacao,
         carga_horaria: treinamento.carga_horaria || 8,
         filial_id: treinamento.filial_id || "",
-        tipo: (treinamento.tipo as "Presencial" | "Online" | "Híbrido") || "Presencial",
         vagas_totais: treinamento.vagas_totais || 20,
       });
     }
@@ -90,13 +89,11 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
         id: treinamento.id,
         ...values,
         filial_id: values.filial_id || null,
-        tipo: values.tipo || null,
       } as any);
     } else {
       await createTreinamento.mutateAsync({
         ...values,
         filial_id: values.filial_id || null,
-        tipo: values.tipo || null,
       } as any);
       form.reset();
     }
@@ -131,7 +128,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
                 <FormItem>
                   <FormLabel>Nome do Treinamento *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Segurança do Trabalho" {...field} />
+                    <Input placeholder="Ex: Seguranca do Trabalho" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,12 +136,25 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
             />
             <FormField
               control={form.control}
-              name="descricao"
+              name="setor_alvo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Setor Alvo *</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Descreva o treinamento..." {...field} />
+                    <Input placeholder="Ex: Enfermagem, Administrativo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="responsavel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Responsavel *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Ana Souza" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,7 +179,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
                 name="carga_horaria"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Carga Horária (h) *</FormLabel>
+                    <FormLabel>Duracao (h) *</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -178,43 +188,19 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="tipo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-popover z-50">
-                        <SelectItem value="Presencial">Presencial</SelectItem>
-                        <SelectItem value="Online">Online</SelectItem>
-                        <SelectItem value="Híbrido">Híbrido</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="vagas_totais"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vagas Totais *</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="vagas_totais"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vagas Totais *</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="filial_id"

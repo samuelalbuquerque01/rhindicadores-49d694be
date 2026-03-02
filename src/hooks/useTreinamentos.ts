@@ -86,11 +86,14 @@ export function useTreinamentosStats(filialId?: string) {
       // Get all participations
       const { data: participacoes, error: participacoesError } = await supabase
         .from("treinamento_participacoes")
-        .select("*, treinamento:treinamentos(*)");
+        .select("*, treinamento:treinamentos(*), colaborador:colaboradores(departamento)");
       if (participacoesError) throw participacoesError;
 
-      const treinamentosList = treinamentos as Treinamento[];
-      const participacoesList = participacoes as TreinamentoParticipacao[];
+      const treinamentosList = (treinamentos || []) as Treinamento[];
+      const participacoesList = (participacoes || []) as (TreinamentoParticipacao & {
+        treinamento?: Treinamento;
+        colaborador?: { departamento?: string | null };
+      })[];
 
       // Filter participations by filial if needed
       const filteredParticipacoes = filialId
@@ -99,14 +102,68 @@ export function useTreinamentosStats(filialId?: string) {
 
       const totalTreinamentos = treinamentosList.length;
       const totalVagas = treinamentosList.reduce((sum, t) => sum + (t.vagas_totais || 0), 0);
+      const totalParticipacoes = filteredParticipacoes.length;
       const totalParticipantes = filteredParticipacoes.filter(p => p.participou).length;
       const taxaParticipacao = totalVagas > 0 ? (totalParticipantes / totalVagas) * 100 : 0;
+      const taxaConclusao = totalParticipacoes > 0 ? (totalParticipantes / totalParticipacoes) * 100 : 0;
+      const mediaParticipacao = totalTreinamentos > 0 ? totalParticipacoes / totalTreinamentos : 0;
+      const horasTotais = filteredParticipacoes.reduce((sum, p) => {
+        if (!p.participou) return sum;
+        return sum + (p.treinamento?.carga_horaria || 0);
+      }, 0);
+
+      const setorStats = new Map<string, { participou: number; total: number }>();
+      filteredParticipacoes.forEach((p) => {
+        const setor = p.colaborador?.departamento || "Sem setor";
+        const current = setorStats.get(setor) || { participou: 0, total: 0 };
+        current.total += 1;
+        if (p.participou) current.participou += 1;
+        setorStats.set(setor, current);
+      });
+
+      let setorMaisTreinado = "-";
+      let maiorTreinado = -1;
+      let setorMaiorEngajamento = "-";
+      let maiorEngajamento = -1;
+      setorStats.forEach((stats, setor) => {
+        if (stats.participou > maiorTreinado) {
+          maiorTreinado = stats.participou;
+          setorMaisTreinado = setor;
+        }
+        const taxa = stats.total > 0 ? stats.participou / stats.total : 0;
+        if (taxa > maiorEngajamento) {
+          maiorEngajamento = taxa;
+          setorMaiorEngajamento = setor;
+        }
+      });
+
+      const treinamentoCounts = new Map<string, { nome: string; total: number }>();
+      filteredParticipacoes.forEach((p) => {
+        if (!p.treinamento) return;
+        const key = p.treinamento.id;
+        const current = treinamentoCounts.get(key) || {
+          nome: p.treinamento.nome,
+          total: 0,
+        };
+        if (p.participou) current.total += 1;
+        treinamentoCounts.set(key, current);
+      });
+
+      const topTreinamentos = Array.from(treinamentoCounts.values())
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 3);
 
       return {
         totalTreinamentos,
         totalVagas,
         totalParticipantes,
         taxaParticipacao: Math.round(taxaParticipacao * 10) / 10,
+        taxaConclusao: Math.round(taxaConclusao * 10) / 10,
+        mediaParticipacao: Math.round(mediaParticipacao * 10) / 10,
+        setorMaisTreinado,
+        setorMaiorEngajamento,
+        horasTotais,
+        topTreinamentos,
       };
     },
   });
@@ -179,6 +236,27 @@ export function useTreinamentoParticipacoes(treinamentoId?: string) {
       return data;
     },
     enabled: !!treinamentoId,
+  });
+}
+
+export function useTreinamentosParticipacoesDetalhadas(filialId?: string) {
+  return useQuery({
+    queryKey: ["treinamento-participacoes-detalhadas", filialId],
+    queryFn: async () => {
+      let query = supabase
+        .from("treinamento_participacoes")
+        .select(
+          "*, colaborador:colaboradores(id, nome, departamento), treinamento:treinamentos(id, nome, data_realizacao, carga_horaria, finalizado, setor_alvo, filial_id)"
+        );
+
+      if (filialId) {
+        query = query.eq("treinamento.filial_id", filialId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
   });
 }
 

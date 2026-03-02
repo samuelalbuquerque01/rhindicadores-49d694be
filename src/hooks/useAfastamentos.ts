@@ -113,6 +113,7 @@ export function useCreateAfastamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
       queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["absenteismo-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
       toast.success("Afastamento registrado com sucesso!");
@@ -138,6 +139,7 @@ export function useUpdateAfastamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
       queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["absenteismo-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
       queryClient.invalidateQueries({ queryKey: ["afastamento-ativo"] });
@@ -164,6 +166,7 @@ export function useDeleteAfastamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
       queryClient.invalidateQueries({ queryKey: ["absenteismo-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["absenteismo-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-ativos"] });
       queryClient.invalidateQueries({ queryKey: ["afastamentos-por-tipo"] });
       queryClient.invalidateQueries({ queryKey: ["afastamento-ativo"] });

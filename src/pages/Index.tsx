@@ -17,6 +17,8 @@ import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
 import { AfastamentosList } from "@/components/dashboard/AfastamentosList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
+import { TreinamentosParticipacaoTable } from "@/components/dashboard/TreinamentosParticipacaoTable";
+import { TreinamentosInsightsCard } from "@/components/dashboard/TreinamentosInsightsCard";
 import { EventosList } from "@/components/dashboard/EventosList";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
@@ -167,9 +169,13 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="treinamentos" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <TreinamentoChart filialId={selectedFilial} />
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2 space-y-6">
+                <TreinamentoChart filialId={selectedFilial} />
+                <TreinamentosParticipacaoTable filialId={selectedFilial} />
+              </div>
+              <div className="space-y-6">
+                <TreinamentosInsightsCard filialId={selectedFilial} />
                 <TreinamentosList filialId={selectedFilial} />
               </div>
             </div>

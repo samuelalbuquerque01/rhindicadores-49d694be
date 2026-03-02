@@ -190,6 +190,7 @@ function TreinamentoItem({
   const taxaAssiduidade = totalParticipantes > 0 
     ? Math.round((participaram / totalParticipantes) * 100) 
     : 0;
+  const taxaConclusao = taxaAssiduidade;
 
   // Filter colaboradores that are not already added
   const availableColaboradores = colaboradores.filter(
@@ -213,10 +214,12 @@ function TreinamentoItem({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(treinamento.data_realizacao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                      {treinamento.carga_horaria && ` • ${treinamento.carga_horaria}h`}
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                      <span>{format(new Date(treinamento.data_realizacao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                      {treinamento.carga_horaria && <span>{treinamento.carga_horaria}h</span>}
+                      {treinamento.setor_alvo && <span>Setor: {treinamento.setor_alvo}</span>}
+                      {treinamento.responsavel && <span>Resp.: {treinamento.responsavel}</span>}
+                    </div>
                   </div>
                 </div>
               <div className="flex items-center gap-4">
@@ -305,6 +308,15 @@ function TreinamentoItem({
                   </Button>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                Taxa de conclusao: {taxaConclusao}%
+              </Badge>
+              <span className="text-muted-foreground">
+                Participantes: {participaram}/{totalParticipantes}
+              </span>
             </div>
 
             {/* Add participant */}

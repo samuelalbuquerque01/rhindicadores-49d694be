@@ -40,6 +40,18 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
     tipoAfastamento: tipoFilter,
   });
 
+  const afastamentos = data?.afastamentos || [];
+
+  const impactoPorSetor = Object.entries(
+    afastamentos.reduce((acc: Record<string, number>, a) => {
+      const setor = a.departamento || "-";
+      acc[setor] = (acc[setor] || 0) + (a.dias_afastados || 0);
+      return acc;
+    }, {})
+  )
+    .map(([setor, dias]) => ({ setor, dias }))
+    .sort((a, b) => b.dias - a.dias);
+
   const { data: setores } = useSetoresDisponiveis();
 
   const formatCurrency = (v: number) =>
@@ -72,7 +84,13 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
     <div className="space-y-6">
       {/* Row 1: Chart + KPIs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <AbsenteismoDetailChart filialId={filialId || "all"} />
+        <AbsenteismoDetailChart
+          afastamentos={afastamentos}
+          taxaAbsenteismo={data?.taxaAbsenteismo || 0}
+          totalDias={data?.totalDias || 0}
+          topSetores={impactoPorSetor}
+          isLoading={isLoading}
+        />
         <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
           <KpiCard
             icon={<Calendar className="h-5 w-5" />}

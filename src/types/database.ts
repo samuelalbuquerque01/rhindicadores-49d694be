@@ -67,6 +67,9 @@ export interface Treinamento {
   filial_id?: string;
   tipo?: 'Presencial' | 'Online' | 'Híbrido';
   vagas_totais: number;
+  setor_alvo?: string;
+  responsavel?: string;
+  finalizado?: boolean;
   created_at: string;
   filial?: Filial;
 }
