@@ -329,6 +329,8 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
               </TableBody>
             </Table>
           </div>
+        )}
+
         <PaginationControls
           page={page}
           pageSize={pageSize}
@@ -338,8 +340,6 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
         />
-
-        )}
 
         {/* Edit Modal */}
         <EditColaboradorModal

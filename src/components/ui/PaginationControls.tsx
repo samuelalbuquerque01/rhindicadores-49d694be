@@ -45,7 +45,7 @@ export function PaginationControls({
           <SelectContent className="bg-popover z-50">
             {pageSizeOptions.map((size) => (
               <SelectItem key={size} value={String(size)}>
-                {size} / pÃ¡gina
+                {size} / página
               </SelectItem>
             ))}
           </SelectContent>
@@ -60,7 +60,7 @@ export function PaginationControls({
             Anterior
           </Button>
           <span className="text-sm text-muted-foreground">
-            PÃ¡gina {page} de {totalPages}
+            Página {page} de {totalPages}
           </span>
           <Button
             variant="outline"
@@ -68,7 +68,7 @@ export function PaginationControls({
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages || isLoading}
           >
-            PrÃ³ximo
+            Próximo
           </Button>
         </div>
       </div>
