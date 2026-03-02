@@ -223,7 +223,7 @@ export function useEventosParticipacoesDetalhadas(filialId?: string) {
       let query = supabase
         .from("evento_participacoes")
         .select(
-          "*, colaborador:colaboradores(id, nome, departamento), evento:eventos(id, nome, data_evento, setor_alvo, filial_id)"
+          "*, colaborador:colaboradores(id, nome, departamento), evento:eventos(id, nome, data_evento, filial_id)"
         );
 
       if (filialId) {

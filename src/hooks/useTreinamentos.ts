@@ -246,7 +246,7 @@ export function useTreinamentosParticipacoesDetalhadas(filialId?: string) {
       let query = supabase
         .from("treinamento_participacoes")
         .select(
-          "*, colaborador:colaboradores(id, nome, departamento), treinamento:treinamentos(id, nome, data_realizacao, carga_horaria, finalizado, setor_alvo, filial_id)"
+          "*, colaborador:colaboradores(id, nome, departamento), treinamento:treinamentos(id, nome, data_realizacao, carga_horaria, finalizado, filial_id)"
         );
 
       if (filialId) {
