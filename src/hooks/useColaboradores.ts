@@ -6,6 +6,7 @@ import { toast } from "sonner";
 interface ColaboradoresFilters {
   filialId?: string;
   tipoColaborador?: string;
+  tipoColaboradorIn?: string[];
   status?: string;
   search?: string;
 }
@@ -22,7 +23,9 @@ export function useColaboradores(filters?: ColaboradoresFilters) {
       if (filters?.filialId) {
         query = query.eq("filial_id", filters.filialId);
       }
-      if (filters?.tipoColaborador) {
+      if (filters?.tipoColaboradorIn && filters.tipoColaboradorIn.length > 0) {
+        query = query.in("tipo_colaborador", filters.tipoColaboradorIn);
+      } else if (filters?.tipoColaborador) {
         query = query.eq("tipo_colaborador", filters.tipoColaborador);
       }
       if (filters?.status) {
@@ -35,8 +38,53 @@ export function useColaboradores(filters?: ColaboradoresFilters) {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as Colaborador[];
+      return (data ?? []) as Colaborador[];
     },
+  });
+}
+
+interface ColaboradoresPaginadosFilters extends ColaboradoresFilters {
+  page: number;
+  pageSize: number;
+}
+
+export function useColaboradoresPaginados(filters: ColaboradoresPaginadosFilters) {
+  return useQuery({
+    queryKey: ["colaboradores-paginados", filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("colaboradores")
+        .select("*, filial:filiais(*)", { count: "exact" })
+        .order("nome");
+
+      if (filters?.filialId) {
+        query = query.eq("filial_id", filters.filialId);
+      }
+      if (filters?.tipoColaboradorIn && filters.tipoColaboradorIn.length > 0) {
+        query = query.in("tipo_colaborador", filters.tipoColaboradorIn);
+      } else if (filters?.tipoColaborador) {
+        query = query.eq("tipo_colaborador", filters.tipoColaborador);
+      }
+      if (filters?.status) {
+        query = query.eq("status", filters.status);
+      }
+      if (filters?.search) {
+        query = query.ilike("nome", `%${filters.search}%`);
+      }
+
+      const page = Math.max(filters.page, 1);
+      const pageSize = Math.max(filters.pageSize, 1);
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error, count } = await query.range(from, to);
+      if (error) throw error;
+      return {
+        data: (data ?? []) as Colaborador[],
+        count: count ?? 0,
+      };
+    },
+    keepPreviousData: true,
   });
 }
 

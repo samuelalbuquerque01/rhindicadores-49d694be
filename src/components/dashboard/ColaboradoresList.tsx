@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Search, Users } from "lucide-react";
@@ -31,13 +31,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useColaboradores, useDeleteColaborador } from "@/hooks/useColaboradores";
+import { useColaboradoresPaginados, useDeleteColaborador } from "@/hooks/useColaboradores";
 import { useFiliais } from "@/hooks/useFiliais";
 import { useAfastamentosAtivos } from "@/hooks/useAfastamentoAtivo";
+import { usePagination } from "@/hooks/usePagination";
 import { supabase } from "@/integrations/supabase/client";
 import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
 import { AfastamentoBadge } from "./AfastamentoBadge";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 
 interface ColaboradoresListProps {
   filialId?: string;
@@ -66,20 +68,48 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
     return subTipoFilter === "all" ? undefined : subTipoFilter;
   };
 
-  const { data: allColaboradores, isLoading } = useColaboradores({
+  const tipoColaboradorFilter = getTipoColaboradorFilter();
+  const tipoColaboradorIn =
+    propTipoFilter === "CLT" && subTipoFilter === "all"
+      ? ["CLT Administrativo", "CLT Corpo Clínico"]
+      : undefined;
+
+  const {
+    page,
+    pageSize,
+    totalPages,
+    setPage,
+    setPageSize,
+    setTotalCount,
+  } = usePagination();
+
+  const {
+    data: colaboradoresResponse,
+    isLoading,
+    isFetching,
+  } = useColaboradoresPaginados({
     filialId: filialId === "all" ? undefined : filialId,
-    tipoColaborador: getTipoColaboradorFilter(),
+    tipoColaborador: tipoColaboradorIn ? undefined : tipoColaboradorFilter,
+    tipoColaboradorIn,
     status: statusFilter === "all" ? undefined : statusFilter,
     search: search || undefined,
+    page,
+    pageSize,
   });
 
-  // Filter CLT types if propTipoFilter is CLT
-  const colaboradores = propTipoFilter === "CLT" && subTipoFilter === "all"
-    ? allColaboradores?.filter(c => c.tipo_colaborador === "CLT Administrativo" || c.tipo_colaborador === "CLT Corpo Clínico")
-    : allColaboradores;
+  const colaboradores = colaboradoresResponse?.data ?? [];
+  const totalCount = colaboradoresResponse?.count ?? 0;
   const { data: filiais } = useFiliais();
   const { data: afastamentosAtivos } = useAfastamentosAtivos(filialId === "all" ? undefined : filialId);
   const deleteColaborador = useDeleteColaborador();
+
+  useEffect(() => {
+    setTotalCount(totalCount);
+  }, [setTotalCount, totalCount]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, subTipoFilter, statusFilter, filialId, propTipoFilter, setPage, pageSize]);
 
   // Fetch contratacoes to show tipo_contratacao
   const { data: contratacoes } = useQuery({
@@ -299,6 +329,16 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
               </TableBody>
             </Table>
           </div>
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          totalItems={totalCount}
+          totalPages={totalPages}
+          isLoading={isFetching}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+
         )}
 
         {/* Edit Modal */}

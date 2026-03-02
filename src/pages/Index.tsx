@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building, GraduationCap } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -26,6 +26,7 @@ import { ParticipacaoColaboradorChart } from "@/components/dashboard/Participaca
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
 import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
+import { useAbsenteismoAnalytics } from "@/hooks/useAbsenteismoAnalytics";
 import { useContratacaoStats } from "@/hooks/useContratacoes";
 import { useTreinamentosStats } from "@/hooks/useTreinamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,8 +38,24 @@ const Index = () => {
   const { data: colaboradoresStats } = useColaboradoresStats(filialId);
   const { data: turnoverStats } = useTurnoverStats(filialId);
   const { data: absenteismoStats } = useAbsenteismoStats(filialId);
+  const { data: absenteismoGeral, isLoading: absenteismoGeralLoading } = useAbsenteismoAnalytics({
+    filialId,
+  });
   const { data: contratacaoStats } = useContratacaoStats(filialId);
   const { data: treinamentosStats } = useTreinamentosStats(filialId);
+
+  const absenteismoAfastamentos = absenteismoGeral?.afastamentos ?? [];
+  const absenteismoTopSetores = useMemo(() => {
+    if (!absenteismoAfastamentos.length) return [];
+    const map: Record<string, number> = {};
+    absenteismoAfastamentos.forEach((a) => {
+      const setor = a.departamento || "-";
+      map[setor] = (map[setor] || 0) + (a.dias_afastados || 0);
+    });
+    return Object.entries(map)
+      .map(([setor, dias]) => ({ setor, dias }))
+      .sort((a, b) => b.dias - a.dias);
+  }, [absenteismoAfastamentos]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -159,7 +176,13 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <TurnoverChart filialId={selectedFilial} />
               <div className="lg:col-span-2">
-                <AbsenteismoDetailChart filialId={selectedFilial} />
+              <AbsenteismoDetailChart
+                afastamentos={absenteismoAfastamentos}
+                taxaAbsenteismo={absenteismoGeral?.taxaAbsenteismo || 0}
+                totalDias={absenteismoGeral?.totalDias || 0}
+                topSetores={absenteismoTopSetores}
+                isLoading={absenteismoGeralLoading}
+              />
               </div>
             </div>
 
