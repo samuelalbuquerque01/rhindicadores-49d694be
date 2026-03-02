@@ -92,8 +92,11 @@ export interface Evento {
   descricao?: string;
   data_evento: string;
   filial_id?: string;
-  tipo?: 'Confraternização' | 'Palestra' | 'Workshop' | 'Integração' | 'Outro';
+  tipo?: string;
+  setor_alvo?: string;
+  responsavel?: string;
   capacidade?: number;
+  finalizado?: boolean;
   created_at: string;
   filial?: Filial;
 }

@@ -20,6 +20,8 @@ import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { TreinamentosParticipacaoTable } from "@/components/dashboard/TreinamentosParticipacaoTable";
 import { TreinamentosInsightsCard } from "@/components/dashboard/TreinamentosInsightsCard";
 import { EventosList } from "@/components/dashboard/EventosList";
+import { EventosParticipacaoTable } from "@/components/dashboard/EventosParticipacaoTable";
+import { EventosInsightsCard } from "@/components/dashboard/EventosInsightsCard";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
 import { useTurnoverStats } from "@/hooks/useDesligamentos";
@@ -182,9 +184,13 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="eventos" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <EventosChart filialId={selectedFilial} />
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2 space-y-6">
+                <EventosChart filialId={selectedFilial} />
+                <EventosParticipacaoTable filialId={selectedFilial} />
+              </div>
+              <div className="space-y-6">
+                <EventosInsightsCard filialId={selectedFilial} />
                 <EventosList filialId={selectedFilial} />
               </div>
             </div>

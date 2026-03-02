@@ -86,11 +86,14 @@ export function useEventosStats(filialId?: string) {
       // Get all participations
       const { data: participacoes, error: participacoesError } = await supabase
         .from("evento_participacoes")
-        .select("*, evento:eventos(*)");
+        .select("*, evento:eventos(*), colaborador:colaboradores(departamento)");
       if (participacoesError) throw participacoesError;
 
-      const eventosList = eventos as Evento[];
-      const participacoesList = participacoes as EventoParticipacao[];
+      const eventosList = (eventos || []) as Evento[];
+      const participacoesList = (participacoes || []) as (EventoParticipacao & {
+        evento?: Evento;
+        colaborador?: { departamento?: string | null };
+      })[];
 
       // Filter participations by filial if needed
       const filteredParticipacoes = filialId
@@ -100,13 +103,43 @@ export function useEventosStats(filialId?: string) {
       const totalEventos = eventosList.length;
       const totalConfirmados = filteredParticipacoes.filter(p => p.confirmou_presenca).length;
       const totalCompareceram = filteredParticipacoes.filter(p => p.compareceu).length;
-      const taxaEngajamento = totalConfirmados > 0 ? (totalCompareceram / totalConfirmados) * 100 : 0;
+      const totalParticipantes = totalCompareceram;
+      const faltaram = Math.max(totalConfirmados - totalCompareceram, 0);
+      const taxaComparecimento = totalConfirmados > 0 ? (totalCompareceram / totalConfirmados) * 100 : 0;
+      const mediaParticipacao = totalEventos > 0 ? totalParticipantes / totalEventos : 0;
+
+      const setorStats = new Map<string, number>();
+      filteredParticipacoes.forEach((p) => {
+        if (!p.compareceu) return;
+        const setor = p.colaborador?.departamento || "Sem setor";
+        setorStats.set(setor, (setorStats.get(setor) || 0) + 1);
+      });
+      const setorMaisEngajado = Array.from(setorStats.entries())
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
+
+      const eventoCounts = new Map<string, { nome: string; total: number }>();
+      filteredParticipacoes.forEach((p) => {
+        if (!p.evento) return;
+        const key = p.evento.id;
+        const current = eventoCounts.get(key) || { nome: p.evento.nome, total: 0 };
+        if (p.compareceu) current.total += 1;
+        eventoCounts.set(key, current);
+      });
+
+      const topEventos = Array.from(eventoCounts.values())
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 3);
 
       return {
         totalEventos,
+        totalParticipantes,
         totalConfirmados,
         totalCompareceram,
-        taxaEngajamento: Math.round(taxaEngajamento * 10) / 10,
+        faltaram,
+        taxaComparecimento: Math.round(taxaComparecimento * 10) / 10,
+        mediaParticipacao: Math.round(mediaParticipacao * 10) / 10,
+        setorMaisEngajado,
+        topEventos,
       };
     },
   });
@@ -154,6 +187,7 @@ export function useCreateEventoParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes-detalhadas"] });
       toast.success("Participação registrada!");
     },
     onError: (error) => {
@@ -168,7 +202,7 @@ export function useEventoParticipacoes(eventoId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("evento_participacoes")
-        .select("*, colaborador:colaboradores(id, nome), evento:eventos(*)");
+        .select("*, colaborador:colaboradores(id, nome, departamento), evento:eventos(*)");
       
       if (eventoId) {
         query = query.eq("evento_id", eventoId);
@@ -179,6 +213,27 @@ export function useEventoParticipacoes(eventoId?: string) {
       return data;
     },
     enabled: !!eventoId,
+  });
+}
+
+export function useEventosParticipacoesDetalhadas(filialId?: string) {
+  return useQuery({
+    queryKey: ["evento-participacoes-detalhadas", filialId],
+    queryFn: async () => {
+      let query = supabase
+        .from("evento_participacoes")
+        .select(
+          "*, colaborador:colaboradores(id, nome, departamento), evento:eventos(id, nome, data_evento, setor_alvo, filial_id)"
+        );
+
+      if (filialId) {
+        query = query.eq("evento.filial_id", filialId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
   });
 }
 
@@ -197,6 +252,7 @@ export function useUpdateEventoParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes-detalhadas"] });
       toast.success("Participação atualizada!");
     },
     onError: (error) => {
@@ -220,6 +276,7 @@ export function useDeleteEventoParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["evento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes-detalhadas"] });
       toast.success("Participação removida!");
     },
     onError: (error) => {
@@ -243,6 +300,7 @@ export function useUpdateEvento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eventos"] });
       queryClient.invalidateQueries({ queryKey: ["eventos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["evento-participacoes-detalhadas"] });
       toast.success("Evento atualizado!");
     },
     onError: (error) => {

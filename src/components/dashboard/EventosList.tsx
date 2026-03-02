@@ -210,6 +210,8 @@ function EventoItem({
       "Palestra": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
       "Workshop": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       "Integração": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+      "Treinamento": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+      "Corporativo": "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
       "Outro": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
     };
     return tipo ? (
@@ -237,9 +239,11 @@ function EventoItem({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(evento.data_evento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                      <span>{format(new Date(evento.data_evento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                      {evento.setor_alvo && <span>Setor: {evento.setor_alvo}</span>}
+                      {evento.responsavel && <span>Resp.: {evento.responsavel}</span>}
+                    </div>
                   </div>
                 </div>
               <div className="flex items-center gap-4">
