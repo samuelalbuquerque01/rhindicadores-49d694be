@@ -239,7 +239,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <>
               <ChartContainer
                 config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full"
+                className="h-[180px] sm:h-[200px] w-full aspect-auto"
               >
                 <PieChart>
                   <Pie
@@ -283,7 +283,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : turnoverResumo.chartData.length > 0 ? (
             <ChartContainer
               config={{ value: { label: "Quantidade" } }}
-              className="h-[180px] sm:h-[200px] w-full"
+              className="h-[180px] sm:h-[200px] w-full aspect-auto"
             >
               <BarChart data={turnoverResumo.chartData} margin={{ left: 12, right: 8 }}>
                 <XAxis type="number" />
@@ -311,7 +311,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <ChartContainer
                 config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full"
+                className="h-[180px] sm:h-[200px] w-full aspect-auto"
               >
                 <BarChart data={treinamentosResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis type="number" />
@@ -347,7 +347,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
           ) : absenteismoResumo.chartData.length > 0 ? (
             <ChartContainer
               config={{ dias: { label: "Dias" } }}
-              className="h-[180px] sm:h-[200px] w-full"
+              className="h-[180px] sm:h-[200px] w-full aspect-auto"
             >
               <BarChart data={absenteismoResumo.chartData} margin={{ left: 12, right: 8 }}>
                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
@@ -375,7 +375,7 @@ export function VisaoGeralPanel({ filialId }: VisaoGeralPanelProps) {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-center">
               <ChartContainer
                 config={{ value: { label: "Quantidade" } }}
-                className="h-[180px] sm:h-[200px] w-full"
+                className="h-[180px] sm:h-[200px] w-full aspect-auto"
               >
                 <BarChart data={eventosResumo.chartData} margin={{ left: 12, right: 8 }}>
                   <XAxis type="number" />
