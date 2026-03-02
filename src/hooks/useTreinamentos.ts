@@ -225,7 +225,7 @@ export function useTreinamentoParticipacoes(treinamentoId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("treinamento_participacoes")
-        .select("*, colaborador:colaboradores(id, nome), treinamento:treinamentos(*)");
+        .select("*, colaborador:colaboradores(id, nome, departamento), treinamento:treinamentos(*)");
       
       if (treinamentoId) {
         query = query.eq("treinamento_id", treinamentoId);
