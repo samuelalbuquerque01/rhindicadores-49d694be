@@ -12,6 +12,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Paperclip,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,7 +59,7 @@ const TIPOS_AFASTAMENTO = [
 export function AfastamentosList({ filialId }: AfastamentosListProps) {
   const [tipoSelecionado, setTipoSelecionado] = useState("todos");
   const [editingAfastamento, setEditingAfastamento] = useState<any>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<{ id: string; anexo_url?: string | null } | null>(null);
   const [expandedObs, setExpandedObs] = useState<Set<string>>(new Set());
 
   const { data: afastamentos, isLoading } = useAfastamentosPorTipo(
@@ -116,9 +117,9 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
   };
 
   const handleDelete = async () => {
-    if (deletingId) {
-      await deleteAfastamento.mutateAsync(deletingId);
-      setDeletingId(null);
+    if (deleting) {
+      await deleteAfastamento.mutateAsync(deleting);
+      setDeleting(null);
     }
   };
 
@@ -178,6 +179,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                         <TableHead>Status</TableHead>
                         <TableHead>Filial</TableHead>
                         <TableHead>Observações</TableHead>
+                        <TableHead>Anexo</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -254,6 +256,13 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                               "-"
                             )}
                           </TableCell>
+                          <TableCell className="text-center">
+                            {afastamento.anexo_url ? (
+                              <Paperclip className="h-4 w-4 text-muted-foreground inline" />
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button
@@ -266,7 +275,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setDeletingId(afastamento.id)}
+                                onClick={() => setDeleting({ id: afastamento.id, anexo_url: afastamento.anexo_url })}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -291,7 +300,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
       />
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>

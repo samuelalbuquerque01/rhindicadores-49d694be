@@ -9,6 +9,7 @@ export interface AfastamentoCompleto {
   data_fim: string;
   dias_afastados: number;
   observacoes: string | null;
+  anexo_url?: string | null;
   created_at: string;
   nome: string;
   cargo: string;
@@ -55,6 +56,7 @@ export function useAbsenteismoAnalytics(filters: Filters) {
           data_fim: a.data_fim,
           dias_afastados: dias,
           observacoes: a.observacoes,
+          anexo_url: a.anexo_url || null,
           created_at: a.created_at,
           nome: a.colaborador?.nome || "—",
           cargo: a.colaborador?.cargo || "—",

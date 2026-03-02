@@ -54,6 +54,7 @@ export interface Afastamento {
   data_fim: string;
   dias_afastados: number;
   observacoes?: string;
+  anexo_url?: string;
   created_at: string;
   colaborador?: Colaborador;
 }

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus } from "lucide-react";
+import { Paperclip, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { useCreateAfastamento } from "@/hooks/useAfastamentos";
 import { useColaboradores } from "@/hooks/useColaboradores";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   colaborador_id: z.string().min(1, "Selecione um colaborador"),
@@ -53,6 +54,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function AfastamentoForm() {
   const [open, setOpen] = useState(false);
+  const [anexoFile, setAnexoFile] = useState<File | null>(null);
   const createAfastamento = useCreateAfastamento();
   const { data: colaboradores } = useColaboradores({ status: "Ativo" });
 
@@ -69,9 +71,31 @@ export function AfastamentoForm() {
 
   const tipoSelecionado = form.watch("tipo");
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (!file) {
+      setAnexoFile(null);
+      return;
+    }
+
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato inválido. Envie PDF, JPG ou PNG.");
+      event.target.value = "";
+      setAnexoFile(null);
+      return;
+    }
+
+    setAnexoFile(file);
+  };
+
   const onSubmit = async (values: FormValues) => {
-    await createAfastamento.mutateAsync(values as any);
+    await createAfastamento.mutateAsync({
+      ...(values as any),
+      anexoFile,
+    });
     form.reset();
+    setAnexoFile(null);
     setOpen(false);
   };
 
@@ -191,6 +215,34 @@ export function AfastamentoForm() {
                 </FormItem>
               )}
             />
+            <div className="space-y-2">
+              <FormLabel className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Anexar documento
+              </FormLabel>
+              <Input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+              />
+              {anexoFile && (
+                <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2 text-xs">
+                  <span className="truncate">{anexoFile.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setAnexoFile(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Formatos aceitos: PDF, JPG, PNG.
+              </p>
+            </div>
             <Button
               type="submit"
               className="w-full"

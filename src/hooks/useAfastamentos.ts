@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Afastamento } from "@/types/database";
+import {
+  uploadAfastamentoAnexo,
+  removeAfastamentoAnexo,
+} from "@/lib/afastamentosStorage";
 import { toast } from "sonner";
 
 export function useAfastamentos(filialId?: string) {
@@ -100,14 +104,30 @@ export function useCreateAfastamento() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (afastamento: Omit<Afastamento, "id" | "created_at" | "dias_afastados" | "colaborador">) => {
+    mutationFn: async (
+      afastamento: Omit<Afastamento, "id" | "created_at" | "dias_afastados" | "colaborador"> & {
+        anexoFile?: File | null;
+      }
+    ) => {
+      const { anexoFile, ...payload } = afastamento;
+      let uploadedPath: string | null = null;
+
+      if (anexoFile) {
+        uploadedPath = await uploadAfastamentoAnexo(anexoFile, payload.colaborador_id);
+      }
+
       const { data, error } = await supabase
         .from("afastamentos")
-        .insert(afastamento)
+        .insert({ ...payload, anexo_url: uploadedPath })
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        if (uploadedPath) {
+          await removeAfastamentoAnexo(uploadedPath);
+        }
+        throw error;
+      }
       return data as Afastamento;
     },
     onSuccess: () => {
@@ -128,13 +148,61 @@ export function useUpdateAfastamento() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; tipo: string; data_inicio: string; data_fim: string; observacoes?: string }) => {
+    mutationFn: async ({
+      id,
+      anexoFile,
+      removeAnexo,
+      currentAnexoUrl,
+      colaborador_id,
+      ...data
+    }: {
+      id: string;
+      tipo: string;
+      data_inicio: string;
+      data_fim: string;
+      observacoes?: string;
+      colaborador_id?: string | null;
+      anexoFile?: File | null;
+      removeAnexo?: boolean;
+      currentAnexoUrl?: string | null;
+    }) => {
+      let nextAnexoUrl = currentAnexoUrl || null;
+      let uploadedPath: string | null = null;
+
+      if (anexoFile) {
+        uploadedPath = await uploadAfastamentoAnexo(anexoFile, colaborador_id);
+        nextAnexoUrl = uploadedPath;
+      } else if (removeAnexo) {
+        nextAnexoUrl = null;
+      }
+
       const { error } = await supabase
         .from("afastamentos")
-        .update(data)
+        .update({ ...data, anexo_url: nextAnexoUrl })
         .eq("id", id);
       
-      if (error) throw error;
+      if (error) {
+        if (uploadedPath) {
+          await removeAfastamentoAnexo(uploadedPath);
+        }
+        throw error;
+      }
+
+      if (removeAnexo && currentAnexoUrl && !anexoFile) {
+        try {
+          await removeAfastamentoAnexo(currentAnexoUrl);
+        } catch (err) {
+          console.warn("Falha ao remover anexo antigo:", err);
+        }
+      }
+
+      if (uploadedPath && currentAnexoUrl) {
+        try {
+          await removeAfastamentoAnexo(currentAnexoUrl);
+        } catch (err) {
+          console.warn("Falha ao remover anexo antigo:", err);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });
@@ -155,13 +223,21 @@ export function useDeleteAfastamento() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, anexo_url }: { id: string; anexo_url?: string | null }) => {
       const { error } = await supabase
         .from("afastamentos")
         .delete()
         .eq("id", id);
       
       if (error) throw error;
+
+      if (anexo_url) {
+        try {
+          await removeAfastamentoAnexo(anexo_url);
+        } catch (err) {
+          console.warn("Falha ao remover anexo:", err);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["afastamentos"] });

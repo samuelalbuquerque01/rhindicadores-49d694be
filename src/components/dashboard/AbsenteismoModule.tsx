@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Calendar, TrendingDown, Clock, DollarSign, AlertTriangle, Building, BarChart3,
+  Calendar,
+  TrendingDown,
+  Clock,
+  DollarSign,
+  AlertTriangle,
+  Building,
+  BarChart3,
+  Paperclip,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,11 +23,18 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AbsenteismoDetailChart } from "./AbsenteismoDetailChart";
 import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
 import { useAbsenteismoAnalytics, AfastamentoCompleto } from "@/hooks/useAbsenteismoAnalytics";
 import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
+import {
+  createAfastamentoSignedUrl,
+  downloadAfastamentoAnexo,
+  isHttpUrl,
+} from "@/lib/afastamentosStorage";
+import { toast } from "sonner";
 
 interface AbsenteismoModuleProps {
   filialId?: string;
@@ -61,6 +77,42 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
     if (!d) return "—";
     const [y, m, day] = d.split("-");
     return `${day}/${m}/${y}`;
+  };
+
+  const handleViewAnexo = async (anexoUrl?: string | null) => {
+    if (!anexoUrl) return;
+    try {
+      if (isHttpUrl(anexoUrl)) {
+        window.open(anexoUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+      const signedUrl = await createAfastamentoSignedUrl(anexoUrl);
+      if (signedUrl) window.open(signedUrl, "_blank", "noopener,noreferrer");
+    } catch (error: any) {
+      toast.error(`Erro ao visualizar anexo: ${error.message}`);
+    }
+  };
+
+  const handleDownloadAnexo = async (anexoUrl?: string | null) => {
+    if (!anexoUrl) return;
+    try {
+      if (isHttpUrl(anexoUrl)) {
+        window.open(anexoUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+      const blob = await downloadAfastamentoAnexo(anexoUrl);
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = anexoUrl.split("/").pop() || "anexo";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(`Erro ao baixar anexo: ${error.message}`);
+    }
   };
 
   const mesesOptions = Array.from({ length: 12 }, (_, i) => {
@@ -222,6 +274,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                       <TableHead>Início</TableHead>
                       <TableHead>Retorno</TableHead>
                       <TableHead className="text-right">Dias</TableHead>
+                      <TableHead>Anexo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -240,6 +293,13 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                         <TableCell className="whitespace-nowrap">{formatDate(a.data_inicio)}</TableCell>
                         <TableCell className="whitespace-nowrap">{formatDate(a.data_fim)}</TableCell>
                         <TableCell className="text-right">{a.dias_afastados}</TableCell>
+                        <TableCell className="text-center">
+                          {a.anexo_url ? (
+                            <Paperclip className="h-4 w-4 text-muted-foreground inline" />
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -263,6 +323,12 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                       <span>{formatDate(a.data_inicio)} → {formatDate(a.data_fim)}</span>
                       <span className="font-semibold text-foreground">{a.dias_afastados} dias</span>
                     </div>
+                    {a.anexo_url && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Paperclip className="h-3 w-3" />
+                        Documento anexado
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -294,6 +360,33 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                   <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3 whitespace-pre-wrap">{selected.observacoes}</p>
                 </div>
               )}
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Documento anexado</p>
+                {selected.anexo_url ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleViewAnexo(selected.anexo_url)}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Visualizar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadAnexo(selected.anexo_url)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Nenhum documento anexado.</p>
+                )}
+              </div>
               {selected.colaborador_id && (
                 <button
                   className="text-sm text-primary hover:underline"
