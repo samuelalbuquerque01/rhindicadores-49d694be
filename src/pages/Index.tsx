@@ -4,6 +4,7 @@ import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
 import { TurnoverChart } from "@/components/dashboard/TurnoverChart";
+import { TurnoverModule } from "@/components/dashboard/TurnoverModule";
 import { AbsenteismoDetailChart } from "@/components/dashboard/AbsenteismoDetailChart";
 import { ColaboradoresChart } from "@/components/dashboard/ColaboradoresChart";
 import { LideresChart } from "@/components/dashboard/LideresChart";
@@ -182,12 +183,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="turnover" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TurnoverChart filialId={selectedFilial} />
-              <AbsenteismoDetailChart filialId={selectedFilial} />
-            </div>
-            <AfastamentosList filialId={selectedFilial} />
-            <NovasContratacoesCard filialId={selectedFilial} />
+            <TurnoverModule filialId={selectedFilial} />
           </TabsContent>
 
         </Tabs>
