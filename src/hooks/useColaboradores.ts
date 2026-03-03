@@ -84,7 +84,7 @@ export function useColaboradoresPaginados(filters: ColaboradoresPaginadosFilters
         count: count ?? 0,
       };
     },
-    keepPreviousData: true,
+    placeholderData: (prev) => prev,
   });
 }
 
