@@ -375,6 +375,47 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          colaborador_id: string | null
+          created_at: string
+          data: string
+          id: string
+          lida: boolean
+          mensagem: string
+          prioridade: string
+          tipo: string
+        }
+        Insert: {
+          colaborador_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lida?: boolean
+          mensagem: string
+          prioridade?: string
+          tipo: string
+        }
+        Update: {
+          colaborador_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          prioridade?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treinamento_participacoes: {
         Row: {
           certificado_emitido: boolean | null

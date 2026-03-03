@@ -1,6 +1,7 @@
-import { Bell, Search, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NotificacoesDropdown } from "./NotificacoesDropdown";
 
 export function Header() {
   return (
@@ -29,10 +30,7 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
+            <NotificacoesDropdown />
             <Button variant="ghost" size="icon" className="rounded-full">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="h-4 w-4 text-primary" />
