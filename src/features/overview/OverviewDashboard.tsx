@@ -45,7 +45,6 @@ import { PeriodPreset } from "@/lib/analytics/period";
 import { readGoals, persistGoals } from "@/lib/storage/goalsStorage";
 import { useOverviewAnalytics } from "@/features/overview/useOverviewAnalytics";
 import { useSmartNotifications } from "@/hooks/useSmartNotifications";
-import { persistSmartNotifications } from "@/lib/analytics/notificationStore";
 import { useNavigate } from "react-router-dom";
 
 interface OverviewDashboardProps {
@@ -139,11 +138,6 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
     preset,
     customRange,
   });
-
-  useEffect(() => {
-    if (!data) return;
-    persistSmartNotifications(data.notifications);
-  }, [data]);
 
   useEffect(() => {
     if (goalsModalOpen) {
