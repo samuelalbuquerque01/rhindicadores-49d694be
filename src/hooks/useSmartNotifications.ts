@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   clearReadSmartNotifications,
+  hydrateNotificationStateFromBackend,
   markAllSmartNotificationsAsRead,
   markSmartNotificationAsRead,
   readSmartNotifications,
@@ -21,6 +22,10 @@ export function useSmartNotifications() {
       window.removeEventListener("storage", sync);
       window.removeEventListener(SMART_NOTIFICATIONS_EVENT, sync);
     };
+  }, []);
+
+  useEffect(() => {
+    void hydrateNotificationStateFromBackend();
   }, []);
 
   const notifications = useMemo(

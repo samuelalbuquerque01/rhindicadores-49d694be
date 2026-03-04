@@ -14,13 +14,17 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { usePagination } from "@/hooks/usePagination";
 import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
 import {
+  createEventId,
+  deleteInstitutionalEventFromBackend,
   EventRecord,
+  fetchInstitutionalEventsFromBackend,
   INSTITUTIONAL_EVENT_TYPES,
   InstitutionalEventType,
   filterInstitutionalEvents,
   persistInstitutionalEvents,
   readInstitutionalEvents,
   removeInstitutionalEvent,
+  saveInstitutionalEventToBackend,
   summarizeInstitutionalEventsByType,
   upsertInstitutionalEvent,
 } from "@/lib/storage/eventsStorage";
@@ -56,9 +60,26 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
   } = usePagination({ initialPage: 1, initialPageSize: 10 });
 
   useEffect(() => {
+    let active = true;
+    const localEvents = readInstitutionalEvents();
+    setEvents(localEvents);
     setIsLoadingLocal(true);
-    setEvents(readInstitutionalEvents());
-    setIsLoadingLocal(false);
+
+    const loadRemote = async () => {
+      const remoteEvents = await fetchInstitutionalEventsFromBackend();
+      if (!active) return;
+      if (remoteEvents) {
+        setEvents(remoteEvents);
+        persistInstitutionalEvents(remoteEvents);
+      }
+      setIsLoadingLocal(false);
+    };
+
+    void loadRemote();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const sectorOptions = useMemo(() => {
@@ -98,8 +119,14 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
   };
 
   const handleSaveEvent = (nextEvent: Omit<EventRecord, "auditTrail"> & { id?: string }) => {
-    const next = upsertInstitutionalEvent(events, nextEvent);
+    const eventId = nextEvent.id || createEventId();
+    const candidate = { ...nextEvent, id: eventId };
+    const next = upsertInstitutionalEvent(events, candidate);
     saveEvents(next);
+    const saved = next.find((item) => item.id === eventId);
+    if (saved) {
+      void saveInstitutionalEventToBackend(saved);
+    }
     setEditingEvent(null);
   };
 
@@ -107,6 +134,7 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
     if (!deletingEvent) return;
     const next = removeInstitutionalEvent(events, deletingEvent.id);
     saveEvents(next);
+    void deleteInstitutionalEventFromBackend(deletingEvent.id);
     setDeletingEvent(null);
   };
 
@@ -138,7 +166,7 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-            TODO: quando o backend de eventos institucionais estiver disponivel, migrar historico, tags e anexos do localStorage.
+            Sincronizacao com backend habilitada. Se indisponivel, o sistema usa fallback localStorage.
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">

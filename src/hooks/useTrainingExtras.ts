@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  fetchTrainingsExtraFromBackend,
+  persistTrainingsExtra,
   TRAININGS_EXTRA_EVENT,
   TrainingExtraData,
   readTrainingsExtra,
@@ -12,12 +14,23 @@ export function useTrainingsExtra() {
   const [items, setItems] = useState<TrainingExtraData[]>(() => readTrainingsExtra());
 
   useEffect(() => {
+    let active = true;
     const sync = () => setItems(readTrainingsExtra());
 
     window.addEventListener("storage", sync);
     window.addEventListener(TRAININGS_EXTRA_EVENT, sync);
 
+    const syncRemote = async () => {
+      const remoteItems = await fetchTrainingsExtraFromBackend();
+      if (!active || !remoteItems) return;
+      persistTrainingsExtra(remoteItems);
+      setItems(remoteItems);
+    };
+
+    void syncRemote();
+
     return () => {
+      active = false;
       window.removeEventListener("storage", sync);
       window.removeEventListener(TRAININGS_EXTRA_EVENT, sync);
     };

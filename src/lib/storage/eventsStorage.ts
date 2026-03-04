@@ -7,6 +7,8 @@ import {
 } from "@/lib/analytics/audit";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage/localStorage";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const INSTITUTIONAL_EVENT_TYPES = [
   "Confraternizacao",
@@ -56,6 +58,7 @@ interface SerializedEventRecord extends Omit<EventRecord, "estimatedParticipants
 }
 
 const STORAGE_KEY = "rh-events-institutional-v2";
+type InstitutionalEventRow = Tables<"institutional_events">;
 
 const AUDIT_LABELS: Partial<Record<keyof EventRecord, string>> = {
   title: "titulo",
@@ -149,6 +152,53 @@ function normalizeRecord(value: Partial<SerializedEventRecord>): EventRecord | n
     tags: normalizeStringArray(value.tags),
     attachments: normalizeAttachments(value.attachments),
     auditTrail: normalizeAudit(value.auditTrail, nowIso),
+  };
+}
+
+function normalizeRemoteRecord(row: InstitutionalEventRow): EventRecord | null {
+  return normalizeRecord({
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    date: row.event_date,
+    location: row.location ?? "",
+    organizer: row.organizer ?? "",
+    sectors: row.sectors,
+    estimatedParticipants: row.estimated_participants,
+    description: row.description ?? "",
+    tags: row.tags,
+    attachments: row.attachments as unknown as LocalAttachment[],
+    auditTrail: row.audit_trail as unknown as AuditTrailData,
+  });
+}
+
+function toRemotePayload(event: EventRecord): {
+  id: string;
+  title: string;
+  type: string;
+  event_date: string;
+  location: string | null;
+  organizer: string | null;
+  sectors: string[];
+  estimated_participants: number | null;
+  description: string | null;
+  tags: string[];
+  attachments: unknown;
+  audit_trail: unknown;
+} {
+  return {
+    id: event.id,
+    title: event.title,
+    type: event.type,
+    event_date: event.date,
+    location: event.location || null,
+    organizer: event.organizer || null,
+    sectors: event.sectors,
+    estimated_participants: event.estimatedParticipants,
+    description: event.description || null,
+    tags: event.tags,
+    attachments: event.attachments,
+    audit_trail: event.auditTrail,
   };
 }
 
@@ -283,4 +333,48 @@ export function summarizeInstitutionalEventsByType(events: EventRecord[]): Array
     type,
     total: counters.get(type) ?? 0,
   }));
+}
+
+export async function fetchInstitutionalEventsFromBackend(): Promise<EventRecord[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("institutional_events")
+      .select("*")
+      .order("event_date", { ascending: false });
+
+    if (error || !data) return null;
+
+    const normalized = data
+      .map((row) => normalizeRemoteRecord(row))
+      .filter((item): item is EventRecord => item !== null);
+
+    return sortByDateDesc(normalized);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveInstitutionalEventToBackend(event: EventRecord): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("institutional_events")
+      .upsert(toRemotePayload(event), { onConflict: "id" });
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteInstitutionalEventFromBackend(eventId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("institutional_events")
+      .delete()
+      .eq("id", eventId);
+
+    return !error;
+  } catch {
+    return false;
+  }
 }

@@ -239,7 +239,7 @@ export function EventFormModal({
           </div>
 
           <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-            TODO: persistir eventos/tags/anexos no backend para trilha de auditoria centralizada.
+            Sincronizacao de evento/tags/auditoria em Supabase ativa. TODO: mover anexos para bucket (Storage) em vez de URL local.
           </div>
 
           <div className="flex justify-end gap-2">

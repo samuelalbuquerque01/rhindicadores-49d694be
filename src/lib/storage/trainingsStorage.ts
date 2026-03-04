@@ -7,9 +7,12 @@ import {
 } from "@/lib/analytics/audit";
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage/localStorage";
 import type { LocalAttachment } from "@/lib/storage/eventsStorage";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
 const STORAGE_KEY = "rh-trainings-extra-v2";
 const STORAGE_EVENT = "rh-trainings-extra-updated";
+type TrainingExtraRow = Tables<"training_extras">;
 
 export interface TrainingExtraData {
   trainingId: string;
@@ -97,6 +100,32 @@ function normalizeTrainingExtra(input: Partial<SerializedTrainingExtraData>): Tr
   };
 }
 
+function normalizeRemoteTrainingExtra(row: TrainingExtraRow): TrainingExtraData | null {
+  return normalizeTrainingExtra({
+    trainingId: row.training_id,
+    tags: row.tags,
+    attachments: row.attachments as unknown as LocalAttachment[],
+    auditTrail: row.audit_trail as unknown as AuditTrailData,
+    snapshot: row.snapshot as TrainingExtraData["snapshot"],
+  });
+}
+
+function toRemotePayload(item: TrainingExtraData): {
+  training_id: string;
+  tags: string[];
+  attachments: unknown;
+  audit_trail: unknown;
+  snapshot: unknown;
+} {
+  return {
+    training_id: item.trainingId,
+    tags: item.tags,
+    attachments: item.attachments,
+    audit_trail: item.auditTrail,
+    snapshot: item.snapshot,
+  };
+}
+
 export function createFallbackAttachmentId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -123,6 +152,34 @@ export function persistTrainingsExtra(items: TrainingExtraData[]): void {
   }
 }
 
+export async function fetchTrainingsExtraFromBackend(): Promise<TrainingExtraData[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("training_extras")
+      .select("*");
+
+    if (error || !data) return null;
+
+    return data
+      .map((row) => normalizeRemoteTrainingExtra(row))
+      .filter((item): item is TrainingExtraData => item !== null);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveTrainingExtraToBackend(item: TrainingExtraData): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("training_extras")
+      .upsert(toRemotePayload(item), { onConflict: "training_id" });
+
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export function upsertTrainingExtra(
   trainingId: string,
   updates: Pick<TrainingExtraData, "tags" | "attachments"> & {
@@ -142,6 +199,7 @@ export function upsertTrainingExtra(
       snapshot: updates.snapshot || null,
     };
     persistTrainingsExtra([...all, created]);
+    void saveTrainingExtraToBackend(created);
     return created;
   }
 
@@ -160,6 +218,7 @@ export function upsertTrainingExtra(
   };
 
   persistTrainingsExtra(all.map((item) => (item.trainingId === trainingId ? updated : item)));
+  void saveTrainingExtraToBackend(updated);
   return updated;
 }
 

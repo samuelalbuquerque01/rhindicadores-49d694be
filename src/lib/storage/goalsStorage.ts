@@ -1,4 +1,5 @@
 import { readLocalStorage, writeLocalStorage } from "@/lib/storage/localStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface RHGoals {
   absenteeismTarget: number;
@@ -7,6 +8,7 @@ export interface RHGoals {
 }
 
 const STORAGE_KEY = "rh-dashboard-goals";
+const GOALS_SCOPE_KEY = "global";
 
 export const DEFAULT_RH_GOALS: RHGoals = {
   absenteeismTarget: 2.5,
@@ -39,4 +41,48 @@ export function persistGoals(goals: RHGoals): void {
     turnoverTarget: normalizeGoalValue(goals.turnoverTarget, DEFAULT_RH_GOALS.turnoverTarget),
     updatedAt: goals.updatedAt || new Date().toISOString(),
   });
+}
+
+export async function fetchGoalsFromBackend(): Promise<RHGoals | null> {
+  try {
+    const { data, error } = await supabase
+      .from("rh_goals")
+      .select("absenteeism_target, turnover_target, updated_at")
+      .eq("scope_key", GOALS_SCOPE_KEY)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const goals: RHGoals = {
+      absenteeismTarget: normalizeGoalValue(data.absenteeism_target, DEFAULT_RH_GOALS.absenteeismTarget),
+      turnoverTarget: normalizeGoalValue(data.turnover_target, DEFAULT_RH_GOALS.turnoverTarget),
+      updatedAt: data.updated_at || new Date().toISOString(),
+    };
+
+    persistGoals(goals);
+    return goals;
+  } catch {
+    return null;
+  }
+}
+
+export async function persistGoalsToBackend(goals: RHGoals): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("rh_goals")
+      .upsert(
+        {
+          scope_key: GOALS_SCOPE_KEY,
+          absenteeism_target: normalizeGoalValue(goals.absenteeismTarget, DEFAULT_RH_GOALS.absenteeismTarget),
+          turnover_target: normalizeGoalValue(goals.turnoverTarget, DEFAULT_RH_GOALS.turnoverTarget),
+          updated_by: "Usuario do sistema",
+          updated_at: goals.updatedAt || new Date().toISOString(),
+        },
+        { onConflict: "scope_key" },
+      );
+
+    return !error;
+  } catch {
+    return false;
+  }
 }

@@ -42,7 +42,7 @@ import { SectorComparisonTable } from "@/components/dashboard/SectorComparisonTa
 import { GoalsCard } from "@/components/dashboard/GoalsCard";
 import { StatusTrafficLight } from "@/components/dashboard/StatusTrafficLight";
 import { PeriodPreset } from "@/lib/analytics/period";
-import { readGoals, persistGoals } from "@/lib/storage/goalsStorage";
+import { fetchGoalsFromBackend, persistGoals, persistGoalsToBackend, readGoals } from "@/lib/storage/goalsStorage";
 import { useOverviewAnalytics } from "@/features/overview/useOverviewAnalytics";
 import { useSmartNotifications } from "@/hooks/useSmartNotifications";
 import { useNavigate } from "react-router-dom";
@@ -146,6 +146,22 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
     }
   }, [goals, goalsModalOpen]);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadGoals = async () => {
+      const remoteGoals = await fetchGoalsFromBackend();
+      if (!active || !remoteGoals) return;
+      setGoals(remoteGoals);
+    };
+
+    void loadGoals();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const alertsOfTheDay = useMemo(() => {
     if (alertsFilter === "unread") {
       return notifications.filter((item) => !item.read).slice(0, 5);
@@ -189,6 +205,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
     };
     setGoals(nextGoals);
     persistGoals(nextGoals);
+    void persistGoalsToBackend(nextGoals);
     setGoalsModalOpen(false);
   };
 
@@ -614,7 +631,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            TODO: quando o backend de configuracoes existir, persistir metas por filial e por usuario.
+            Metas sincronizadas no Supabase em escopo global. TODO: evoluir para metas por filial e por usuario.
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setGoalsModalOpen(false)}>

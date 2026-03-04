@@ -1,4 +1,5 @@
 import type { SmartNotification, SmartNotificationState } from "@/lib/analytics/notifications";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "rh-smart-notifications";
 const HIDDEN_STORAGE_KEY = "rh-smart-notifications-hidden";
@@ -6,6 +7,7 @@ const READ_STORAGE_KEY = "rh-smart-notifications-read";
 const EVENT_NAME = "rh-smart-notifications-updated";
 const TOMBSTONE_LIMIT = 1200;
 const READ_RETENTION_DAYS = 30;
+const STATE_USER_KEY = "system";
 
 function notificationSignature(notification: Pick<SmartNotificationState, "type" | "targetTab" | "title" | "message">): string {
   return [notification.type, notification.targetTab, notification.title, notification.message]
@@ -35,9 +37,14 @@ function dispatchNotificationUpdate(): void {
   window.dispatchEvent(new Event(EVENT_NAME));
 }
 
+function scheduleBackendSync(notifications: SmartNotificationState[]): void {
+  void syncNotificationStateToBackend(notifications);
+}
+
 function writeSmartNotifications(notifications: SmartNotificationState[]): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+  scheduleBackendSync(notifications);
   dispatchNotificationUpdate();
 }
 
@@ -144,6 +151,133 @@ function upsertReadTombstones(
   return Array.from(byId.values()).sort((left, right) => right.readAt.localeCompare(left.readAt));
 }
 
+export async function hydrateNotificationStateFromBackend(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from("smart_notification_state")
+      .select("notification_id, semantic_key, read, read_at, hidden, hidden_at")
+      .eq("user_key", STATE_USER_KEY);
+
+    if (error || !data || data.length === 0) return;
+
+    const nowIso = new Date().toISOString();
+    const existingReadTombstones = readReadTombstones();
+
+    const readById = new Map(existingReadTombstones.map((item) => [item.id, item]));
+    const readByKey = new Map(existingReadTombstones.map((item) => [item.key, item]));
+    data
+      .filter((item) => item.read)
+      .forEach((item) => {
+        const tombstone: ReadNotificationTombstone = {
+          id: item.notification_id,
+          key: item.semantic_key,
+          readAt: item.read_at || nowIso,
+        };
+        if (!readById.has(tombstone.id) && !readByKey.has(tombstone.key)) {
+          readById.set(tombstone.id, tombstone);
+          readByKey.set(tombstone.key, tombstone);
+        }
+      });
+    writeReadTombstones(
+      Array.from(readById.values()).sort((left, right) => right.readAt.localeCompare(left.readAt)),
+    );
+
+    const hiddenById = new Map(readHiddenTombstones().map((item) => [item.id, item]));
+    data
+      .filter((item) => item.hidden)
+      .forEach((item) => {
+        if (hiddenById.has(item.notification_id)) return;
+        hiddenById.set(item.notification_id, {
+          id: item.notification_id,
+          signature: item.notification_id,
+          hiddenAt: item.hidden_at || nowIso,
+        });
+      });
+    writeHiddenTombstones(
+      Array.from(hiddenById.values()).sort((left, right) => right.hiddenAt.localeCompare(left.hiddenAt)),
+    );
+
+    const local = readSmartNotifications();
+    if (local.length === 0) return;
+
+    const byId = new Map(data.map((item) => [item.notification_id, item]));
+    const bySemantic = new Map(data.map((item) => [item.semantic_key, item]));
+
+    const merged = local.map((item) => {
+      const semanticKey = notificationReadKey(item);
+      const remote = byId.get(item.id) ?? bySemantic.get(semanticKey);
+      if (!remote) return item;
+
+      return {
+        ...item,
+        read: item.read || remote.read || readById.has(item.id) || readByKey.has(semanticKey),
+        readAt: item.readAt ?? remote.read_at ?? readById.get(item.id)?.readAt ?? readByKey.get(semanticKey)?.readAt ?? null,
+        hidden: item.hidden || remote.hidden || hiddenById.has(item.id),
+      };
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    dispatchNotificationUpdate();
+  } catch {
+    // silent fallback to localStorage
+  }
+}
+
+async function syncNotificationStateToBackend(notifications: SmartNotificationState[]): Promise<void> {
+  try {
+    if (notifications.length === 0) return;
+
+    const rowsBySemantic = new Map<
+      string,
+      {
+        user_key: string;
+        notification_id: string;
+        semantic_key: string;
+        read: boolean;
+        read_at: string | null;
+        hidden: boolean;
+        hidden_at: string | null;
+        updated_at: string;
+      }
+    >();
+
+    notifications.forEach((item) => {
+      const semanticKey = notificationReadKey(item);
+      const current = rowsBySemantic.get(semanticKey);
+      const candidate = {
+        user_key: STATE_USER_KEY,
+        notification_id: item.id,
+        semantic_key: semanticKey,
+        read: item.read,
+        read_at: item.readAt,
+        hidden: item.hidden,
+        hidden_at: item.hidden ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (!current) {
+        rowsBySemantic.set(semanticKey, candidate);
+        return;
+      }
+
+      rowsBySemantic.set(semanticKey, {
+        ...candidate,
+        notification_id: current.notification_id,
+        read: current.read || candidate.read,
+        read_at: current.read_at ?? candidate.read_at,
+        hidden: current.hidden || candidate.hidden,
+        hidden_at: current.hidden_at ?? candidate.hidden_at,
+      });
+    });
+
+    await supabase
+      .from("smart_notification_state")
+      .upsert(Array.from(rowsBySemantic.values()), { onConflict: "user_key,semantic_key" });
+  } catch {
+    // silent fallback to localStorage
+  }
+}
+
 function normalizeStoredItem(item: Partial<SmartNotificationState>): SmartNotificationState | null {
   if (!item.id || !item.type || !item.message || !item.date || !item.priority || !item.targetTab) {
     return null;
@@ -200,7 +334,9 @@ export function persistSmartNotifications(notifications: SmartNotification[]): v
     const signature = notificationSignature(item);
     const readKey = notificationReadKey(item);
     const existing = previousById.get(item.id) ?? previousBySignature.get(signature);
-    const restoredRead = existing?.read ?? (readIds.has(item.id) || readKeys.has(readKey));
+    const restoredRead = Boolean(existing?.read || readIds.has(item.id) || readKeys.has(readKey));
+    const restoredHidden = Boolean(existing?.hidden || hiddenIds.has(item.id) || hiddenSignatures.has(signature));
+
     return {
       ...item,
       read: restoredRead,
@@ -209,7 +345,7 @@ export function persistSmartNotifications(notifications: SmartNotification[]): v
         ?? readAtById.get(item.id)
         ?? readAtByKey.get(readKey)
         ?? null,
-      hidden: existing?.hidden ?? (hiddenIds.has(item.id) || hiddenSignatures.has(signature)),
+      hidden: restoredHidden,
     };
   });
 

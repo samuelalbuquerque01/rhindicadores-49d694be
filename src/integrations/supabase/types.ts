@@ -337,6 +337,68 @@ export type Database = {
         }
         Relationships: []
       }
+      institutional_events: {
+        Row: {
+          attachments: Json
+          audit_trail: Json
+          created_at: string
+          description: string | null
+          estimated_participants: number | null
+          event_date: string
+          filial_id: string | null
+          id: string
+          location: string | null
+          organizer: string | null
+          sectors: string[]
+          tags: string[]
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          description?: string | null
+          estimated_participants?: number | null
+          event_date: string
+          filial_id?: string | null
+          id?: string
+          location?: string | null
+          organizer?: string | null
+          sectors?: string[]
+          tags?: string[]
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          description?: string | null
+          estimated_participants?: number | null
+          event_date?: string
+          filial_id?: string | null
+          id?: string
+          location?: string | null
+          organizer?: string | null
+          sectors?: string[]
+          tags?: string[]
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institutional_events_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lideres_formados: {
         Row: {
           colaborador_id: string | null
@@ -416,6 +478,83 @@ export type Database = {
           },
         ]
       }
+      rh_goals: {
+        Row: {
+          absenteeism_target: number
+          created_at: string
+          filial_id: string | null
+          scope_key: string
+          turnover_target: number
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          absenteeism_target?: number
+          created_at?: string
+          filial_id?: string | null
+          scope_key?: string
+          turnover_target?: number
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          absenteeism_target?: number
+          created_at?: string
+          filial_id?: string | null
+          scope_key?: string
+          turnover_target?: number
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_goals_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_notification_state: {
+        Row: {
+          created_at: string
+          hidden: boolean
+          hidden_at: string | null
+          id: string
+          notification_id: string
+          read: boolean
+          read_at: string | null
+          semantic_key: string
+          updated_at: string
+          user_key: string
+        }
+        Insert: {
+          created_at?: string
+          hidden?: boolean
+          hidden_at?: string | null
+          id?: string
+          notification_id: string
+          read?: boolean
+          read_at?: string | null
+          semantic_key: string
+          updated_at?: string
+          user_key?: string
+        }
+        Update: {
+          created_at?: string
+          hidden?: boolean
+          hidden_at?: string | null
+          id?: string
+          notification_id?: string
+          read?: boolean
+          read_at?: string | null
+          semantic_key?: string
+          updated_at?: string
+          user_key?: string
+        }
+        Relationships: []
+      }
       treinamento_participacoes: {
         Row: {
           certificado_emitido: boolean | null
@@ -456,6 +595,44 @@ export type Database = {
             foreignKeyName: "treinamento_participacoes_treinamento_id_fkey"
             columns: ["treinamento_id"]
             isOneToOne: false
+            referencedRelation: "treinamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_extras: {
+        Row: {
+          attachments: Json
+          audit_trail: Json
+          created_at: string
+          snapshot: Json | null
+          tags: string[]
+          training_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          snapshot?: Json | null
+          tags?: string[]
+          training_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          snapshot?: Json | null
+          tags?: string[]
+          training_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_extras_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: true
             referencedRelation: "treinamentos"
             referencedColumns: ["id"]
           },
