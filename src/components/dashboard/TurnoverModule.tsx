@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserMinus, TrendingDown, TrendingUp, Clock, DollarSign, AlertTriangle, Building,
+  Edit2, Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -14,11 +16,20 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TurnoverChart } from "./TurnoverChart";
 import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
 import { RankingMotivosCard } from "./RankingMotivosCard";
+import { EditDesligamentoModal } from "./EditDesligamentoModal";
 import { useTurnoverAnalytics, useSetoresDisponiveis, DesligamentoCompleto } from "@/hooks/useTurnoverAnalytics";
+import { useDeleteDesligamento } from "@/hooks/useDesligamentos";
 
 interface TurnoverModuleProps {
   filialId?: string;
@@ -30,7 +41,10 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [tipoFilter, setTipoFilter] = useState<string>("all");
   const [selectedDesligamento, setSelectedDesligamento] = useState<DesligamentoCompleto | null>(null);
+  const [editingDesligamento, setEditingDesligamento] = useState<DesligamentoCompleto | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
+  const deleteDesligamento = useDeleteDesligamento();
   const effectiveFilialId = filialId === "all" ? undefined : filialId;
 
   const { data, isLoading } = useTurnoverAnalytics({
@@ -197,6 +211,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                       <TableHead>Desligamento</TableHead>
                       <TableHead>Tempo</TableHead>
                       <TableHead className="text-right">Custo</TableHead>
+                      <TableHead className="text-center w-[100px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -217,6 +232,38 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                         <TableCell className="whitespace-nowrap">{formatTempo(d.tempo_empresa)}</TableCell>
                         <TableCell className="text-right whitespace-nowrap">
                           {d.custo_rescisao ? formatCurrency(d.custo_rescisao) : "—"}
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <TooltipProvider delayDuration={200}>
+                            <div className="flex items-center justify-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    onClick={() => setEditingDesligamento(d)}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Editar</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => setDeleting(d.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Apagar</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -244,6 +291,24 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                     {d.custo_rescisao && (
                       <p className="text-sm font-medium text-destructive">{formatCurrency(d.custo_rescisao)}</p>
                     )}
+                    <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs gap-1"
+                        onClick={() => setEditingDesligamento(d)}
+                      >
+                        <Edit2 className="h-3 w-3" /> Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs gap-1 text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleting(d.id)}
+                      >
+                        <Trash2 className="h-3 w-3" /> Apagar
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -294,6 +359,39 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Modal */}
+      <EditDesligamentoModal
+        desligamento={editingDesligamento}
+        open={!!editingDesligamento}
+        onOpenChange={(open) => !open && setEditingDesligamento(null)}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent className="bg-background">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este registro de desligamento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (deleting) {
+                  await deleteDesligamento.mutateAsync(deleting);
+                  setDeleting(null);
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
