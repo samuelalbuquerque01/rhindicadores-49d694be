@@ -35,8 +35,8 @@ export function generateChartNarrative(
 ): string[] {
   if (series.length === 0) {
     return [
-      `No data for ${options.metricLabel.toLowerCase()} in the selected period.`,
-      "Keep collecting data to unlock automatic trend explanations.",
+      `Sem dados de ${options.metricLabel.toLowerCase()} no periodo selecionado.`,
+      "Continue registrando dados para gerar explicacoes automaticas mais completas.",
     ];
   }
 
@@ -48,12 +48,12 @@ export function generateChartNarrative(
 
   const trendText =
     trend === "up"
-      ? `${options.metricLabel} is trending up (${variation.toFixed(1)}% vs period start).`
+      ? `${options.metricLabel} esta em alta (${variation.toFixed(1)}% desde o inicio do periodo).`
       : trend === "down"
-        ? `${options.metricLabel} is trending down (${Math.abs(variation).toFixed(1)}% vs period start).`
-        : `${options.metricLabel} is stable across the selected period.`;
+        ? `${options.metricLabel} esta em queda (${Math.abs(variation).toFixed(1)}% desde o inicio do periodo).`
+        : `${options.metricLabel} permaneceu estavel no periodo selecionado.`;
 
-  let largestJumpText = "No significant month-to-month jumps were detected.";
+  let largestJumpText = "Nao houve saltos relevantes entre meses consecutivos.";
 
   if (series.length >= 2) {
     let maxDelta = 0;
@@ -69,22 +69,22 @@ export function generateChartNarrative(
 
     const from = series[maxIndex - 1];
     const to = series[maxIndex];
-    largestJumpText = `Largest change happened from ${from.label} to ${to.label} (${from.value.toFixed(1)} to ${to.value.toFixed(1)}).`;
+    largestJumpText = `Maior variacao de ${from.label} para ${to.label} (${from.value.toFixed(1)} para ${to.value.toFixed(1)}).`;
   }
 
   const driverText = options.topDrivers && options.topDrivers.length > 0
-    ? `${options.driverLabel ?? "Main drivers"}: ${options.topDrivers
+    ? `${options.driverLabel ?? "Principais vetores"}: ${options.topDrivers
         .slice(0, 2)
         .map((driver) => `${driver.label} (${driver.value.toFixed(1)})`)
         .join(", ")}.`
-    : "No sector concentration identified from available data.";
+    : "Nao houve concentracao setorial relevante com os dados disponiveis.";
 
   const recommendation =
     trend === "up"
-      ? `Recommendation: investigate the latest spike and validate mitigation actions by sector.`
+      ? "Recomendacao: investigar o pico mais recente e validar plano de acao por setor."
       : trend === "down"
-        ? `Recommendation: sustain current practices and monitor for rebound in the next cycle.`
-        : `Recommendation: monitor outliers and focus on departments above average.`;
+        ? "Recomendacao: manter as praticas atuais e monitorar possivel retomada no proximo ciclo."
+        : "Recomendacao: acompanhar outliers e focar nos setores acima da media.";
 
   return [trendText, largestJumpText, driverText, recommendation];
 }

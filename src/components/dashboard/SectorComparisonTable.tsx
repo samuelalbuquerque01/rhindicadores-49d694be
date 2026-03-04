@@ -61,11 +61,11 @@ export function SectorComparisonTable({ rows }: SectorComparisonTableProps) {
     <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Sector comparison</h3>
-          <p className="text-sm text-muted-foreground">Benchmark by absenteeism, turnover and dismissals</p>
+          <h3 className="text-base font-semibold text-foreground">Comparacao entre setores</h3>
+          <p className="text-sm text-muted-foreground">Comparativo de absenteismo, turnover e desligamentos</p>
         </div>
         <Input
-          placeholder="Filter by sector"
+          placeholder="Filtrar por setor"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="sm:w-64"
@@ -74,31 +74,31 @@ export function SectorComparisonTable({ rows }: SectorComparisonTableProps) {
 
       {filteredRows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground text-center">
-          No sectors found for this filter.
+          Nenhum setor encontrado para este filtro.
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <SortableHeader label="Sector" active={sortBy === "sector"} onClick={() => toggleSort("sector")} />
+                <SortableHeader label="Setor" active={sortBy === "sector"} onClick={() => toggleSort("sector")} />
                 <SortableHeader
-                  label="Absence days"
+                  label="Dias de afastamento"
                   active={sortBy === "absenteeismDays"}
                   onClick={() => toggleSort("absenteeismDays")}
                 />
                 <SortableHeader
-                  label="Absence rate"
+                  label="Taxa de absenteismo"
                   active={sortBy === "absenteeismRate"}
                   onClick={() => toggleSort("absenteeismRate")}
                 />
                 <SortableHeader
-                  label="Turnover rate"
+                  label="Taxa de turnover"
                   active={sortBy === "turnoverRate"}
                   onClick={() => toggleSort("turnoverRate")}
                 />
                 <SortableHeader
-                  label="Dismissals"
+                  label="Desligamentos"
                   active={sortBy === "dismissals"}
                   onClick={() => toggleSort("dismissals")}
                 />

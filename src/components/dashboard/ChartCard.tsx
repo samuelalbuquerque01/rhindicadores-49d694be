@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+﻿import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -21,13 +21,13 @@ export function ChartCard({
   action,
   loading = false,
   isEmpty = false,
-  emptyMessage = "No data for this chart in the selected period.",
+  emptyMessage = "Sem dados para este grafico no periodo selecionado.",
 }: ChartCardProps) {
   return (
     <div
       className={cn(
         "bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-4 sm:p-6 animate-fade-in min-w-0 overflow-hidden",
-        className
+        className,
       )}
     >
       <div className="flex items-start justify-between mb-4 sm:mb-6 gap-2">

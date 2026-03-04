@@ -48,7 +48,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `contract-${index}-${item.employeeName}`,
       type: "contract",
-      message: `${item.employeeName} has a contract ending in ${item.daysLeft} day(s).`,
+      message: `${item.employeeName} tem contrato encerrando em ${item.daysLeft} dia(s).`,
       date: isoDate,
       urgencyLabel: `D-${item.daysLeft}`,
       priority: item.daysLeft <= 7 ? "high" : "medium",
@@ -60,7 +60,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `vac-${index}-${item.employeeName}`,
       type: "vacation",
-      message: `Vacation for ${item.employeeName} starts in ${item.daysLeft} day(s).`,
+      message: `Ferias de ${item.employeeName} com inicio em ${item.daysLeft} dia(s).`,
       date: isoDate,
       urgencyLabel: `D-${item.daysLeft}`,
       priority: item.daysLeft <= 7 ? "high" : "low",
@@ -72,9 +72,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `medical-${index}-${item.employeeName}`,
       type: "medical",
-      message: `${item.employeeName} has ${item.certificates} medical certificates this month.`,
+      message: `${item.employeeName} possui ${item.certificates} atestados medicos no mes.`,
       date: isoDate,
-      urgencyLabel: "This month",
+      urgencyLabel: "Mes atual",
       priority: item.certificates >= 4 ? "high" : "medium",
       targetTab: "absenteismo",
     });
@@ -84,9 +84,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `abs-inc-${index}-${item.sector}`,
       type: "absenteeism",
-      message: `${item.sector} absenteeism increased ${item.variation.toFixed(1)}% vs previous period.`,
+      message: `${item.sector} aumentou o absenteismo em ${item.variation.toFixed(1)}% vs periodo anterior.`,
       date: isoDate,
-      urgencyLabel: "Period comparison",
+      urgencyLabel: "Comparacao de periodo",
       priority: toPriority(item.variation),
       targetTab: "absenteismo",
     });
@@ -96,9 +96,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `turn-inc-${index}-${item.sector}`,
       type: "turnover",
-      message: `${item.sector} turnover increased ${item.variation.toFixed(1)}% vs previous period.`,
+      message: `${item.sector} aumentou o turnover em ${item.variation.toFixed(1)}% vs periodo anterior.`,
       date: isoDate,
-      urgencyLabel: "Period comparison",
+      urgencyLabel: "Comparacao de periodo",
       priority: toPriority(item.variation),
       targetTab: "turnover",
     });
@@ -108,9 +108,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `anomaly-${index}-${item.key}`,
       type: "anomaly",
-      message: `Anomaly detected in ${item.label} with value ${item.value.toFixed(1)}.`,
+      message: `Anomalia detectada em ${item.label} com valor ${item.value.toFixed(1)}.`,
       date: isoDate,
-      urgencyLabel: "Anomaly",
+      urgencyLabel: "Anomalia",
       priority: item.score >= 2.5 ? "high" : "medium",
       targetTab: "geral",
     });
@@ -120,9 +120,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `forecast-turnover-${data.turnoverRiskHigh.sector}`,
       type: "forecast",
-      message: `Forecast indicates high turnover risk in ${data.turnoverRiskHigh.sector} (${data.turnoverRiskHigh.projected.toFixed(1)} projected).`,
+      message: `Previsao indica alto risco de turnover em ${data.turnoverRiskHigh.sector} (${data.turnoverRiskHigh.projected.toFixed(1)} projetado).`,
       date: isoDate,
-      urgencyLabel: "3-month forecast",
+      urgencyLabel: "Previsao 3 meses",
       priority: "high",
       targetTab: "turnover",
     });
@@ -132,9 +132,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `forecast-abs-${data.absenteeismRiskHigh.sector}`,
       type: "forecast",
-      message: `Forecast indicates absenteeism risk in ${data.absenteeismRiskHigh.sector} (${data.absenteeismRiskHigh.projected.toFixed(1)} projected days).`,
+      message: `Previsao indica risco de absenteismo em ${data.absenteeismRiskHigh.sector} (${data.absenteeismRiskHigh.projected.toFixed(1)} dias projetados).`,
       date: isoDate,
-      urgencyLabel: "3-month forecast",
+      urgencyLabel: "Previsao 3 meses",
       priority: "high",
       targetTab: "absenteismo",
     });

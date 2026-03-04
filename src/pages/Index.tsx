@@ -89,7 +89,7 @@ const Index = () => {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Dashboard de RH</h1>
-            <p className="text-muted-foreground mt-1">Indicadores e mÃ©tricas do Departamento Pessoal</p>
+            <p className="text-muted-foreground mt-1">Indicadores e metricas do Departamento Pessoal</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <FilialSelector value={selectedFilial} onValueChange={setSelectedFilial} />
@@ -109,14 +109,14 @@ const Index = () => {
           <StatCard
             title="Taxa de Turnover"
             value={`${turnoverStats?.turnoverPercentual || 0}%`}
-            subtitle="Ãšltimos 12 meses"
+            subtitle="Ultimos 12 meses"
             icon={<UserMinus className="h-6 w-6" />}
             variant="success"
           />
           <StatCard
-            title="AbsenteÃ­smo"
+            title="Absenteismo"
             value={`${absenteismoStats?.taxaAbsenteismo || 0}%`}
-            subtitle="Taxa de ausÃªncias (30 dias)"
+            subtitle="Taxa de ausencias (30 dias)"
             icon={<Clock className="h-6 w-6" />}
             variant="warning"
           />
@@ -130,21 +130,21 @@ const Index = () => {
             icon={<GraduationCap className="h-5 w-5" />}
           />
           <StatCard
-            title="Novas ContrataÃ§Ãµes"
+            title="Novas Contratacoes"
             value={contratacaoStats?.novasContratacoes || 0}
-            subtitle="Este mÃªs"
+            subtitle="Este mes"
             icon={<TrendingUp className="h-5 w-5" />}
           />
           <StatCard
-            title="LÃ­deres"
+            title="Lideres"
             value={colaboradoresStats?.lideres || 0}
             subtitle="Formados pela empresa"
             icon={<Briefcase className="h-5 w-5" />}
           />
           <StatCard
-            title="CLT PrÃ³prios"
+            title="CLT Proprios"
             value={(colaboradoresStats?.porTipo.administrativo || 0) + (colaboradoresStats?.porTipo.corpoClinico || 0)}
-            subtitle="Admin + Corpo ClÃ­nico"
+            subtitle="Admin + Corpo Clinico"
             icon={<Building className="h-5 w-5" />}
           />
         </div>
@@ -152,14 +152,14 @@ const Index = () => {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="colaboradores">CLT</TabsTrigger>
-            <TabsTrigger value="estagiarios">EstagiÃ¡rios</TabsTrigger>
+            <TabsTrigger value="estagiarios">Estagiarios</TabsTrigger>
             <TabsTrigger value="pj">PJ</TabsTrigger>
-            <TabsTrigger value="participacao">ParticipaÃ§Ã£o</TabsTrigger>
-            <TabsTrigger value="geral">VisÃ£o Geral</TabsTrigger>
+            <TabsTrigger value="participacao">Participacao</TabsTrigger>
+            <TabsTrigger value="geral">Visao Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="eventos">Eventos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
-            <TabsTrigger value="absenteismo">AbsenteÃ­smo</TabsTrigger>
+            <TabsTrigger value="absenteismo">Absenteismo</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
@@ -168,7 +168,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="estagiarios" className="space-y-6">
-            <ColaboradoresList filialId={selectedFilial} tipoFilter="EstagiÃ¡rio" />
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="Estagiario" />
           </TabsContent>
 
           <TabsContent value="pj" className="space-y-6">
@@ -226,7 +226,7 @@ const Index = () => {
       <footer className="border-t border-border/50 mt-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-muted-foreground">
-            Â© 2024 RH Analytics. Sistema de GestÃ£o de Recursos Humanos.
+            © 2024 RH Analytics. Sistema de Gestao de Recursos Humanos.
           </p>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+﻿import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TurnoverAnalytics {
@@ -55,9 +55,9 @@ export function useTurnoverAnalytics(filters: Filters) {
         custo_rescisao: d.custo_rescisao,
         observacoes: d.observacoes,
         created_at: d.created_at,
-        nome: d.colaborador?.nome || "—",
-        cargo: d.colaborador?.cargo || "—",
-        departamento: d.colaborador?.departamento || "—",
+        nome: d.colaborador?.nome || "-",
+        cargo: d.colaborador?.cargo || "-",
+        departamento: d.colaborador?.departamento || "-",
         data_admissao: d.colaborador?.data_admissao || "",
         filial_id: d.colaborador?.filial_id,
         tempo_empresa: 0,
@@ -118,7 +118,7 @@ export function useTurnoverAnalytics(filters: Filters) {
         porSetor[i.departamento] = (porSetor[i.departamento] || 0) + 1;
       });
       const setorMaiorTurnover = Object.entries(porSetor)
-        .sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
 
       // Clean items for return
       const desligamentos: DesligamentoCompleto[] = items.map(({ filial_id, ...rest }: any) => rest);
@@ -151,3 +151,4 @@ export function useSetoresDisponiveis() {
     },
   });
 }
+

@@ -160,8 +160,8 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
   });
 
   const tiposAfastamento = [
-    "Atestado mÃ©dico", "Banco de horas", "FÃ©rias",
-    "LicenÃ§a maternidade", "LicenÃ§a paternidade", "Outro",
+    "Atestado m\u00e9dico", "Banco de horas", "F\u00e9rias",
+    "Licen\u00e7a maternidade", "Licen\u00e7a paternidade", "Outro",
   ];
 
   const rankingReasons = useMemo<RankingItemData[]>(() => {
@@ -232,19 +232,19 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
           />
           <KpiCard
             icon={<TrendingDown className="h-5 w-5" />}
-            label="Taxa de AbsenteÃ­smo"
+            label="Taxa de Absenteismo"
             value={`${data?.taxaAbsenteismo || 0}%`}
             color="text-warning"
           />
           <KpiCard
             icon={<BarChart3 className="h-5 w-5" />}
-            label="MÃ©dia Dias/Colaborador"
+            label="Media Dias/Colaborador"
             value={data?.mediaDiasPorColab || 0}
             color="text-primary"
           />
           <KpiCard
             icon={<Building className="h-5 w-5" />}
-            label="Setor Maior AbsenteÃ­smo"
+            label="Setor Maior Absenteismo"
             value={data?.setorMaiorAbsenteismo || "â€”"}
             color="text-muted-foreground"
           />
@@ -289,7 +289,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-base">Afastamentos do PerÃ­odo</CardTitle>
+            <CardTitle className="text-base">Afastamentos do Periodo</CardTitle>
             <AfastamentoForm />
           </div>
         </CardHeader>
@@ -297,7 +297,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <Select value={mesFilter} onValueChange={setMesFilter}>
               <SelectTrigger className="w-full sm:w-52 bg-background">
-                <SelectValue placeholder="MÃªs" />
+                <SelectValue placeholder="Mes" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os meses</SelectItem>
@@ -345,11 +345,11 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                       <TableHead>Cargo</TableHead>
                       <TableHead>Setor</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>InÃ­cio</TableHead>
+                      <TableHead>Inicio</TableHead>
                       <TableHead>Retorno</TableHead>
                       <TableHead className="text-right">Dias</TableHead>
                       <TableHead>Anexo</TableHead>
-                      <TableHead className="text-right">AÃ§Ãµes</TableHead>
+                      <TableHead className="text-right">Acoes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -449,13 +449,13 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                 <Info label="Cargo" value={selected.cargo} />
                 <Info label="Setor" value={selected.departamento} />
                 <Info label="Tipo" value={selected.tipo} />
-                <Info label="Data InÃ­cio" value={formatDate(selected.data_inicio)} />
+                <Info label="Data Inicio" value={formatDate(selected.data_inicio)} />
                 <Info label="Data Retorno" value={formatDate(selected.data_fim)} />
                 <Info label="Total de Dias" value={`${selected.dias_afastados} dias`} />
               </div>
               {selected.observacoes && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">ObservaÃ§Ãµes</p>
+                  <p className="text-xs text-muted-foreground mb-1">Observacoes</p>
                   <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3 whitespace-pre-wrap">{selected.observacoes}</p>
                 </div>
               )}
@@ -539,7 +539,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta aÃ§Ã£o nÃ£o pode ser desfeita. O registro serÃ¡ removido permanentemente.
+              Esta acao nao pode ser desfeita. O registro sera removido permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -614,4 +614,5 @@ function Info({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
 

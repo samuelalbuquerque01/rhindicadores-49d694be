@@ -11,11 +11,11 @@ interface HeatmapChartProps {
   data: HeatmapData;
 }
 
-export function HeatmapChart({ title = "Absenteeism Heatmap", data }: HeatmapChartProps) {
+export function HeatmapChart({ title = "Heatmap de Absenteismo", data }: HeatmapChartProps) {
   if (data.sectors.length === 0 || data.months.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground text-center">
-        No absenteeism data to build heatmap for this period.
+        Sem dados de absenteismo para montar o heatmap neste periodo.
       </div>
     );
   }
@@ -25,9 +25,9 @@ export function HeatmapChart({ title = "Absenteeism Heatmap", data }: HeatmapCha
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-foreground">{title}</h3>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300" />Low</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-300" />Medium</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-300" />High</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300" />Baixo</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-300" />Medio</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-300" />Alto</span>
         </div>
       </div>
 
@@ -37,7 +37,7 @@ export function HeatmapChart({ title = "Absenteeism Heatmap", data }: HeatmapCha
             className="grid gap-2"
             style={{ gridTemplateColumns: `160px repeat(${data.months.length}, minmax(88px, 1fr))` }}
           >
-            <div className="text-xs font-medium text-muted-foreground p-2">Sector</div>
+            <div className="text-xs font-medium text-muted-foreground p-2">Setor</div>
             {data.months.map((month) => (
               <div key={month.key} className="text-xs font-medium text-muted-foreground p-2 text-center">
                 {month.label}
@@ -79,7 +79,7 @@ function HeatmapRow({ sector, data }: { sector: string; data: HeatmapData }) {
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-xs">
-                  {sector} | {month.label}: {value.toFixed(0)} day(s)
+                  {sector} | {month.label}: {value.toFixed(0)} dia(s)
                 </p>
               </TooltipContent>
             </Tooltip>

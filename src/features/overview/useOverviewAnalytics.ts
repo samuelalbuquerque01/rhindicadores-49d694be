@@ -192,43 +192,43 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
     const metrics: OverviewMetric[] = [
       {
         id: "employees",
-        label: "Total employees",
-        value: activeEmployees.length.toLocaleString("en-US"),
+        label: "Total de colaboradores",
+        value: activeEmployees.length.toLocaleString("pt-BR"),
         comparison: toComparison(activeEmployees.length, Math.max(1, activeEmployees.length - dismissalCountPrevious)),
         direction: "higher-better",
-        tooltip: "Current active employees in selected branch.",
+        tooltip: "Total de colaboradores ativos na filial selecionada.",
       },
       {
         id: "absenteeism-rate",
-        label: "Absenteeism rate",
+        label: "Taxa de absenteismo",
         value: `${absenteeismRateCurrent.toFixed(2)}%`,
         comparison: toComparison(absenteeismRateCurrent, absenteeismRatePrevious),
         direction: "lower-better",
-        tooltip: "Absence days divided by available workdays (22 days/month per active employee).",
+        tooltip: "Dias de afastamento divididos pelos dias uteis disponiveis (22 dias/mes por colaborador ativo).",
       },
       {
         id: "turnover-rate",
-        label: "Turnover rate",
+        label: "Taxa de turnover",
         value: `${turnoverRateCurrent.toFixed(2)}%`,
         comparison: toComparison(turnoverRateCurrent, turnoverRatePrevious),
         direction: "lower-better",
-        tooltip: "Dismissals over active headcount proxy for selected period.",
+        tooltip: "Desligamentos sobre base ativa aproximada no periodo selecionado.",
       },
       {
         id: "dismissals",
-        label: "Total dismissals",
-        value: dismissalCountCurrent.toLocaleString("en-US"),
+        label: "Total de desligamentos",
+        value: dismissalCountCurrent.toLocaleString("pt-BR"),
         comparison: toComparison(dismissalCountCurrent, dismissalCountPrevious),
         direction: "lower-better",
-        tooltip: "Number of dismissals registered in selected period.",
+        tooltip: "Numero de desligamentos registrados no periodo selecionado.",
       },
       {
         id: "absences",
-        label: "Total absences",
-        value: absCurrent.length.toLocaleString("en-US"),
+        label: "Total de afastamentos",
+        value: absCurrent.length.toLocaleString("pt-BR"),
         comparison: toComparison(absCurrent.length, absPrevious.length),
         direction: "lower-better",
-        tooltip: "Count of absence records registered in selected period.",
+        tooltip: "Quantidade de registros de afastamento no periodo selecionado.",
       },
     ];
 
@@ -286,13 +286,13 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
 
     const absBySectorMap = new Map<string, number>();
     absCurrent.forEach((afastamento) => {
-      const sector = afastamento.colaborador?.departamento || "Unassigned";
+      const sector = afastamento.colaborador?.departamento || "Sem setor";
       absBySectorMap.set(sector, (absBySectorMap.get(sector) ?? 0) + (afastamento.dias_afastados || 0));
     });
 
     const dismissalsBySectorMap = new Map<string, number>();
     dismissalsCurrent.forEach((desligamento) => {
-      const sector = desligamento.colaborador?.departamento || "Unassigned";
+      const sector = desligamento.colaborador?.departamento || "Sem setor";
       dismissalsBySectorMap.set(sector, (dismissalsBySectorMap.get(sector) ?? 0) + 1);
     });
 
@@ -307,12 +307,12 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       .slice(0, 10);
 
     const sectors = Array.from(
-      new Set(activeEmployees.map((employee) => employee.departamento || "Unassigned")),
+      new Set(activeEmployees.map((employee) => employee.departamento || "Sem setor")),
     ).sort((a, b) => a.localeCompare(b));
 
     const heatmap = buildHeatmapData(
       absCurrent.map((afastamento) => ({
-        sector: afastamento.colaborador?.departamento || "Unassigned",
+        sector: afastamento.colaborador?.departamento || "Sem setor",
         date: toDate(afastamento.data_inicio) ?? new Date(),
         days: afastamento.dias_afastados || 0,
       })),
@@ -330,7 +330,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
 
     const topAbsenceReasonMap = new Map<string, number>();
     absCurrent.forEach((afastamento) => {
-      const reason = afastamento.tipo || "Other";
+      const reason = afastamento.tipo || "Outro";
       topAbsenceReasonMap.set(reason, (topAbsenceReasonMap.get(reason) ?? 0) + (afastamento.dias_afastados || 0));
     });
 
@@ -397,13 +397,13 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
 
     const sectorCurrentAbs = new Map<string, number>();
     absCurrent.forEach((item) => {
-      const sector = item.colaborador?.departamento || "Unassigned";
+      const sector = item.colaborador?.departamento || "Sem setor";
       sectorCurrentAbs.set(sector, (sectorCurrentAbs.get(sector) ?? 0) + (item.dias_afastados || 0));
     });
 
     const sectorPreviousAbs = new Map<string, number>();
     absPrevious.forEach((item) => {
-      const sector = item.colaborador?.departamento || "Unassigned";
+      const sector = item.colaborador?.departamento || "Sem setor";
       sectorPreviousAbs.set(sector, (sectorPreviousAbs.get(sector) ?? 0) + (item.dias_afastados || 0));
     });
 
@@ -421,13 +421,13 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
 
     const sectorCurrentTurn = new Map<string, number>();
     dismissalsCurrent.forEach((item) => {
-      const sector = item.colaborador?.departamento || "Unassigned";
+      const sector = item.colaborador?.departamento || "Sem setor";
       sectorCurrentTurn.set(sector, (sectorCurrentTurn.get(sector) ?? 0) + 1);
     });
 
     const sectorPreviousTurn = new Map<string, number>();
     dismissalsPrevious.forEach((item) => {
-      const sector = item.colaborador?.departamento || "Unassigned";
+      const sector = item.colaborador?.departamento || "Sem setor";
       sectorPreviousTurn.set(sector, (sectorPreviousTurn.get(sector) ?? 0) + 1);
     });
 
@@ -458,7 +458,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
     const vacationsSoon = afastamentos
       .filter((afastamento) => (afastamento.tipo || "").toLowerCase().includes("fer"))
       .map((afastamento) => ({
-        employeeName: afastamento.colaborador?.nome || "Employee",
+        employeeName: afastamento.colaborador?.nome || "Colaborador",
         startDate: toDate(afastamento.data_inicio),
       }))
       .filter((item) => item.startDate)
@@ -472,7 +472,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
     const employeeNames = employeeNameMap(colaboradores);
     const currentMonth = format(now, "yyyy-MM");
 
-    const medicalCountByEmployee = new Map<string, number>();
+    const medicalCountByColaborador = new Map<string, number>();
     afastamentos
       .filter((afastamento) => {
         const date = toDate(afastamento.data_inicio);
@@ -482,12 +482,12 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       .filter((afastamento) => (afastamento.tipo || "").toLowerCase().includes("atestado"))
       .forEach((afastamento) => {
         const employeeId = afastamento.colaborador_id || "unknown";
-        medicalCountByEmployee.set(employeeId, (medicalCountByEmployee.get(employeeId) ?? 0) + 1);
+        medicalCountByColaborador.set(employeeId, (medicalCountByColaborador.get(employeeId) ?? 0) + 1);
       });
 
-    const medicalCertificates = Array.from(medicalCountByEmployee.entries())
+    const medicalCertificates = Array.from(medicalCountByColaborador.entries())
       .map(([employeeId, certificates]) => ({
-        employeeName: employeeNames.get(employeeId) ?? "Employee",
+        employeeName: employeeNames.get(employeeId) ?? "Colaborador",
         certificates,
       }))
       .filter((item) => item.certificates >= 3);
@@ -515,8 +515,8 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       absenteeism: generateChartNarrative(
         absenteeismMonthly.map((point) => ({ label: point.label, value: point.value })),
         {
-          metricLabel: "Absenteeism",
-          driverLabel: "Sectors with most lost days",
+          metricLabel: "Absenteismo",
+          driverLabel: "Setores com mais dias perdidos",
           topDrivers: absencesBySector.slice(0, 2).map((item) => ({ label: item.sector, value: item.value })),
         },
       ),
@@ -524,20 +524,20 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
         turnoverMonthly.map((point) => ({ label: point.label, value: point.value })),
         {
           metricLabel: "Turnover",
-          driverLabel: "Sectors with most dismissals",
+          driverLabel: "Setores com mais desligamentos",
           topDrivers: dismissalsBySector.slice(0, 2).map((item) => ({ label: item.sector, value: item.value })),
         },
       ),
       dismissalsBySector: generateChartNarrative(
         dismissalsBySector.map((point) => ({ label: point.sector, value: point.value })),
         {
-          metricLabel: "Dismissals by sector",
+          metricLabel: "Desligamentos por setor",
         },
       ),
       absencesBySector: generateChartNarrative(
         absencesBySector.map((point) => ({ label: point.sector, value: point.value })),
         {
-          metricLabel: "Absences by sector",
+          metricLabel: "Afastamentos por setor",
         },
       ),
     };
@@ -561,7 +561,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
             turnoverForecast.predictions.reduce((sum, value) => sum + value, 0).toFixed(1),
           ),
           confidence: turnoverForecast.confidence,
-          riskSector: topTurnoverSector?.sector ?? "No data",
+          riskSector: topTurnoverSector?.sector ?? "Sem dados",
           points: turnoverProjectionPoints,
         },
         absenteeism: {
@@ -570,7 +570,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
             absenteeismForecast.predictions.reduce((sum, value) => sum + value, 0).toFixed(1),
           ),
           confidence: absenteeismForecast.confidence,
-          riskSector: topAbsenteeismSector?.sector ?? "No data",
+          riskSector: topAbsenteeismSector?.sector ?? "Sem dados",
           points: absenteeismProjectionPoints,
         },
       },
@@ -584,3 +584,4 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
     error,
   };
 }
+

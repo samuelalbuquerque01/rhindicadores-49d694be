@@ -10,7 +10,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   if (insights.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        No insights for this period. Try expanding the date range.
+        Sem insights para este periodo. Tente ampliar o intervalo.
       </div>
     );
   }
@@ -18,8 +18,8 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   return (
     <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-4">
       <div>
-        <h3 className="text-base font-semibold text-foreground">HR Insights</h3>
-        <p className="text-sm text-muted-foreground">Automatic analysis based on selected period data</p>
+        <h3 className="text-base font-semibold text-foreground">Insights de RH</h3>
+        <p className="text-sm text-muted-foreground">Analise automatica baseada nos dados do periodo</p>
       </div>
       <div className="space-y-3">
         {insights.map((insight) => (

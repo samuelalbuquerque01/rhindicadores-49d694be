@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -60,14 +61,14 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[360px] p-0">
         <div className="border-b border-border p-3">
-          <h4 className="text-sm font-semibold text-foreground">Smart notifications</h4>
-          <p className="text-xs text-muted-foreground">Generated from current HR analytics data</p>
+          <h4 className="text-sm font-semibold text-foreground">Notificacoes inteligentes</h4>
+          <p className="text-xs text-muted-foreground">Geradas automaticamente a partir dos dados de RH</p>
         </div>
 
         <ScrollArea className="max-h-[420px]">
           {notifications.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              No alerts right now.
+              Nenhum alerta no momento.
             </div>
           ) : (
             <div className="divide-y divide-border/70">
@@ -86,10 +87,10 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
                       <p className="text-sm text-foreground leading-snug">{notification.message}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(parseISO(notification.date), { addSuffix: true })}
+                          {formatDistanceToNow(parseISO(notification.date), { addSuffix: true, locale: ptBR })}
                         </span>
                         <Badge variant="outline" className="text-[10px] capitalize">
-                          {notification.priority}
+                          {notification.priority === "high" ? "alta" : notification.priority === "medium" ? "media" : "baixa"}
                         </Badge>
                       </div>
                     </div>
@@ -97,7 +98,7 @@ export function NotificationPanel({ notifications }: NotificationPanelProps) {
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs text-muted-foreground">{notification.urgencyLabel}</span>
                     <Button size="sm" variant="outline" onClick={() => goToDetails(notification.targetTab)}>
-                      View details
+                      Ver detalhes
                     </Button>
                   </div>
                 </div>

@@ -33,14 +33,14 @@ export function PredictionCard({
       ? <TrendingDown className="h-4 w-4" />
       : <Minus className="h-4 w-4" />;
 
-  const trendLabel = trend === "up" ? "Rising" : trend === "down" ? "Falling" : "Stable";
+  const trendLabel = trend === "up" ? "Em alta" : trend === "down" ? "Em queda" : "Estavel";
 
   return (
     <div className="bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-6 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-base font-semibold text-foreground">{title}</h3>
-          <p className="text-sm text-muted-foreground">Next 3 months projection</p>
+          <p className="text-sm text-muted-foreground">Projecao para os proximos 3 meses</p>
         </div>
         <div className="inline-flex items-center gap-1 text-sm font-medium text-primary">
           {trendIcon}
@@ -49,9 +49,9 @@ export function PredictionCard({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <InfoTile label="Projected" value={projectedTotal.toFixed(1)} />
-        <InfoTile label="Confidence" value={`${confidence}%`} />
-        <InfoTile label="Highest risk sector" value={riskSector} />
+        <InfoTile label="Projecao" value={projectedTotal.toFixed(1)} />
+        <InfoTile label="Confianca" value={`${confidence}%`} />
+        <InfoTile label="Setor de maior risco" value={riskSector} />
       </div>
 
       <div className="h-[230px] w-full">
@@ -67,7 +67,7 @@ export function PredictionCard({
               stroke="#0f766e"
               strokeWidth={2}
               dot={{ r: 3 }}
-              name="Historical"
+              name="Historico"
             />
             <Line
               type="monotone"
@@ -76,7 +76,7 @@ export function PredictionCard({
               strokeWidth={2}
               strokeDasharray="6 3"
               dot={{ r: 3 }}
-              name="Projected"
+              name="Projetado"
             />
           </LineChart>
         </ResponsiveContainer>

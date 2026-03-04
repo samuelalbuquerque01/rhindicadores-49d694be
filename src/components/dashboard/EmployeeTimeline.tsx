@@ -33,6 +33,14 @@ function parseDate(date: string): Date | null {
   return parsed;
 }
 
+function typeLabel(type: EmployeeTimelineEvent["type"]): string {
+  if (type === "hire") return "Contratacao";
+  if (type === "absence") return "Afastamento";
+  if (type === "vacation") return "Ferias";
+  if (type === "promotion") return "Promocao";
+  return "Desligamento";
+}
+
 export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
   const [search, setSearch] = useState("");
   const [sectorFilter, setSectorFilter] = useState("all");
@@ -84,22 +92,22 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
       <div className="bg-white rounded-xl border border-border shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-base font-semibold text-foreground">Employee timeline filters</h3>
+          <h3 className="text-base font-semibold text-foreground">Filtros da timeline</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Input
-            placeholder="Search employee or event"
+            placeholder="Buscar colaborador ou evento"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
 
           <Select value={sectorFilter} onValueChange={setSectorFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Sector" />
+              <SelectValue placeholder="Setor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All sectors</SelectItem>
+              <SelectItem value="all">Todos os setores</SelectItem>
               {sectors.map((sector) => (
                 <SelectItem key={sector} value={sector}>{sector}</SelectItem>
               ))}
@@ -108,23 +116,23 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
 
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Period" />
+              <SelectValue placeholder="Periodo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="30d">30 days</SelectItem>
-              <SelectItem value="3m">3 months</SelectItem>
-              <SelectItem value="6m">6 months</SelectItem>
-              <SelectItem value="12m">12 months</SelectItem>
+              <SelectItem value="30d">30 dias</SelectItem>
+              <SelectItem value="3m">3 meses</SelectItem>
+              <SelectItem value="6m">6 meses</SelectItem>
+              <SelectItem value="12m">12 meses</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="bg-white rounded-xl border border-border shadow-sm p-6">
-        <h3 className="text-base font-semibold text-foreground">Employee timeline</h3>
+        <h3 className="text-base font-semibold text-foreground">Timeline de colaboradores</h3>
         {filtered.length === 0 ? (
           <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No timeline events for this filter.
+            Nenhum evento encontrado para este filtro.
           </div>
         ) : (
           <div className="mt-4 space-y-4">
@@ -143,7 +151,7 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
                     <p className="text-sm font-semibold text-foreground">{event.employeeName}</p>
                     <p className="text-sm text-slate-700">{event.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatDate(event.date)} | {event.sector} | {event.type}
+                      {formatDate(event.date)} | {event.sector} | {typeLabel(event.type)}
                     </p>
                   </div>
                 </div>
@@ -158,20 +166,20 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
         onOpenChange={(open) => {
           if (!open) setSelectedEvent(null);
         }}
-        title={selectedEvent ? `${selectedEvent.employeeName} - ${selectedEvent.title}` : "Event detail"}
+        title={selectedEvent ? `${selectedEvent.employeeName} - ${selectedEvent.title}` : "Detalhe do evento"}
       >
         {selectedEvent ? (
           <div className="space-y-3">
-            <InfoRow label="Date" value={formatDate(selectedEvent.date)} />
-            <InfoRow label="Sector" value={selectedEvent.sector} />
-            <InfoRow label="Type" value={selectedEvent.type} />
+            <InfoRow label="Data" value={formatDate(selectedEvent.date)} />
+            <InfoRow label="Setor" value={selectedEvent.sector} />
+            <InfoRow label="Tipo" value={typeLabel(selectedEvent.type)} />
             {selectedEvent.durationDays ? (
-              <InfoRow label="Duration" value={`${selectedEvent.durationDays} day(s)`} />
+              <InfoRow label="Duracao" value={`${selectedEvent.durationDays} dia(s)`} />
             ) : null}
             <div>
-              <p className="text-xs text-muted-foreground">Description</p>
+              <p className="text-xs text-muted-foreground">Descricao</p>
               <p className="text-sm text-foreground mt-1">
-                {selectedEvent.description ?? "No details available for this event."}
+                {selectedEvent.description ?? "Sem detalhes disponiveis para este evento."}
               </p>
             </div>
           </div>

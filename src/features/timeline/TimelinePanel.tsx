@@ -22,11 +22,11 @@ export function TimelinePanel({ filialId }: TimelinePanelProps) {
         id: `hire-${colaborador.id}`,
         employeeId: colaborador.id,
         employeeName: colaborador.nome,
-        sector: colaborador.departamento || "Unassigned",
+        sector: colaborador.departamento || "Sem setor",
         date: colaborador.data_admissao,
         type: "hire",
-        title: "Hired",
-        description: `${colaborador.nome} joined as ${colaborador.cargo}.`,
+        title: "Contratacao",
+        description: `${colaborador.nome} entrou como ${colaborador.cargo}.`,
       });
 
       if (colaborador.data_desligamento) {
@@ -34,18 +34,18 @@ export function TimelinePanel({ filialId }: TimelinePanelProps) {
           id: `termination-${colaborador.id}-${colaborador.data_desligamento}`,
           employeeId: colaborador.id,
           employeeName: colaborador.nome,
-          sector: colaborador.departamento || "Unassigned",
+          sector: colaborador.departamento || "Sem setor",
           date: colaborador.data_desligamento,
           type: "termination",
-          title: "Termination date",
-          description: "Employee termination recorded in HR base.",
+          title: "Data de desligamento",
+          description: "Desligamento registrado na base de RH.",
         });
       }
     });
 
     afastamentos.forEach((afastamento) => {
-      const employeeName = afastamento.colaborador?.nome || "Employee";
-      const sector = afastamento.colaborador?.departamento || "Unassigned";
+      const employeeName = afastamento.colaborador?.nome || "Colaborador";
+      const sector = afastamento.colaborador?.departamento || "Sem setor";
       const isVacation = (afastamento.tipo || "").toLowerCase().includes("fer");
 
       output.push({
@@ -55,8 +55,8 @@ export function TimelinePanel({ filialId }: TimelinePanelProps) {
         sector,
         date: afastamento.data_inicio,
         type: isVacation ? "vacation" : "absence",
-        title: isVacation ? "Vacation start" : `Absence: ${afastamento.tipo}`,
-        description: afastamento.observacoes || "No extra details.",
+        title: isVacation ? "Inicio de ferias" : `Afastamento: ${afastamento.tipo}`,
+        description: afastamento.observacoes || "Sem detalhes adicionais.",
         durationDays: afastamento.dias_afastados || undefined,
       });
     });
@@ -65,12 +65,12 @@ export function TimelinePanel({ filialId }: TimelinePanelProps) {
       output.push({
         id: `dismissal-${desligamento.id}`,
         employeeId: desligamento.colaborador_id,
-        employeeName: desligamento.colaborador?.nome || "Employee",
-        sector: desligamento.colaborador?.departamento || "Unassigned",
+        employeeName: desligamento.colaborador?.nome || "Colaborador",
+        sector: desligamento.colaborador?.departamento || "Sem setor",
         date: desligamento.data_desligamento,
         type: "termination",
-        title: `Dismissal: ${desligamento.motivo}`,
-        description: desligamento.observacoes || "No extra details.",
+        title: `Desligamento: ${desligamento.motivo}`,
+        description: desligamento.observacoes || "Sem detalhes adicionais.",
       });
     });
 

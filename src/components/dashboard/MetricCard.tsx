@@ -71,7 +71,7 @@ export function MetricCard({
         {trendDown ? <TrendingDown className="h-4 w-4" /> : null}
         {trend === "stable" ? <span>~</span> : null}
         <span>{formatVariation(variationPercent)}</span>
-        <span className="text-xs font-normal text-muted-foreground">vs previous period</span>
+        <span className="text-xs font-normal text-muted-foreground">vs periodo anterior</span>
       </div>
     </div>
   );

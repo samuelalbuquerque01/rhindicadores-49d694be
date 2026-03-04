@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserMinus, TrendingDown, TrendingUp, Clock, DollarSign, AlertTriangle, Building,
@@ -71,7 +71,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   const formatDate = (d: string) => {
-    if (!d) return "—";
+    if (!d) return "â€”";
     const [y, m, day] = d.split("-");
     return `${day}/${m}/${y}`;
   };
@@ -79,7 +79,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
   const formatTempo = (dias: number) => {
     if (dias < 30) return `${dias} dias`;
     const meses = Math.floor(dias / 30);
-    if (meses < 12) return `${meses} ${meses === 1 ? "mês" : "meses"}`;
+    if (meses < 12) return `${meses} ${meses === 1 ? "mes" : "meses"}`;
     const anos = Math.floor(meses / 12);
     const rest = meses % 12;
     return rest > 0 ? `${anos}a ${rest}m` : `${anos} ${anos === 1 ? "ano" : "anos"}`;
@@ -156,19 +156,19 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           />
           <KpiCard
             icon={<TrendingDown className="h-5 w-5" />}
-            label="Turnover Voluntário"
+            label="Turnover Voluntario"
             value={`${data?.turnoverVoluntario || 0}%`}
             color="text-warning"
           />
           <KpiCard
             icon={<TrendingUp className="h-5 w-5" />}
-            label="Turnover Involuntário"
+            label="Turnover Involuntario"
             value={`${data?.turnoverInvoluntario || 0}%`}
             color="text-destructive"
           />
           <KpiCard
             icon={<Clock className="h-5 w-5" />}
-            label="Tempo Médio Permanência"
+            label="Tempo Medio Permanencia"
             value={formatTempo(data?.tempoMedioPermanencia || 0)}
             color="text-primary"
           />
@@ -181,7 +181,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           <KpiCard
             icon={<Building className="h-5 w-5" />}
             label="Setor Maior Turnover"
-            value={data?.setorMaiorTurnover || "—"}
+            value={data?.setorMaiorTurnover || "â€”"}
             color="text-muted-foreground"
           />
         </div>
@@ -190,7 +190,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
       {/* Strategic card: top motivos */}
       {(data?.topMotivos?.length || 0) > 0 && (
         <RankingMotivosCard
-          title="Principais Motivos de Saída"
+          title="Principais Motivos de Saida"
           items={data!.topMotivos.map((m) => ({
             label: m.motivo,
             value: m.count,
@@ -213,7 +213,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-base">Desligamentos do Período</CardTitle>
+            <CardTitle className="text-base">Desligamentos do Periodo</CardTitle>
             <DesligamentoForm />
           </div>
         </CardHeader>
@@ -221,7 +221,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <Select value={mesFilter} onValueChange={setMesFilter}>
               <SelectTrigger className="w-full sm:w-52 bg-background">
-                <SelectValue placeholder="Mês" />
+                <SelectValue placeholder="Mes" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os meses</SelectItem>
@@ -247,9 +247,9 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="Pedido de demissão">Pedido de demissão</SelectItem>
+                <SelectItem value={"Pedido de demiss\u00e3o"}>{"Pedido de demiss\u00e3o"}</SelectItem>
                 <SelectItem value="Iniciativa da empresa">Iniciativa da empresa</SelectItem>
-                <SelectItem value="Término de contrato">Término de contrato</SelectItem>
+                <SelectItem value={"T\u00e9rmino de contrato"}>{"T\u00e9rmino de contrato"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -270,11 +270,11 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                       <TableHead>Cargo</TableHead>
                       <TableHead>Setor</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>Admissão</TableHead>
+                      <TableHead>Admissao</TableHead>
                       <TableHead>Desligamento</TableHead>
                       <TableHead>Tempo</TableHead>
                       <TableHead className="text-right">Custo</TableHead>
-                      <TableHead className="text-center w-[100px]">Ações</TableHead>
+                      <TableHead className="text-center w-[100px]">Acoes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -294,7 +294,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                         <TableCell className="whitespace-nowrap">{formatDate(d.data_desligamento)}</TableCell>
                         <TableCell className="whitespace-nowrap">{formatTempo(d.tempo_empresa)}</TableCell>
                         <TableCell className="text-right whitespace-nowrap">
-                          {d.custo_rescisao ? formatCurrency(d.custo_rescisao) : "—"}
+                          {d.custo_rescisao ? formatCurrency(d.custo_rescisao) : "â€”"}
                         </TableCell>
                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                           <TooltipProvider delayDuration={200}>
@@ -346,7 +346,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                       <p className="font-medium text-foreground">{d.nome}</p>
                       <Badge variant="outline" className="text-xs">{d.motivo}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{d.cargo} — {d.departamento}</p>
+                    <p className="text-sm text-muted-foreground">{d.cargo} â€” {d.departamento}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Desligamento: {formatDate(d.data_desligamento)}</span>
                       <span>{formatTempo(d.tempo_empresa)}</span>
@@ -393,17 +393,17 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                 <Info label="Cargo" value={selectedDesligamento.cargo} />
                 <Info label="Setor" value={selectedDesligamento.departamento} />
                 <Info label="Motivo" value={selectedDesligamento.motivo} />
-                <Info label="Data Admissão" value={formatDate(selectedDesligamento.data_admissao)} />
+                <Info label="Data Admissao" value={formatDate(selectedDesligamento.data_admissao)} />
                 <Info label="Data Desligamento" value={formatDate(selectedDesligamento.data_desligamento)} />
                 <Info label="Tempo de Empresa" value={formatTempo(selectedDesligamento.tempo_empresa)} />
                 <Info
-                  label="Custo Rescisão"
-                  value={selectedDesligamento.custo_rescisao ? formatCurrency(selectedDesligamento.custo_rescisao) : "—"}
+                  label="Custo Rescisao"
+                  value={selectedDesligamento.custo_rescisao ? formatCurrency(selectedDesligamento.custo_rescisao) : "â€”"}
                 />
               </div>
               {selectedDesligamento.observacoes && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Observações</p>
+                  <p className="text-xs text-muted-foreground mb-1">Observacoes</p>
                   <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3">{selectedDesligamento.observacoes}</p>
                 </div>
               )}
@@ -415,7 +415,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                     navigate(`/employee/${selectedDesligamento.colaborador_id}`);
                   }}
                 >
-                  Ver perfil completo →
+                  Ver perfil completo â†’
                 </button>
               )}
             </div>
@@ -434,9 +434,9 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
       <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent className="bg-background">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusao</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este registro de desligamento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este registro de desligamento? Esta acao nao pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -519,3 +519,4 @@ function Info({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

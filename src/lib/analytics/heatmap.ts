@@ -42,18 +42,18 @@ export function buildHeatmapData(
   const sectorSet = new Set<string>();
 
   items.forEach((item) => {
-    sectorSet.add(item.sector || "Unassigned");
+    sectorSet.add(item.sector || "Sem setor");
   });
 
   (explicitSectors ?? []).forEach((sector) => {
-    sectorSet.add(sector || "Unassigned");
+    sectorSet.add(sector || "Sem setor");
   });
 
   const sectors = Array.from(sectorSet).sort((a, b) => a.localeCompare(b));
   const matrix = new Map<string, number>();
 
   items.forEach((item) => {
-    const sector = item.sector || "Unassigned";
+    const sector = item.sector || "Sem setor";
     const monthKey = format(item.date, "yyyy-MM");
 
     if (!monthKeys.includes(monthKey)) {

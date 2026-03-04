@@ -35,30 +35,30 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
   const absVariation = variationPercent(input.absenteeismRate, input.absenteeismRatePrevious);
   insights.push({
     id: "abs-rate",
-    title: "Absenteeism trend",
+    title: "Tendencia de absenteismo",
     description:
       absVariation >= 0
-        ? `Absenteeism increased ${absVariation.toFixed(1)}% compared to the previous period.`
-        : `Absenteeism dropped ${Math.abs(absVariation).toFixed(1)}% compared to the previous period.`,
+        ? `O absenteismo aumentou ${absVariation.toFixed(1)}% em relacao ao periodo anterior.`
+        : `O absenteismo caiu ${Math.abs(absVariation).toFixed(1)}% em relacao ao periodo anterior.`,
     tone: absVariation > 0 ? "warning" : "positive",
   });
 
   const turnoverVariation = variationPercent(input.turnoverRate, input.turnoverRatePrevious);
   insights.push({
     id: "turnover-rate",
-    title: "Turnover movement",
+    title: "Movimento de turnover",
     description:
       turnoverVariation >= 0
-        ? `Turnover increased ${turnoverVariation.toFixed(1)}% versus the previous period.`
-        : `Turnover decreased ${Math.abs(turnoverVariation).toFixed(1)}% versus the previous period.`,
+        ? `O turnover aumentou ${turnoverVariation.toFixed(1)}% em relacao ao periodo anterior.`
+        : `O turnover reduziu ${Math.abs(turnoverVariation).toFixed(1)}% em relacao ao periodo anterior.`,
     tone: turnoverVariation > 0 ? "warning" : "positive",
   });
 
   if (input.topTurnoverSector) {
     insights.push({
       id: "turnover-sector",
-      title: "Highest turnover sector",
-      description: `${input.topTurnoverSector.sector} leads turnover with ${input.topTurnoverSector.rate.toFixed(1)}%.`,
+      title: "Setor com maior turnover",
+      description: `${input.topTurnoverSector.sector} lidera com taxa de ${input.topTurnoverSector.rate.toFixed(1)}%.`,
       tone: "warning",
     });
   }
@@ -66,8 +66,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
   if (input.topAbsenteeismSector) {
     insights.push({
       id: "abs-sector",
-      title: "Highest absenteeism sector",
-      description: `${input.topAbsenteeismSector.sector} accumulated ${input.topAbsenteeismSector.days.toFixed(0)} lost days.`,
+      title: "Setor com maior absenteismo",
+      description: `${input.topAbsenteeismSector.sector} acumulou ${input.topAbsenteeismSector.days.toFixed(0)} dias perdidos.`,
       tone: "warning",
     });
   }
@@ -75,8 +75,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
   if (input.topAbsenceReason) {
     insights.push({
       id: "reason",
-      title: "Most common absence reason",
-      description: `${input.topAbsenceReason.reason} is the top reason with ${input.topAbsenceReason.days.toFixed(0)} days.`,
+      title: "Motivo de afastamento mais comum",
+      description: `${input.topAbsenceReason.reason} foi o principal motivo com ${input.topAbsenceReason.days.toFixed(0)} dias.`,
       tone: "neutral",
     });
   }
@@ -84,8 +84,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
   if (input.criticalMonth) {
     insights.push({
       id: "critical-month",
-      title: "Critical month",
-      description: `${input.criticalMonth.label} was the most critical month for ${input.criticalMonth.metric} (${input.criticalMonth.value.toFixed(1)}).`,
+      title: "Mes mais critico",
+      description: `${input.criticalMonth.label} foi o mes mais critico para ${input.criticalMonth.metric} (${input.criticalMonth.value.toFixed(1)}).`,
       tone: "warning",
     });
   }
@@ -97,16 +97,16 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
 
     insights.push({
       id: "anomaly",
-      title: "Anomaly detected",
-      description: `A significant spike was detected in ${highest.label} (${highest.value.toFixed(1)}).`,
+      title: "Anomalia detectada",
+      description: `Foi detectado um pico relevante em ${highest.label} (${highest.value.toFixed(1)}).`,
       tone: "warning",
     });
   }
 
   insights.push({
     id: "volume-summary",
-    title: "Volume summary",
-    description: `${input.dismissals} dismissals and ${input.absences} absences were registered in the selected period.`,
+    title: "Resumo de volume",
+    description: `${input.dismissals} desligamentos e ${input.absences} afastamentos foram registrados no periodo selecionado.`,
     tone: "neutral",
   });
 
@@ -122,8 +122,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
   if (result.length < 5) {
     result.push({
       id: "fallback-1",
-      title: "Data coverage",
-      description: "There is not enough historical data to generate deeper insights for this period.",
+      title: "Cobertura de dados",
+      description: "Ainda nao ha historico suficiente para gerar insights mais profundos neste periodo.",
       tone: "neutral",
     });
   }

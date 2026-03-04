@@ -33,7 +33,7 @@ export function buildSectorComparison(
   colaboradores
     .filter((colaborador) => colaborador.status === "Ativo")
     .forEach((colaborador) => {
-      const sector = colaborador.departamento || "Unassigned";
+      const sector = colaborador.departamento || "Sem setor";
       const previous = sectorMap.get(sector) ?? {
         sector,
         activeEmployees: 0,
@@ -53,7 +53,7 @@ export function buildSectorComparison(
       return;
     }
 
-    const sector = afastamento.colaborador?.departamento || "Unassigned";
+    const sector = afastamento.colaborador?.departamento || "Sem setor";
     const previous = sectorMap.get(sector) ?? {
       sector,
       activeEmployees: 0,
@@ -73,7 +73,7 @@ export function buildSectorComparison(
       return;
     }
 
-    const sector = desligamento.colaborador?.departamento || "Unassigned";
+    const sector = desligamento.colaborador?.departamento || "Sem setor";
     const previous = sectorMap.get(sector) ?? {
       sector,
       activeEmployees: 0,
