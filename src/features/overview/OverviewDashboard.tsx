@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   CalendarRange,
@@ -30,7 +30,6 @@ import { HeatmapChart } from "@/components/dashboard/HeatmapChart";
 import { PredictionCard } from "@/components/dashboard/PredictionCard";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { SectorComparisonTable } from "@/components/dashboard/SectorComparisonTable";
-import { persistSmartNotifications } from "@/lib/analytics/notificationStore";
 import { PeriodPreset } from "@/lib/analytics/period";
 import { useOverviewAnalytics } from "@/features/overview/useOverviewAnalytics";
 
@@ -85,12 +84,6 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
     preset,
     customRange,
   });
-
-  useEffect(() => {
-    if (data) {
-      persistSmartNotifications(data.notifications);
-    }
-  }, [data]);
 
   if (error) {
     return (
@@ -302,3 +295,4 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
     </div>
   );
 }
+

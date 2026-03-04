@@ -44,6 +44,27 @@ function toPriority(variation: number): NotificationPriority {
   return "low";
 }
 
+function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function stableNotificationId(
+  type: NotificationType,
+  targetTab: SmartNotification["targetTab"],
+  primary: string,
+  secondary?: string,
+): string {
+  const base = [type, targetTab, toSlug(primary), secondary ? toSlug(secondary) : ""]
+    .filter(Boolean)
+    .join("__");
+  return base.slice(0, 120);
+}
+
 export function notificationTitleByType(type: NotificationType): string {
   const titles: Record<NotificationType, string> = {
     contract: "Contrato proximo do vencimento",
@@ -64,9 +85,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
 
   const notifications: SmartNotification[] = [];
 
-  data.contractsEndingSoon.forEach((item, index) => {
+  data.contractsEndingSoon.forEach((item) => {
     notifications.push({
-      id: `contract-${index}-${item.employeeName}`,
+      id: stableNotificationId("contract", "timeline", item.employeeName),
       type: "contract",
       title: notificationTitleByType("contract"),
       message: `${item.employeeName} tem contrato encerrando em ${item.daysLeft} dia(s).`,
@@ -77,9 +98,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   });
 
-  data.vacationsSoon.forEach((item, index) => {
+  data.vacationsSoon.forEach((item) => {
     notifications.push({
-      id: `vac-${index}-${item.employeeName}`,
+      id: stableNotificationId("vacation", "absenteismo", item.employeeName),
       type: "vacation",
       title: notificationTitleByType("vacation"),
       message: `Ferias de ${item.employeeName} com inicio em ${item.daysLeft} dia(s).`,
@@ -90,9 +111,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   });
 
-  data.medicalCertificates.forEach((item, index) => {
+  data.medicalCertificates.forEach((item) => {
     notifications.push({
-      id: `medical-${index}-${item.employeeName}`,
+      id: stableNotificationId("medical", "absenteismo", item.employeeName),
       type: "medical",
       title: notificationTitleByType("medical"),
       message: `${item.employeeName} possui ${item.certificates} atestados medicos no mes.`,
@@ -103,9 +124,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   });
 
-  data.absenteeismSectorIncrease.forEach((item, index) => {
+  data.absenteeismSectorIncrease.forEach((item) => {
     notifications.push({
-      id: `abs-inc-${index}-${item.sector}`,
+      id: stableNotificationId("absenteeism", "absenteismo", item.sector),
       type: "absenteeism",
       title: notificationTitleByType("absenteeism"),
       message: `${item.sector} aumentou o absenteismo em ${item.variation.toFixed(1)}% vs periodo anterior.`,
@@ -116,9 +137,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   });
 
-  data.turnoverSectorIncrease.forEach((item, index) => {
+  data.turnoverSectorIncrease.forEach((item) => {
     notifications.push({
-      id: `turn-inc-${index}-${item.sector}`,
+      id: stableNotificationId("turnover", "turnover", item.sector),
       type: "turnover",
       title: notificationTitleByType("turnover"),
       message: `${item.sector} aumentou o turnover em ${item.variation.toFixed(1)}% vs periodo anterior.`,
@@ -129,9 +150,9 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   });
 
-  data.anomalies.forEach((item, index) => {
+  data.anomalies.forEach((item) => {
     notifications.push({
-      id: `anomaly-${index}-${item.key}`,
+      id: stableNotificationId("anomaly", "geral", item.key || item.label),
       type: "anomaly",
       title: notificationTitleByType("anomaly"),
       message: `Anomalia detectada em ${item.label} com valor ${item.value.toFixed(1)}.`,
@@ -144,7 +165,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
 
   if (data.turnoverRiskHigh) {
     notifications.push({
-      id: `forecast-turnover-${data.turnoverRiskHigh.sector}`,
+      id: stableNotificationId("forecast", "turnover", data.turnoverRiskHigh.sector),
       type: "forecast",
       title: notificationTitleByType("forecast"),
       message: `Previsao indica alto risco de turnover em ${data.turnoverRiskHigh.sector} (${data.turnoverRiskHigh.projected.toFixed(1)} projetado).`,
@@ -157,7 +178,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
 
   if (data.absenteeismRiskHigh) {
     notifications.push({
-      id: `forecast-abs-${data.absenteeismRiskHigh.sector}`,
+      id: stableNotificationId("forecast", "absenteismo", data.absenteeismRiskHigh.sector),
       type: "forecast",
       title: notificationTitleByType("forecast"),
       message: `Previsao indica risco de absenteismo em ${data.absenteeismRiskHigh.sector} (${data.absenteeismRiskHigh.projected.toFixed(1)} dias projetados).`,
@@ -174,7 +195,14 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     low: 1,
   };
 
-  return notifications
+  const dedupedById = new Map<string, SmartNotification>();
+  notifications.forEach((notification) => {
+    if (!dedupedById.has(notification.id)) {
+      dedupedById.set(notification.id, notification);
+    }
+  });
+
+  return [...dedupedById.values()]
     .sort((left, right) => {
       const priorityDiff = weight[right.priority] - weight[left.priority];
       if (priorityDiff !== 0) return priorityDiff;

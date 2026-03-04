@@ -3,6 +3,12 @@ import type { SmartNotification, SmartNotificationState } from "@/lib/analytics/
 const STORAGE_KEY = "rh-smart-notifications";
 const EVENT_NAME = "rh-smart-notifications-updated";
 
+function notificationSignature(notification: Pick<SmartNotificationState, "type" | "targetTab" | "title" | "message">): string {
+  return [notification.type, notification.targetTab, notification.title, notification.message]
+    .map((part) => part.trim().toLowerCase())
+    .join("::");
+}
+
 function dispatchNotificationUpdate(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(EVENT_NAME));
@@ -55,9 +61,10 @@ export function readSmartNotifications(): SmartNotificationState[] {
 export function persistSmartNotifications(notifications: SmartNotification[]): void {
   const previous = readSmartNotifications();
   const previousById = new Map(previous.map((item) => [item.id, item]));
+  const previousBySignature = new Map(previous.map((item) => [notificationSignature(item), item]));
 
   const merged = notifications.map<SmartNotificationState>((item) => {
-    const existing = previousById.get(item.id);
+    const existing = previousById.get(item.id) ?? previousBySignature.get(notificationSignature(item));
     return {
       ...item,
       read: existing?.read ?? false,
