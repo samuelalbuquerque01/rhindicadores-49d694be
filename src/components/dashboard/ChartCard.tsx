@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChartCardProps {
   title: string;
@@ -7,6 +8,9 @@ interface ChartCardProps {
   children: ReactNode;
   className?: string;
   action?: ReactNode;
+  loading?: boolean;
+  isEmpty?: boolean;
+  emptyMessage?: string;
 }
 
 export function ChartCard({
@@ -15,11 +19,14 @@ export function ChartCard({
   children,
   className,
   action,
+  loading = false,
+  isEmpty = false,
+  emptyMessage = "No data for this chart in the selected period.",
 }: ChartCardProps) {
   return (
     <div
       className={cn(
-        "stat-card p-4 sm:p-6 rounded-xl animate-fade-in min-w-0 overflow-hidden",
+        "bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-4 sm:p-6 animate-fade-in min-w-0 overflow-hidden",
         className
       )}
     >
@@ -32,7 +39,17 @@ export function ChartCard({
         </div>
         <div className="shrink-0">{action}</div>
       </div>
-      <div className="w-full min-w-0">{children}</div>
+      <div className="w-full min-w-0">
+        {loading ? (
+          <Skeleton className="h-[240px] w-full" />
+        ) : isEmpty ? (
+          <div className="h-[240px] w-full rounded-lg border border-dashed border-border flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }

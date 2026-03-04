@@ -1,9 +1,22 @@
+import { useEffect } from "react";
 import { Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NotificacoesDropdown } from "./NotificacoesDropdown";
+import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
+import { useSmartNotifications } from "@/hooks/useSmartNotifications";
+import { useOverviewAnalytics } from "@/features/overview";
+import { persistSmartNotifications } from "@/lib/analytics/notificationStore";
 
 export function Header() {
+  const { data: overviewData } = useOverviewAnalytics({ preset: "30d", customRange: null });
+  const notifications = useSmartNotifications();
+
+  useEffect(() => {
+    if (overviewData) {
+      persistSmartNotifications(overviewData.notifications);
+    }
+  }, [overviewData]);
+
   return (
     <header className="sticky top-0 z-50 w-full bg-card/80 backdrop-blur-md border-b border-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,7 +43,7 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-2">
-            <NotificacoesDropdown />
+            <NotificationPanel notifications={notifications} />
             <Button variant="ghost" size="icon" className="rounded-full">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="h-4 w-4 text-primary" />

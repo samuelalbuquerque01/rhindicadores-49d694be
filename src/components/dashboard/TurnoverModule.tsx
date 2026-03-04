@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserMinus, TrendingDown, TrendingUp, Clock, DollarSign, AlertTriangle, Building,
@@ -7,6 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -27,9 +28,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TurnoverChart } from "./TurnoverChart";
 import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
 import { RankingMotivosCard } from "./RankingMotivosCard";
+import { RankingList } from "./RankingList";
+import type { RankingItemData } from "./RankingItem";
 import { EditDesligamentoModal } from "./EditDesligamentoModal";
 import { useTurnoverAnalytics, useSetoresDisponiveis, DesligamentoCompleto } from "@/hooks/useTurnoverAnalytics";
 import { useDeleteDesligamento } from "@/hooks/useDesligamentos";
+import { Modal } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface TurnoverModuleProps {
   filialId?: string;
@@ -43,6 +48,12 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
   const [selectedDesligamento, setSelectedDesligamento] = useState<DesligamentoCompleto | null>(null);
   const [editingDesligamento, setEditingDesligamento] = useState<DesligamentoCompleto | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [editedReasons, setEditedReasons] = useState<Record<string, RankingItemData>>({});
+  const [hiddenReasonIds, setHiddenReasonIds] = useState<string[]>([]);
+  const [editingReason, setEditingReason] = useState<RankingItemData | null>(null);
+  const [reasonLabelDraft, setReasonLabelDraft] = useState("");
+  const [reasonValueDraft, setReasonValueDraft] = useState("");
+  const [deletingReason, setDeletingReason] = useState<RankingItemData | null>(null);
 
   const deleteDesligamento = useDeleteDesligamento();
   const effectiveFilialId = filialId === "all" ? undefined : filialId;
@@ -82,6 +93,50 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
     const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
     return { value, label: label.charAt(0).toUpperCase() + label.slice(1) };
   });
+
+  const rankingReasons = useMemo<RankingItemData[]>(() => {
+    const base = (data?.topMotivos || []).map((motivo) => ({
+      id: motivo.motivo.toLowerCase().replace(/\s+/g, "-"),
+      label: motivo.motivo,
+      value: motivo.count,
+      unit: motivo.count !== 1 ? "desligamentos" : "desligamento",
+    }));
+
+    return base
+      .filter((item) => !hiddenReasonIds.includes(item.id))
+      .map((item) => editedReasons[item.id] || item);
+  }, [data?.topMotivos, editedReasons, hiddenReasonIds]);
+
+  const startEditReason = (item: RankingItemData) => {
+    setEditingReason(item);
+    setReasonLabelDraft(item.label);
+    setReasonValueDraft(String(item.value));
+  };
+
+  const saveReasonEdit = () => {
+    if (!editingReason) return;
+
+    const parsedValue = Number(reasonValueDraft);
+    if (!reasonLabelDraft.trim() || Number.isNaN(parsedValue) || parsedValue < 0) {
+      return;
+    }
+
+    setEditedReasons((current) => ({
+      ...current,
+      [editingReason.id]: {
+        ...editingReason,
+        label: reasonLabelDraft.trim(),
+        value: parsedValue,
+      },
+    }));
+    setEditingReason(null);
+  };
+
+  const confirmDeleteReason = () => {
+    if (!deletingReason) return;
+    setHiddenReasonIds((current) => Array.from(new Set([...current, deletingReason.id])));
+    setDeletingReason(null);
+  };
 
   if (isLoading) {
     return <Skeleton className="h-[600px] w-full rounded-lg" />;
@@ -145,6 +200,14 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           setorLabel="Setor com maior turnover"
         />
       )}
+
+      <RankingList
+        title="Ranking de motivos (editavel)"
+        items={rankingReasons}
+        emptyMessage="Sem dados para ranking de motivos no periodo selecionado."
+        onEdit={startEditReason}
+        onDelete={setDeletingReason}
+      />
 
       {/* Filters + Action */}
       <Card>
@@ -392,6 +455,46 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Modal
+        open={!!editingReason}
+        onOpenChange={(open) => !open && setEditingReason(null)}
+        title="Editar motivo do ranking"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Motivo</p>
+            <Input value={reasonLabelDraft} onChange={(event) => setReasonLabelDraft(event.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Total</p>
+            <Input
+              type="number"
+              min={0}
+              value={reasonValueDraft}
+              onChange={(event) => setReasonValueDraft(event.target.value)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            TODO: persistir alteracoes de ranking agregado em tabela dedicada no Supabase.
+          </p>
+          <div className="flex justify-end">
+            <Button type="button" onClick={saveReasonEdit}>
+              Salvar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deletingReason}
+        onOpenChange={(open) => !open && setDeletingReason(null)}
+        title="Apagar motivo do ranking?"
+        description="Essa acao remove o item apenas da visao atual (dados agregados)."
+        confirmLabel="Apagar"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeleteReason}
+      />
     </div>
   );
 }

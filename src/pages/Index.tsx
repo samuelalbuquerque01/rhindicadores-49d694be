@@ -1,4 +1,5 @@
-import { useState } from "react";
+﻿import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Users, UserMinus, Clock, TrendingUp, Briefcase, Building, GraduationCap } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -10,7 +11,6 @@ import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
 import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
-import { AfastamentosList } from "@/components/dashboard/AfastamentosList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { TreinamentosParticipacaoTable } from "@/components/dashboard/TreinamentosParticipacaoTable";
 import { TreinamentosInsightsCard } from "@/components/dashboard/TreinamentosInsightsCard";
@@ -25,9 +25,37 @@ import { useAbsenteismoStats } from "@/hooks/useAfastamentos";
 import { useContratacaoStats } from "@/hooks/useContratacoes";
 import { useTreinamentosStats } from "@/hooks/useTreinamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TimelinePanel } from "@/features/timeline";
+
+const TAB_VALUES = [
+  "colaboradores",
+  "estagiarios",
+  "pj",
+  "participacao",
+  "geral",
+  "treinamentos",
+  "eventos",
+  "turnover",
+  "absenteismo",
+  "timeline",
+] as const;
+
+type TabValue = (typeof TAB_VALUES)[number];
+
+function isValidTab(value: string | null): value is TabValue {
+  if (!value) return false;
+  return TAB_VALUES.includes(value as TabValue);
+}
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedFilial, setSelectedFilial] = useState<string>("all");
+
+  const initialQueryTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<TabValue>(
+    isValidTab(initialQueryTab) ? initialQueryTab : "colaboradores",
+  );
+
   const filialId = selectedFilial === "all" ? undefined : selectedFilial;
 
   const { data: colaboradoresStats } = useColaboradoresStats(filialId);
@@ -36,32 +64,40 @@ const Index = () => {
   const { data: contratacaoStats } = useContratacaoStats(filialId);
   const { data: treinamentosStats } = useTreinamentosStats(filialId);
 
+  useEffect(() => {
+    const queryTab = searchParams.get("tab");
+    if (isValidTab(queryTab) && queryTab !== activeTab) {
+      setActiveTab(queryTab);
+    }
+  }, [activeTab, searchParams]);
+
+  const handleTabChange = (value: string) => {
+    if (!isValidTab(value)) return;
+
+    setActiveTab(value);
+
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Title with Filters */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Dashboard de RH
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Indicadores e métricas do Departamento Pessoal
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard de RH</h1>
+            <p className="text-muted-foreground mt-1">Indicadores e mÃ©tricas do Departamento Pessoal</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <FilialSelector
-              value={selectedFilial}
-              onValueChange={setSelectedFilial}
-            />
+            <FilialSelector value={selectedFilial} onValueChange={setSelectedFilial} />
             <FilialForm />
             <ColaboradorForm />
           </div>
         </div>
 
-        {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Total de Colaboradores"
@@ -73,20 +109,19 @@ const Index = () => {
           <StatCard
             title="Taxa de Turnover"
             value={`${turnoverStats?.turnoverPercentual || 0}%`}
-            subtitle="Últimos 12 meses"
+            subtitle="Ãšltimos 12 meses"
             icon={<UserMinus className="h-6 w-6" />}
             variant="success"
           />
           <StatCard
-            title="Absenteísmo"
+            title="AbsenteÃ­smo"
             value={`${absenteismoStats?.taxaAbsenteismo || 0}%`}
-            subtitle="Taxa de ausências (30 dias)"
+            subtitle="Taxa de ausÃªncias (30 dias)"
             icon={<Clock className="h-6 w-6" />}
             variant="warning"
           />
         </div>
 
-        {/* Secondary KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Treinamentos"
@@ -95,37 +130,37 @@ const Index = () => {
             icon={<GraduationCap className="h-5 w-5" />}
           />
           <StatCard
-            title="Novas Contratações"
+            title="Novas ContrataÃ§Ãµes"
             value={contratacaoStats?.novasContratacoes || 0}
-            subtitle="Este mês"
+            subtitle="Este mÃªs"
             icon={<TrendingUp className="h-5 w-5" />}
           />
           <StatCard
-            title="Líderes"
+            title="LÃ­deres"
             value={colaboradoresStats?.lideres || 0}
             subtitle="Formados pela empresa"
             icon={<Briefcase className="h-5 w-5" />}
           />
           <StatCard
-            title="CLT Próprios"
+            title="CLT PrÃ³prios"
             value={(colaboradoresStats?.porTipo.administrativo || 0) + (colaboradoresStats?.porTipo.corpoClinico || 0)}
-            subtitle="Admin + Corpo Clínico"
+            subtitle="Admin + Corpo ClÃ­nico"
             icon={<Building className="h-5 w-5" />}
           />
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="colaboradores" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="colaboradores">CLT</TabsTrigger>
-            <TabsTrigger value="estagiarios">Estagiários</TabsTrigger>
+            <TabsTrigger value="estagiarios">EstagiÃ¡rios</TabsTrigger>
             <TabsTrigger value="pj">PJ</TabsTrigger>
-            <TabsTrigger value="participacao">Participação</TabsTrigger>
-            <TabsTrigger value="geral">Visão Geral</TabsTrigger>
+            <TabsTrigger value="participacao">ParticipaÃ§Ã£o</TabsTrigger>
+            <TabsTrigger value="geral">VisÃ£o Geral</TabsTrigger>
             <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
             <TabsTrigger value="eventos">Eventos</TabsTrigger>
             <TabsTrigger value="turnover">Turnover</TabsTrigger>
-            <TabsTrigger value="absenteismo">Absenteísmo</TabsTrigger>
+            <TabsTrigger value="absenteismo">AbsenteÃ­smo</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
           <TabsContent value="colaboradores" className="space-y-6">
@@ -133,7 +168,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="estagiarios" className="space-y-6">
-            <ColaboradoresList filialId={selectedFilial} tipoFilter="Estagiário" />
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="EstagiÃ¡rio" />
           </TabsContent>
 
           <TabsContent value="pj" className="space-y-6">
@@ -182,14 +217,16 @@ const Index = () => {
             <AbsenteismoModule filialId={selectedFilial} />
           </TabsContent>
 
+          <TabsContent value="timeline" className="space-y-6">
+            <TimelinePanel filialId={filialId} />
+          </TabsContent>
         </Tabs>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border/50 mt-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-muted-foreground">
-            © 2024 RH Analytics. Sistema de Gestão de Recursos Humanos.
+            Â© 2024 RH Analytics. Sistema de GestÃ£o de Recursos Humanos.
           </p>
         </div>
       </footer>
