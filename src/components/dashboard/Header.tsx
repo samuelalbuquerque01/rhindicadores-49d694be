@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { persistSmartNotifications } from "@/lib/analytics/notificationStore";
 
 export function Header() {
   const { data: overviewData } = useOverviewAnalytics({ preset: "30d", customRange: null });
-  const notifications = useSmartNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearRead } = useSmartNotifications();
 
   useEffect(() => {
     if (overviewData) {
@@ -26,9 +26,7 @@ export function Header() {
               <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
                 <span className="text-sm font-bold text-primary-foreground">RH</span>
               </div>
-              <span className="text-xl font-bold text-foreground hidden sm:block">
-                Analytics
-              </span>
+              <span className="text-xl font-bold text-foreground hidden sm:block">Analytics</span>
             </div>
           </div>
 
@@ -43,7 +41,13 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-2">
-            <NotificationPanel notifications={notifications} />
+            <NotificationPanel
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkAsRead={markAsRead}
+              onMarkAllAsRead={markAllAsRead}
+              onClearRead={clearRead}
+            />
             <Button variant="ghost" size="icon" className="rounded-full">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="h-4 w-4 text-primary" />

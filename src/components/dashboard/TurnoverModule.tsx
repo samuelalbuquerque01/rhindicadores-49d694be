@@ -1,53 +1,71 @@
-﻿import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  UserMinus, TrendingDown, TrendingUp, Clock, DollarSign, AlertTriangle, Building,
-  Edit2, Trash2,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, UserMinus, Percent, Clock3, Edit2, Trash2 } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TurnoverChart } from "./TurnoverChart";
-import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
-import { RankingMotivosCard } from "./RankingMotivosCard";
-import { RankingList } from "./RankingList";
-import type { RankingItemData } from "./RankingItem";
-import { EditDesligamentoModal } from "./EditDesligamentoModal";
-import { useTurnoverAnalytics, useSetoresDisponiveis, DesligamentoCompleto } from "@/hooks/useTurnoverAnalytics";
-import { useDeleteDesligamento } from "@/hooks/useDesligamentos";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { RankingList } from "@/components/dashboard/RankingList";
+import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import type { RankingItemData } from "@/components/dashboard/RankingItem";
+import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
+import { EditDesligamentoModal } from "@/components/dashboard/EditDesligamentoModal";
+import { useTurnoverAnalytics, useSetoresDisponiveis, type DesligamentoCompleto } from "@/hooks/useTurnoverAnalytics";
+import { useDeleteDesligamento } from "@/hooks/useDesligamentos";
+import { useColaboradores } from "@/hooks/useColaboradores";
+import { buildTurnoverAnalytics } from "@/lib/analytics/turnover";
 
 interface TurnoverModuleProps {
   filialId?: string;
 }
 
+function formatDate(value: string): string {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}
+
+function formatTenure(days: number | null): string {
+  if (days === null || days <= 0) return "Indisponivel";
+  if (days < 30) return `${days} dias`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} ${months === 1 ? "mes" : "meses"}`;
+  const years = Math.floor(months / 12);
+  const restMonths = months % 12;
+  return restMonths > 0 ? `${years}a ${restMonths}m` : `${years} ${years === 1 ? "ano" : "anos"}`;
+}
+
+function metricTrend(variation: number): "up" | "down" | "stable" {
+  if (variation > 0) return "up";
+  if (variation < 0) return "down";
+  return "stable";
+}
+
 export function TurnoverModule({ filialId }: TurnoverModuleProps) {
-  const navigate = useNavigate();
   const [mesFilter, setMesFilter] = useState<string>("all");
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [tipoFilter, setTipoFilter] = useState<string>("all");
-  const [selectedDesligamento, setSelectedDesligamento] = useState<DesligamentoCompleto | null>(null);
   const [editingDesligamento, setEditingDesligamento] = useState<DesligamentoCompleto | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deletingDesligamento, setDeletingDesligamento] = useState<DesligamentoCompleto | null>(null);
   const [editedReasons, setEditedReasons] = useState<Record<string, RankingItemData>>({});
   const [hiddenReasonIds, setHiddenReasonIds] = useState<string[]>([]);
   const [editingReason, setEditingReason] = useState<RankingItemData | null>(null);
@@ -55,67 +73,73 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
   const [reasonValueDraft, setReasonValueDraft] = useState("");
   const [deletingReason, setDeletingReason] = useState<RankingItemData | null>(null);
 
-  const deleteDesligamento = useDeleteDesligamento();
   const effectiveFilialId = filialId === "all" ? undefined : filialId;
 
-  const { data, isLoading } = useTurnoverAnalytics({
+  const { data, isLoading, error } = useTurnoverAnalytics({
     filialId: effectiveFilialId,
     mes: mesFilter === "all" ? undefined : mesFilter,
     setor: setorFilter,
     tipoDesligamento: tipoFilter,
   });
-
-  const { data: setores } = useSetoresDisponiveis();
-
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-
-  const formatDate = (d: string) => {
-    if (!d) return "â€”";
-    const [y, m, day] = d.split("-");
-    return `${day}/${m}/${y}`;
-  };
-
-  const formatTempo = (dias: number) => {
-    if (dias < 30) return `${dias} dias`;
-    const meses = Math.floor(dias / 30);
-    if (meses < 12) return `${meses} ${meses === 1 ? "mes" : "meses"}`;
-    const anos = Math.floor(meses / 12);
-    const rest = meses % 12;
-    return rest > 0 ? `${anos}a ${rest}m` : `${anos} ${anos === 1 ? "ano" : "anos"}`;
-  };
-
-  // Generate last 12 months options
-  const mesesOptions = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-    return { value, label: label.charAt(0).toUpperCase() + label.slice(1) };
+  const { data: setores = [] } = useSetoresDisponiveis();
+  const { data: colaboradoresAtivos = [] } = useColaboradores({
+    filialId: effectiveFilialId,
+    status: "Ativo",
   });
+  const deleteDesligamento = useDeleteDesligamento();
 
-  const rankingReasons = useMemo<RankingItemData[]>(() => {
-    const base = (data?.topMotivos || []).map((motivo) => ({
-      id: motivo.motivo.toLowerCase().replace(/\s+/g, "-"),
-      label: motivo.motivo,
-      value: motivo.count,
-      unit: motivo.count !== 1 ? "desligamentos" : "desligamento",
-    }));
+  const desligamentos = data?.desligamentos ?? [];
+  const analytics = useMemo(
+    () =>
+      buildTurnoverAnalytics(
+        desligamentos.map((desligamento) => ({
+          id: desligamento.id,
+          reason: desligamento.motivo,
+          terminationDate: desligamento.data_desligamento,
+          hireDate: desligamento.data_admissao,
+          sectorName: desligamento.departamento,
+        })),
+        colaboradoresAtivos.length || undefined,
+      ),
+    [colaboradoresAtivos.length, desligamentos],
+  );
 
-    return base
-      .filter((item) => !hiddenReasonIds.includes(item.id))
-      .map((item) => editedReasons[item.id] || item);
-  }, [data?.topMotivos, editedReasons, hiddenReasonIds]);
+  const currentMonth = analytics.monthlyTerminations[analytics.monthlyTerminations.length - 1]?.terminations ?? 0;
+  const previousMonth = analytics.monthlyTerminations[analytics.monthlyTerminations.length - 2]?.terminations ?? 0;
+  const monthVariation = previousMonth === 0 ? (currentMonth > 0 ? 100 : 0) : ((currentMonth - previousMonth) / previousMonth) * 100;
+  const roundedVariation = Math.round(monthVariation * 10) / 10;
 
-  const startEditReason = (item: RankingItemData) => {
-    setEditingReason(item);
-    setReasonLabelDraft(item.label);
-    setReasonValueDraft(String(item.value));
-  };
+  const rankingReasons = useMemo<RankingItemData[]>(
+    () =>
+      analytics.reasons
+        .map((reason) => ({
+          id: reason.id,
+          label: reason.label,
+          value: reason.count,
+          unit: reason.count === 1 ? "desligamento" : "desligamentos",
+        }))
+        .filter((item) => !hiddenReasonIds.includes(item.id))
+        .map((item) => editedReasons[item.id] || item),
+    [analytics.reasons, editedReasons, hiddenReasonIds],
+  );
+
+  const mesesOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - index);
+        const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        return {
+          value,
+          label: label.charAt(0).toUpperCase() + label.slice(1),
+        };
+      }),
+    [],
+  );
 
   const saveReasonEdit = () => {
     if (!editingReason) return;
-
     const parsedValue = Number(reasonValueDraft);
     if (!reasonLabelDraft.trim() || Number.isNaN(parsedValue) || parsedValue < 0) {
       return;
@@ -138,195 +162,203 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
     setDeletingReason(null);
   };
 
+  const handleDeleteDesligamento = async () => {
+    if (!deletingDesligamento) return;
+    await deleteDesligamento.mutateAsync(deletingDesligamento.id);
+    setDeletingDesligamento(null);
+  };
+
   if (isLoading) {
-    return <Skeleton className="h-[600px] w-full rounded-lg" />;
+    return <div className="rounded-lg border p-8 text-sm text-muted-foreground">Carregando dados de turnover...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-8 text-sm text-destructive">
+        Erro ao carregar dados de turnover.
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Row 1: Chart + KPIs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TurnoverChart filialId={filialId || "all"} />
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <KpiCard
-            icon={<UserMinus className="h-5 w-5" />}
-            label="Total de Desligamentos"
-            value={data?.totalDesligamentos || 0}
-            color="text-destructive"
-          />
-          <KpiCard
-            icon={<TrendingDown className="h-5 w-5" />}
-            label="Turnover Voluntario"
-            value={`${data?.turnoverVoluntario || 0}%`}
-            color="text-warning"
-          />
-          <KpiCard
-            icon={<TrendingUp className="h-5 w-5" />}
-            label="Turnover Involuntario"
-            value={`${data?.turnoverInvoluntario || 0}%`}
-            color="text-destructive"
-          />
-          <KpiCard
-            icon={<Clock className="h-5 w-5" />}
-            label="Tempo Medio Permanencia"
-            value={formatTempo(data?.tempoMedioPermanencia || 0)}
-            color="text-primary"
-          />
-          <KpiCard
-            icon={<DollarSign className="h-5 w-5" />}
-            label="Custo Total Turnover"
-            value={formatCurrency(data?.custoTotal || 0)}
-            color="text-destructive"
-          />
-          <KpiCard
-            icon={<Building className="h-5 w-5" />}
-            label="Setor Maior Turnover"
-            value={data?.setorMaiorTurnover || "â€”"}
-            color="text-muted-foreground"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <MetricCard
+          title="Desligamentos no periodo"
+          value={analytics.terminationsCount}
+          icon={<UserMinus className="h-5 w-5" />}
+          variationPercent={roundedVariation}
+          trend={metricTrend(roundedVariation)}
+          isPositive={false}
+          tooltip="Total de desligamentos no intervalo filtrado."
+        />
+        <MetricCard
+          title="Taxa de turnover"
+          value={analytics.turnoverRate === null ? "Indisponivel" : `${analytics.turnoverRate}%`}
+          icon={<Percent className="h-5 w-5" />}
+          variationPercent={roundedVariation}
+          trend={metricTrend(roundedVariation)}
+          isPositive={false}
+          tooltip="Desligamentos divididos pela base de colaboradores ativos."
+        />
+        <MetricCard
+          title="Setor com maior turnover"
+          value={analytics.topSector}
+          icon={<Building2 className="h-5 w-5" />}
+          variationPercent={0}
+          trend="stable"
+          tooltip="Setor com maior volume de desligamentos no periodo."
+        />
+        <MetricCard
+          title="Tempo medio de permanencia"
+          value={formatTenure(analytics.avgTenureDays)}
+          icon={<Clock3 className="h-5 w-5" />}
+          variationPercent={roundedVariation}
+          trend={metricTrend(-roundedVariation)}
+          tooltip="Media de dias entre admissao e desligamento."
+        />
       </div>
 
-      {/* Strategic card: top motivos */}
-      {(data?.topMotivos?.length || 0) > 0 && (
-        <RankingMotivosCard
-          title="Principais Motivos de Saida"
-          items={data!.topMotivos.map((m) => ({
-            label: m.motivo,
-            value: m.count,
-            unit: m.count !== 1 ? "desligamentos" : "desligamento",
-          }))}
-          setorDestaque={data?.setorMaiorTurnover}
-          setorLabel="Setor com maior turnover"
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <ChartCard
+          title="Desligamentos por mes"
+          subtitle="Evolucao mensal do volume de saidas"
+          isEmpty={analytics.monthlyTerminations.every((item) => item.terminations === 0)}
+        >
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.monthlyTerminations}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="terminations" name="Desligamentos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard
+          title="Desligamentos por setor"
+          subtitle="Setores com maior concentracao de saidas"
+          isEmpty={analytics.sectorTerminations.length === 0}
+        >
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.sectorTerminations.slice(0, 8)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="sector" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="terminations" name="Desligamentos" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <RankingList
+          title="Ranking de motivos de saida"
+          items={rankingReasons}
+          emptyMessage="Sem motivos de desligamento para os filtros selecionados."
+          onEdit={(item) => {
+            setEditingReason(item);
+            setReasonLabelDraft(item.label);
+            setReasonValueDraft(String(item.value));
+          }}
+          onDelete={setDeletingReason}
         />
-      )}
+        <InsightsPanel insights={analytics.insights.slice(0, 3)} />
+      </div>
 
-      <RankingList
-        title="Ranking de motivos (editavel)"
-        items={rankingReasons}
-        emptyMessage="Sem dados para ranking de motivos no periodo selecionado."
-        onEdit={startEditReason}
-        onDelete={setDeletingReason}
-      />
-
-      {/* Filters + Action */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-base">Desligamentos do Periodo</CardTitle>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <CardTitle className="text-base">Registros de desligamento</CardTitle>
             <DesligamentoForm />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Select value={mesFilter} onValueChange={setMesFilter}>
-              <SelectTrigger className="w-full sm:w-52 bg-background">
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Mes" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os meses</SelectItem>
-                {mesesOptions.map(m => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                {mesesOptions.map((mes) => (
+                  <SelectItem key={mes.value} value={mes.value}>
+                    {mes.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
             <Select value={setorFilter} onValueChange={setSetorFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-background">
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Setor" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os setores</SelectItem>
-                {setores?.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                {setores.map((setor) => (
+                  <SelectItem key={setor} value={setor}>
+                    {setor}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
             <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-full sm:w-52 bg-background">
-                <SelectValue placeholder="Tipo" />
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Motivo" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value={"Pedido de demiss\u00e3o"}>{"Pedido de demiss\u00e3o"}</SelectItem>
+                <SelectItem value="all">Todos os motivos</SelectItem>
+                <SelectItem value="Pedido de demissão">Pedido de demissão</SelectItem>
                 <SelectItem value="Iniciativa da empresa">Iniciativa da empresa</SelectItem>
-                <SelectItem value={"T\u00e9rmino de contrato"}>{"T\u00e9rmino de contrato"}</SelectItem>
+                <SelectItem value="Término de contrato">Término de contrato</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Table - desktop */}
-          {!data?.desligamentos?.length ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum desligamento encontrado para os filtros selecionados.
+          {desligamentos.length === 0 ? (
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+              Nenhum desligamento encontrado para o periodo selecionado.
             </div>
           ) : (
             <>
-              {/* Desktop table */}
               <div className="hidden md:block rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Cargo</TableHead>
+                      <TableHead>Colaborador</TableHead>
                       <TableHead>Setor</TableHead>
-                      <TableHead>Tipo</TableHead>
+                      <TableHead>Motivo</TableHead>
                       <TableHead>Admissao</TableHead>
                       <TableHead>Desligamento</TableHead>
-                      <TableHead>Tempo</TableHead>
-                      <TableHead className="text-right">Custo</TableHead>
-                      <TableHead className="text-center w-[100px]">Acoes</TableHead>
+                      <TableHead className="text-right">Acoes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.desligamentos.map(d => (
-                      <TableRow
-                        key={d.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedDesligamento(d)}
-                      >
-                        <TableCell className="font-medium">{d.nome}</TableCell>
-                        <TableCell>{d.cargo}</TableCell>
-                        <TableCell>{d.departamento}</TableCell>
+                    {desligamentos.map((desligamento) => (
+                      <TableRow key={desligamento.id}>
+                        <TableCell className="font-medium">{desligamento.nome}</TableCell>
+                        <TableCell>{desligamento.departamento || "-"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="whitespace-nowrap">{d.motivo}</Badge>
+                          <Badge variant="outline">{desligamento.motivo}</Badge>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(d.data_admissao)}</TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(d.data_desligamento)}</TableCell>
-                        <TableCell className="whitespace-nowrap">{formatTempo(d.tempo_empresa)}</TableCell>
-                        <TableCell className="text-right whitespace-nowrap">
-                          {d.custo_rescisao ? formatCurrency(d.custo_rescisao) : "â€”"}
-                        </TableCell>
-                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                          <TooltipProvider delayDuration={200}>
-                            <div className="flex items-center justify-center gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                    onClick={() => setEditingDesligamento(d)}
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">Editar</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => setDeleting(d.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">Apagar</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </TooltipProvider>
+                        <TableCell>{formatDate(desligamento.data_admissao)}</TableCell>
+                        <TableCell>{formatDate(desligamento.data_desligamento)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => setEditingDesligamento(desligamento)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setDeletingDesligamento(desligamento)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -334,45 +366,28 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                 </Table>
               </div>
 
-              {/* Mobile list */}
               <div className="md:hidden space-y-3">
-                {data.desligamentos.map(d => (
-                  <div
-                    key={d.id}
-                    className="border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => setSelectedDesligamento(d)}
-                  >
+                {desligamentos.map((desligamento) => (
+                  <article key={desligamento.id} className="rounded-lg border p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-foreground">{d.nome}</p>
-                      <Badge variant="outline" className="text-xs">{d.motivo}</Badge>
+                      <p className="font-medium">{desligamento.nome}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {desligamento.motivo}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{d.cargo} â€” {d.departamento}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Desligamento: {formatDate(d.data_desligamento)}</span>
-                      <span>{formatTempo(d.tempo_empresa)}</span>
-                    </div>
-                    {d.custo_rescisao && (
-                      <p className="text-sm font-medium text-destructive">{formatCurrency(d.custo_rescisao)}</p>
-                    )}
-                    <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs gap-1"
-                        onClick={() => setEditingDesligamento(d)}
-                      >
-                        <Edit2 className="h-3 w-3" /> Editar
+                    <p className="text-xs text-muted-foreground">{desligamento.departamento || "Sem setor"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(desligamento.data_admissao)} {"->"} {formatDate(desligamento.data_desligamento)}
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button variant="outline" size="sm" onClick={() => setEditingDesligamento(desligamento)}>
+                        Editar
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs gap-1 text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleting(d.id)}
-                      >
-                        <Trash2 className="h-3 w-3" /> Apagar
+                      <Button variant="outline" size="sm" onClick={() => setDeletingDesligamento(desligamento)}>
+                        Apagar
                       </Button>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             </>
@@ -380,85 +395,19 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
         </CardContent>
       </Card>
 
-      {/* Detail Modal */}
-      <Dialog open={!!selectedDesligamento} onOpenChange={open => !open && setSelectedDesligamento(null)}>
-        <DialogContent className="sm:max-w-[500px] bg-background">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Desligamento</DialogTitle>
-          </DialogHeader>
-          {selectedDesligamento && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Info label="Nome" value={selectedDesligamento.nome} />
-                <Info label="Cargo" value={selectedDesligamento.cargo} />
-                <Info label="Setor" value={selectedDesligamento.departamento} />
-                <Info label="Motivo" value={selectedDesligamento.motivo} />
-                <Info label="Data Admissao" value={formatDate(selectedDesligamento.data_admissao)} />
-                <Info label="Data Desligamento" value={formatDate(selectedDesligamento.data_desligamento)} />
-                <Info label="Tempo de Empresa" value={formatTempo(selectedDesligamento.tempo_empresa)} />
-                <Info
-                  label="Custo Rescisao"
-                  value={selectedDesligamento.custo_rescisao ? formatCurrency(selectedDesligamento.custo_rescisao) : "â€”"}
-                />
-              </div>
-              {selectedDesligamento.observacoes && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Observacoes</p>
-                  <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3">{selectedDesligamento.observacoes}</p>
-                </div>
-              )}
-              {selectedDesligamento.colaborador_id && (
-                <button
-                  className="text-sm text-primary hover:underline"
-                  onClick={() => {
-                    setSelectedDesligamento(null);
-                    navigate(`/employee/${selectedDesligamento.colaborador_id}`);
-                  }}
-                >
-                  Ver perfil completo â†’
-                </button>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Modal */}
       <EditDesligamentoModal
         desligamento={editingDesligamento}
-        open={!!editingDesligamento}
-        onOpenChange={(open) => !open && setEditingDesligamento(null)}
+        open={Boolean(editingDesligamento)}
+        onOpenChange={(open) => {
+          if (!open) setEditingDesligamento(null);
+        }}
       />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent className="bg-background">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusao</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este registro de desligamento? Esta acao nao pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={async () => {
-                if (deleting) {
-                  await deleteDesligamento.mutateAsync(deleting);
-                  setDeleting(null);
-                }
-              }}
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <Modal
-        open={!!editingReason}
-        onOpenChange={(open) => !open && setEditingReason(null)}
+        open={Boolean(editingReason)}
+        onOpenChange={(open) => {
+          if (!open) setEditingReason(null);
+        }}
         title="Editar motivo do ranking"
       >
         <div className="space-y-4">
@@ -476,7 +425,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            TODO: persistir alteracoes de ranking agregado em tabela dedicada no Supabase.
+            TODO: persistir alteracoes de ranking agregado em tabela dedicada no backend.
           </p>
           <div className="flex justify-end">
             <Button type="button" onClick={saveReasonEdit}>
@@ -487,36 +436,28 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
       </Modal>
 
       <ConfirmDialog
-        open={!!deletingReason}
-        onOpenChange={(open) => !open && setDeletingReason(null)}
+        open={Boolean(deletingReason)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReason(null);
+        }}
         title="Apagar motivo do ranking?"
-        description="Essa acao remove o item apenas da visao atual (dados agregados)."
+        description="Essa acao remove o item apenas da visualizacao local."
         confirmLabel="Apagar"
         cancelLabel="Cancelar"
         onConfirm={confirmDeleteReason}
       />
+
+      <ConfirmDialog
+        open={Boolean(deletingDesligamento)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingDesligamento(null);
+        }}
+        title="Excluir desligamento?"
+        description="Esta acao nao pode ser desfeita e remove o registro permanentemente."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={handleDeleteDesligamento}
+      />
     </div>
   );
 }
-
-function KpiCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-        <div className={color}>{icon}</div>
-        <p className="text-xl sm:text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-xs text-muted-foreground leading-tight">{label}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium text-foreground">{value}</p>
-    </div>
-  );
-}
-

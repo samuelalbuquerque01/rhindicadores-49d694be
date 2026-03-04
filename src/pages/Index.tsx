@@ -6,7 +6,6 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { TreinamentoChart } from "@/components/dashboard/TreinamentoChart";
 import { TurnoverModule } from "@/components/dashboard/TurnoverModule";
 import { AbsenteismoModule } from "@/components/dashboard/AbsenteismoModule";
-import { EventosChart } from "@/components/dashboard/EventosChart";
 import { FilialSelector } from "@/components/dashboard/FilialSelector";
 import { FilialForm } from "@/components/forms/FilialForm";
 import { ColaboradorForm } from "@/components/forms/ColaboradorForm";
@@ -14,9 +13,6 @@ import { ColaboradoresList } from "@/components/dashboard/ColaboradoresList";
 import { TreinamentosList } from "@/components/dashboard/TreinamentosList";
 import { TreinamentosParticipacaoTable } from "@/components/dashboard/TreinamentosParticipacaoTable";
 import { TreinamentosInsightsCard } from "@/components/dashboard/TreinamentosInsightsCard";
-import { EventosList } from "@/components/dashboard/EventosList";
-import { EventosParticipacaoTable } from "@/components/dashboard/EventosParticipacaoTable";
-import { EventosInsightsCard } from "@/components/dashboard/EventosInsightsCard";
 import { ParticipacaoColaboradorChart } from "@/components/dashboard/ParticipacaoColaboradorChart";
 import { VisaoGeralPanel } from "@/components/dashboard/VisaoGeralPanel";
 import { useColaboradoresStats } from "@/hooks/useColaboradores";
@@ -26,6 +22,7 @@ import { useContratacaoStats } from "@/hooks/useContratacoes";
 import { useTreinamentosStats } from "@/hooks/useTreinamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimelinePanel } from "@/features/timeline";
+import { EventsPage } from "@/features/events";
 
 const TAB_VALUES = [
   "colaboradores",
@@ -197,16 +194,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="eventos" className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2 space-y-6">
-                <EventosChart filialId={selectedFilial} />
-                <EventosParticipacaoTable filialId={selectedFilial} />
-              </div>
-              <div className="space-y-6">
-                <EventosInsightsCard filialId={selectedFilial} />
-                <EventosList filialId={selectedFilial} />
-              </div>
-            </div>
+            <EventsPage filialId={selectedFilial} />
           </TabsContent>
 
           <TabsContent value="turnover" className="space-y-6">

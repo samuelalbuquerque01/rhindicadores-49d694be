@@ -1,73 +1,64 @@
-﻿import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Calendar,
-  TrendingDown,
-  Clock,
-  DollarSign,
-  AlertTriangle,
-  Building,
-  BarChart3,
-  Edit2,
-  Paperclip,
-  Trash2,
-  Download,
-  ExternalLink,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Activity, CalendarDays, Building2, AlertCircle, Edit2, Trash2 } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { AbsenteismoDetailChart } from "./AbsenteismoDetailChart";
-import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
-import { useAbsenteismoAnalytics, AfastamentoCompleto } from "@/hooks/useAbsenteismoAnalytics";
-import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
-import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
-import { EditAfastamentoModal } from "./EditAfastamentoModal";
-import { RankingMotivosCard } from "./RankingMotivosCard";
-import { RankingList } from "./RankingList";
-import type { RankingItemData } from "./RankingItem";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AfastamentoForm } from "@/components/forms/AfastamentoForm";
+import { EditAfastamentoModal } from "@/components/dashboard/EditAfastamentoModal";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { RankingList } from "@/components/dashboard/RankingList";
+import type { RankingItemData } from "@/components/dashboard/RankingItem";
+import { useAbsenteismoAnalytics, type AfastamentoCompleto } from "@/hooks/useAbsenteismoAnalytics";
+import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
+import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
+import { useColaboradores } from "@/hooks/useColaboradores";
 import {
-  createAfastamentoSignedUrl,
-  downloadAfastamentoAnexo,
-  isHttpUrl,
-} from "@/lib/afastamentosStorage";
-import { toast } from "sonner";
+  buildAbsenteeismAnalytics,
+  deriveMonthVariation,
+} from "@/lib/analytics/absenteeism";
 
 interface AbsenteismoModuleProps {
   filialId?: string;
 }
 
+function metricTrend(variation: number): "up" | "down" | "stable" {
+  if (variation > 0) return "up";
+  if (variation < 0) return "down";
+  return "stable";
+}
+
+function formatDate(value: string): string {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}
+
 export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
-  const navigate = useNavigate();
   const [mesFilter, setMesFilter] = useState<string>("all");
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [tipoFilter, setTipoFilter] = useState<string>("all");
-  const [selected, setSelected] = useState<AfastamentoCompleto | null>(null);
-  const [editingAfastamento, setEditingAfastamento] = useState<any>(null);
-  const [deleting, setDeleting] = useState<{ id: string; anexo_url?: string | null } | null>(null);
+  const [editingAfastamento, setEditingAfastamento] = useState<AfastamentoCompleto | null>(null);
+  const [deletingAfastamento, setDeletingAfastamento] = useState<AfastamentoCompleto | null>(null);
   const [editedReasons, setEditedReasons] = useState<Record<string, RankingItemData>>({});
   const [hiddenReasonIds, setHiddenReasonIds] = useState<string[]>([]);
   const [editingReason, setEditingReason] = useState<RankingItemData | null>(null);
@@ -77,115 +68,79 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
 
   const effectiveFilialId = filialId === "all" ? undefined : filialId;
 
-  const { data, isLoading } = useAbsenteismoAnalytics({
+  const { data, isLoading, error } = useAbsenteismoAnalytics({
     filialId: effectiveFilialId,
     mes: mesFilter === "all" ? undefined : mesFilter,
     setor: setorFilter,
     tipoAfastamento: tipoFilter,
   });
 
-  const afastamentos = data?.afastamentos || [];
-
-  const impactoPorSetor = Object.entries(
-    afastamentos.reduce((acc: Record<string, number>, a) => {
-      const setor = a.departamento || "-";
-      acc[setor] = (acc[setor] || 0) + (a.dias_afastados || 0);
-      return acc;
-    }, {})
-  )
-    .map(([setor, dias]) => ({ setor, dias }))
-    .sort((a, b) => b.dias - a.dias);
-
-  const { data: setores } = useSetoresDisponiveis();
+  const { data: setores = [] } = useSetoresDisponiveis();
+  const { data: colaboradoresAtivos = [] } = useColaboradores({
+    filialId: effectiveFilialId,
+    status: "Ativo",
+  });
   const deleteAfastamento = useDeleteAfastamento();
 
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const afastamentos = data?.afastamentos ?? [];
+  const analytics = useMemo(
+    () =>
+      buildAbsenteeismAnalytics(
+        afastamentos.map((afastamento) => ({
+          id: afastamento.id,
+          type: afastamento.tipo,
+          startDate: afastamento.data_inicio,
+          endDate: afastamento.data_fim,
+          sectorName: afastamento.departamento,
+        })),
+        colaboradoresAtivos.length || undefined,
+      ),
+    [afastamentos, colaboradoresAtivos.length],
+  );
 
-  const formatDate = (d: string) => {
-    if (!d) return "â€”";
-    const [y, m, day] = d.split("-");
-    return `${day}/${m}/${y}`;
-  };
+  const monthlyVariation = deriveMonthVariation(analytics.monthlyLostDays);
+  const monthlyTrend = metricTrend(monthlyVariation);
 
-  const handleViewAnexo = async (anexoUrl?: string | null) => {
-    if (!anexoUrl) return;
-    try {
-      if (isHttpUrl(anexoUrl)) {
-        window.open(anexoUrl, "_blank", "noopener,noreferrer");
-        return;
-      }
-      const signedUrl = await createAfastamentoSignedUrl(anexoUrl);
-      if (signedUrl) window.open(signedUrl, "_blank", "noopener,noreferrer");
-    } catch (error: any) {
-      toast.error(`Erro ao visualizar anexo: ${error.message}`);
-    }
-  };
+  const rankingReasons = useMemo<RankingItemData[]>(
+    () =>
+      analytics.reasons
+        .map((reason) => ({
+          id: reason.id,
+          label: reason.label,
+          value: reason.days,
+          unit: reason.days === 1 ? "dia" : "dias",
+        }))
+        .filter((item) => !hiddenReasonIds.includes(item.id))
+        .map((item) => editedReasons[item.id] || item),
+    [analytics.reasons, editedReasons, hiddenReasonIds],
+  );
 
-  const handleDownloadAnexo = async (anexoUrl?: string | null) => {
-    if (!anexoUrl) return;
-    try {
-      if (isHttpUrl(anexoUrl)) {
-        window.open(anexoUrl, "_blank", "noopener,noreferrer");
-        return;
-      }
-      const blob = await downloadAfastamentoAnexo(anexoUrl);
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = anexoUrl.split("/").pop() || "anexo";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (error: any) {
-      toast.error(`Erro ao baixar anexo: ${error.message}`);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (deleting) {
-      await deleteAfastamento.mutateAsync(deleting);
-      setDeleting(null);
-    }
-  };
-
-  const mesesOptions = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-    return { value, label: label.charAt(0).toUpperCase() + label.slice(1) };
-  });
+  const mesesOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - index);
+        const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        return {
+          value,
+          label: label.charAt(0).toUpperCase() + label.slice(1),
+        };
+      }),
+    [],
+  );
 
   const tiposAfastamento = [
-    "Atestado m\u00e9dico", "Banco de horas", "F\u00e9rias",
-    "Licen\u00e7a maternidade", "Licen\u00e7a paternidade", "Outro",
+    "Atestado médico",
+    "Banco de horas",
+    "Férias",
+    "Licença maternidade",
+    "Licença paternidade",
+    "Outro",
   ];
-
-  const rankingReasons = useMemo<RankingItemData[]>(() => {
-    const base = (data?.topMotivos || []).map((motivo) => ({
-      id: motivo.tipo.toLowerCase().replace(/\s+/g, "-"),
-      label: motivo.tipo,
-      value: motivo.dias,
-      unit: motivo.dias !== 1 ? "dias" : "dia",
-    }));
-
-    return base
-      .filter((item) => !hiddenReasonIds.includes(item.id))
-      .map((item) => editedReasons[item.id] || item);
-  }, [data?.topMotivos, editedReasons, hiddenReasonIds]);
-
-  const startEditReason = (item: RankingItemData) => {
-    setEditingReason(item);
-    setReasonLabelDraft(item.label);
-    setReasonValueDraft(String(item.value));
-  };
 
   const saveReasonEdit = () => {
     if (!editingReason) return;
-
     const parsedValue = Number(reasonValueDraft);
     if (!reasonLabelDraft.trim() || Number.isNaN(parsedValue) || parsedValue < 0) {
       return;
@@ -208,193 +163,205 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
     setDeletingReason(null);
   };
 
+  const handleDeleteAfastamento = async () => {
+    if (!deletingAfastamento) return;
+    await deleteAfastamento.mutateAsync({
+      id: deletingAfastamento.id,
+      anexo_url: deletingAfastamento.anexo_url ?? null,
+    });
+    setDeletingAfastamento(null);
+  };
+
   if (isLoading) {
-    return <Skeleton className="h-[600px] w-full rounded-lg" />;
+    return <div className="rounded-lg border p-8 text-sm text-muted-foreground">Carregando dados de absenteismo...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-8 text-sm text-destructive">
+        Erro ao carregar dados de absenteismo.
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Row 1: Chart + KPIs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <AbsenteismoDetailChart
-          afastamentos={afastamentos}
-          taxaAbsenteismo={data?.taxaAbsenteismo || 0}
-          totalDias={data?.totalDias || 0}
-          topSetores={impactoPorSetor}
-          isLoading={isLoading}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <MetricCard
+          title="Dias perdidos"
+          value={analytics.lostDays}
+          icon={<CalendarDays className="h-5 w-5" />}
+          variationPercent={monthlyVariation}
+          trend={monthlyTrend}
+          isPositive={false}
+          tooltip="Soma dos dias entre data inicial e final dos afastamentos no periodo."
         />
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <KpiCard
-            icon={<Calendar className="h-5 w-5" />}
-            label="Total de Dias Afastados"
-            value={data?.totalDias || 0}
-            color="text-destructive"
-          />
-          <KpiCard
-            icon={<TrendingDown className="h-5 w-5" />}
-            label="Taxa de Absenteismo"
-            value={`${data?.taxaAbsenteismo || 0}%`}
-            color="text-warning"
-          />
-          <KpiCard
-            icon={<BarChart3 className="h-5 w-5" />}
-            label="Media Dias/Colaborador"
-            value={data?.mediaDiasPorColab || 0}
-            color="text-primary"
-          />
-          <KpiCard
-            icon={<Building className="h-5 w-5" />}
-            label="Setor Maior Absenteismo"
-            value={data?.setorMaiorAbsenteismo || "â€”"}
-            color="text-muted-foreground"
-          />
-          <KpiCard
-            icon={<DollarSign className="h-5 w-5" />}
-            label="Custo Estimado"
-            value={formatCurrency(data?.custoEstimado || 0)}
-            color="text-destructive"
-          />
-          <KpiCard
-            icon={<Clock className="h-5 w-5" />}
-            label="Total de Afastamentos"
-            value={data?.afastamentos.length || 0}
-            color="text-primary"
-          />
-        </div>
+        <MetricCard
+          title="Afastamentos no periodo"
+          value={analytics.absencesCount}
+          icon={<Activity className="h-5 w-5" />}
+          variationPercent={monthlyVariation}
+          trend={monthlyTrend}
+          isPositive={false}
+          tooltip="Quantidade total de registros de afastamento filtrados."
+        />
+        <MetricCard
+          title="Taxa de absenteismo"
+          value={analytics.absenteeismRate === null ? "Indisponivel" : `${analytics.absenteeismRate}%`}
+          icon={<AlertCircle className="h-5 w-5" />}
+          variationPercent={monthlyVariation}
+          trend={monthlyTrend}
+          isPositive={false}
+          tooltip="Calculado por dias perdidos dividido por colaboradores ativos x 22 dias uteis."
+        />
+        <MetricCard
+          title="Setor mais impactado"
+          value={analytics.mostImpactedSector}
+          icon={<Building2 className="h-5 w-5" />}
+          variationPercent={0}
+          trend="stable"
+          tooltip="Setor com maior soma de dias perdidos no periodo filtrado."
+        />
       </div>
 
-      {/* Strategic card: top motivos */}
-      {(data?.topMotivos?.length || 0) > 0 && (
-        <RankingMotivosCard
-          title="Principais Motivos de Afastamento"
-          items={data!.topMotivos.map((m) => ({
-            label: m.tipo,
-            value: m.dias,
-            unit: m.dias !== 1 ? "dias" : "dia",
-          }))}
-          setorDestaque={data?.setorMaiorAbsenteismo}
-          setorLabel="Setor com maior impacto"
-        />
-      )}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <ChartCard
+          title="Dias perdidos por mes"
+          subtitle="Distribuicao mensal de absenteismo"
+          isEmpty={analytics.monthlyLostDays.every((item) => item.lostDays === 0)}
+        >
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.monthlyLostDays}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="monthLabel" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="lostDays" name="Dias perdidos" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard
+          title="Impacto por setor"
+          subtitle="Dias perdidos acumulados por area"
+          isEmpty={analytics.sectorLostDays.length === 0}
+        >
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.sectorLostDays.slice(0, 8)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="sector" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="lostDays" name="Dias perdidos" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+      </div>
 
       <RankingList
-        title="Ranking de motivos (editavel)"
+        title="Ranking de motivos de afastamento"
         items={rankingReasons}
-        emptyMessage="Sem dados para ranking de motivos no periodo selecionado."
-        onEdit={startEditReason}
+        emptyMessage="Sem motivos registrados para os filtros selecionados."
+        onEdit={(item) => {
+          setEditingReason(item);
+          setReasonLabelDraft(item.label);
+          setReasonValueDraft(String(item.value));
+        }}
         onDelete={setDeletingReason}
       />
 
-      {/* Filters + Action + Table */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <CardTitle className="text-base">Afastamentos do Periodo</CardTitle>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <CardTitle className="text-base">Registros de afastamento</CardTitle>
             <AfastamentoForm />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Select value={mesFilter} onValueChange={setMesFilter}>
-              <SelectTrigger className="w-full sm:w-52 bg-background">
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Mes" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os meses</SelectItem>
-                {mesesOptions.map(m => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                {mesesOptions.map((mes) => (
+                  <SelectItem key={mes.value} value={mes.value}>
+                    {mes.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
             <Select value={setorFilter} onValueChange={setSetorFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-background">
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Setor" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[250px]">
                 <SelectItem value="all">Todos os setores</SelectItem>
-                {setores?.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                {setores.map((setor) => (
+                  <SelectItem key={setor} value={setor}>
+                    {setor}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
             <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-full sm:w-52 bg-background">
-                <SelectValue placeholder="Tipo" />
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Tipo de afastamento" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 <SelectItem value="all">Todos os tipos</SelectItem>
-                {tiposAfastamento.map(t => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                {tiposAfastamento.map((tipo) => (
+                  <SelectItem key={tipo} value={tipo}>
+                    {tipo}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {!data?.afastamentos?.length ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum afastamento encontrado para os filtros selecionados.
+          {afastamentos.length === 0 ? (
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+              Nenhum afastamento encontrado para o periodo selecionado.
             </div>
           ) : (
             <>
-              {/* Desktop table */}
               <div className="hidden md:block rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Cargo</TableHead>
+                      <TableHead>Colaborador</TableHead>
                       <TableHead>Setor</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Inicio</TableHead>
                       <TableHead>Retorno</TableHead>
                       <TableHead className="text-right">Dias</TableHead>
-                      <TableHead>Anexo</TableHead>
                       <TableHead className="text-right">Acoes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.afastamentos.map(a => (
-                      <TableRow
-                        key={a.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelected(a)}
-                      >
-                        <TableCell className="font-medium">{a.nome}</TableCell>
-                        <TableCell>{a.cargo}</TableCell>
-                        <TableCell>{a.departamento}</TableCell>
+                    {afastamentos.map((afastamento) => (
+                      <TableRow key={afastamento.id}>
+                        <TableCell className="font-medium">{afastamento.nome}</TableCell>
+                        <TableCell>{afastamento.departamento || "-"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="whitespace-nowrap">{a.tipo}</Badge>
+                          <Badge variant="outline">{afastamento.tipo}</Badge>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(a.data_inicio)}</TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(a.data_fim)}</TableCell>
-                        <TableCell className="text-right">{a.dias_afastados}</TableCell>
-                        <TableCell className="text-center">
-                          {a.anexo_url ? (
-                            <Paperclip className="h-4 w-4 text-muted-foreground inline" />
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
+                        <TableCell>{formatDate(afastamento.data_inicio)}</TableCell>
+                        <TableCell>{formatDate(afastamento.data_fim)}</TableCell>
+                        <TableCell className="text-right">{afastamento.dias_afastados}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setEditingAfastamento(a);
-                              }}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => setEditingAfastamento(afastamento)}>
                               <Edit2 className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setDeleting({ id: a.id, anexo_url: a.anexo_url });
-                              }}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => setDeletingAfastamento(afastamento)}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -405,30 +372,31 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                 </Table>
               </div>
 
-              {/* Mobile list */}
               <div className="md:hidden space-y-3">
-                {data.afastamentos.map(a => (
-                  <div
-                    key={a.id}
-                    className="border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => setSelected(a)}
-                  >
+                {afastamentos.map((afastamento) => (
+                  <article key={afastamento.id} className="rounded-lg border p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-foreground">{a.nome}</p>
-                      <Badge variant="outline" className="text-xs">{a.tipo}</Badge>
+                      <p className="font-medium">{afastamento.nome}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {afastamento.tipo}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{a.cargo} â€” {a.departamento}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{formatDate(a.data_inicio)} â†’ {formatDate(a.data_fim)}</span>
-                      <span className="font-semibold text-foreground">{a.dias_afastados} dias</span>
-                    </div>
-                    {a.anexo_url && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Paperclip className="h-3 w-3" />
-                        Documento anexado
+                    <p className="text-xs text-muted-foreground">{afastamento.departamento || "Sem setor"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(afastamento.data_inicio)} ate {formatDate(afastamento.data_fim)}
+                    </p>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-sm font-semibold">{afastamento.dias_afastados} dias</span>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setEditingAfastamento(afastamento)}>
+                          Editar
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDeletingAfastamento(afastamento)}>
+                          Apagar
+                        </Button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </article>
                 ))}
               </div>
             </>
@@ -436,124 +404,19 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
         </CardContent>
       </Card>
 
-      {/* Detail Modal */}
-      <Dialog open={!!selected} onOpenChange={open => !open && setSelected(null)}>
-        <DialogContent className="sm:max-w-[500px] bg-background">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Afastamento</DialogTitle>
-          </DialogHeader>
-          {selected && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Info label="Nome" value={selected.nome} />
-                <Info label="Cargo" value={selected.cargo} />
-                <Info label="Setor" value={selected.departamento} />
-                <Info label="Tipo" value={selected.tipo} />
-                <Info label="Data Inicio" value={formatDate(selected.data_inicio)} />
-                <Info label="Data Retorno" value={formatDate(selected.data_fim)} />
-                <Info label="Total de Dias" value={`${selected.dias_afastados} dias`} />
-              </div>
-              {selected.observacoes && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Observacoes</p>
-                  <p className="text-sm text-foreground bg-muted/50 rounded-lg p-3 whitespace-pre-wrap">{selected.observacoes}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Documento anexado</p>
-                {selected.anexo_url ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleViewAnexo(selected.anexo_url)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Visualizar
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadAnexo(selected.anexo_url)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Baixar
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Nenhum documento anexado.</p>
-                )}
-              </div>
-              {selected.colaborador_id && (
-                <button
-                  className="text-sm text-primary hover:underline"
-                  onClick={() => {
-                    setSelected(null);
-                    navigate(`/employee/${selected.colaborador_id}`);
-                  }}
-                >
-                  Ver perfil completo â†’
-                </button>
-              )}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEditingAfastamento(selected);
-                    setSelected(null);
-                  }}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setDeleting({ id: selected.id, anexo_url: selected.anexo_url });
-                    setSelected(null);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       <EditAfastamentoModal
         afastamento={editingAfastamento}
-        open={!!editingAfastamento}
-        onOpenChange={(open) => !open && setEditingAfastamento(null)}
+        open={Boolean(editingAfastamento)}
+        onOpenChange={(open) => {
+          if (!open) setEditingAfastamento(null);
+        }}
       />
 
-      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acao nao pode ser desfeita. O registro sera removido permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <Modal
-        open={!!editingReason}
-        onOpenChange={(open) => !open && setEditingReason(null)}
+        open={Boolean(editingReason)}
+        onOpenChange={(open) => {
+          if (!open) setEditingReason(null);
+        }}
         title="Editar motivo do ranking"
       >
         <div className="space-y-4">
@@ -571,7 +434,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            TODO: persistir alteracoes de ranking agregado em tabela dedicada no Supabase.
+            TODO: persistir alteracoes de ranking agregado em tabela dedicada no backend.
           </p>
           <div className="flex justify-end">
             <Button type="button" onClick={saveReasonEdit}>
@@ -582,37 +445,28 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
       </Modal>
 
       <ConfirmDialog
-        open={!!deletingReason}
-        onOpenChange={(open) => !open && setDeletingReason(null)}
+        open={Boolean(deletingReason)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReason(null);
+        }}
         title="Apagar motivo do ranking?"
-        description="Essa acao remove o item apenas da visao atual (dados agregados)."
+        description="Essa acao remove o item apenas da visualizacao local."
         confirmLabel="Apagar"
         cancelLabel="Cancelar"
         onConfirm={confirmDeleteReason}
       />
+
+      <ConfirmDialog
+        open={Boolean(deletingAfastamento)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingAfastamento(null);
+        }}
+        title="Excluir afastamento?"
+        description="Esta acao nao pode ser desfeita e remove o registro permanentemente."
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={handleDeleteAfastamento}
+      />
     </div>
   );
 }
-
-function KpiCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-        <div className={color}>{icon}</div>
-        <p className="text-xl sm:text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-xs text-muted-foreground leading-tight">{label}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium text-foreground">{value}</p>
-    </div>
-  );
-}
-
-

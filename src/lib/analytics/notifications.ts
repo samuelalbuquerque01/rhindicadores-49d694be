@@ -1,4 +1,4 @@
-﻿import type { AnomalyPoint } from "@/lib/analytics/anomaly";
+import type { AnomalyPoint } from "@/lib/analytics/anomaly";
 
 export type NotificationPriority = "high" | "medium" | "low";
 export type NotificationType =
@@ -13,11 +13,17 @@ export type NotificationType =
 export interface SmartNotification {
   id: string;
   type: NotificationType;
+  title: string;
   message: string;
   date: string;
   urgencyLabel: string;
   priority: NotificationPriority;
   targetTab: "geral" | "absenteismo" | "turnover" | "timeline";
+}
+
+export interface SmartNotificationState extends SmartNotification {
+  read: boolean;
+  readAt: string | null;
 }
 
 interface InputData {
@@ -38,6 +44,20 @@ function toPriority(variation: number): NotificationPriority {
   return "low";
 }
 
+export function notificationTitleByType(type: NotificationType): string {
+  const titles: Record<NotificationType, string> = {
+    contract: "Contrato proximo do vencimento",
+    vacation: "Ferias proximas",
+    medical: "Atestados medicos",
+    absenteeism: "Risco de absenteismo",
+    turnover: "Risco de turnover",
+    anomaly: "Anomalia detectada",
+    forecast: "Alerta de previsao",
+  };
+
+  return titles[type];
+}
+
 export function generateSmartNotifications(data: InputData): SmartNotification[] {
   const now = data.now ?? new Date();
   const isoDate = now.toISOString();
@@ -48,6 +68,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `contract-${index}-${item.employeeName}`,
       type: "contract",
+      title: notificationTitleByType("contract"),
       message: `${item.employeeName} tem contrato encerrando em ${item.daysLeft} dia(s).`,
       date: isoDate,
       urgencyLabel: `D-${item.daysLeft}`,
@@ -60,6 +81,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `vac-${index}-${item.employeeName}`,
       type: "vacation",
+      title: notificationTitleByType("vacation"),
       message: `Ferias de ${item.employeeName} com inicio em ${item.daysLeft} dia(s).`,
       date: isoDate,
       urgencyLabel: `D-${item.daysLeft}`,
@@ -72,6 +94,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `medical-${index}-${item.employeeName}`,
       type: "medical",
+      title: notificationTitleByType("medical"),
       message: `${item.employeeName} possui ${item.certificates} atestados medicos no mes.`,
       date: isoDate,
       urgencyLabel: "Mes atual",
@@ -84,6 +107,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `abs-inc-${index}-${item.sector}`,
       type: "absenteeism",
+      title: notificationTitleByType("absenteeism"),
       message: `${item.sector} aumentou o absenteismo em ${item.variation.toFixed(1)}% vs periodo anterior.`,
       date: isoDate,
       urgencyLabel: "Comparacao de periodo",
@@ -96,6 +120,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `turn-inc-${index}-${item.sector}`,
       type: "turnover",
+      title: notificationTitleByType("turnover"),
       message: `${item.sector} aumentou o turnover em ${item.variation.toFixed(1)}% vs periodo anterior.`,
       date: isoDate,
       urgencyLabel: "Comparacao de periodo",
@@ -108,6 +133,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `anomaly-${index}-${item.key}`,
       type: "anomaly",
+      title: notificationTitleByType("anomaly"),
       message: `Anomalia detectada em ${item.label} com valor ${item.value.toFixed(1)}.`,
       date: isoDate,
       urgencyLabel: "Anomalia",
@@ -120,6 +146,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `forecast-turnover-${data.turnoverRiskHigh.sector}`,
       type: "forecast",
+      title: notificationTitleByType("forecast"),
       message: `Previsao indica alto risco de turnover em ${data.turnoverRiskHigh.sector} (${data.turnoverRiskHigh.projected.toFixed(1)} projetado).`,
       date: isoDate,
       urgencyLabel: "Previsao 3 meses",
@@ -132,6 +159,7 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     notifications.push({
       id: `forecast-abs-${data.absenteeismRiskHigh.sector}`,
       type: "forecast",
+      title: notificationTitleByType("forecast"),
       message: `Previsao indica risco de absenteismo em ${data.absenteeismRiskHigh.sector} (${data.absenteeismRiskHigh.projected.toFixed(1)} dias projetados).`,
       date: isoDate,
       urgencyLabel: "Previsao 3 meses",
@@ -140,14 +168,17 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
     });
   }
 
+  const weight: Record<NotificationPriority, number> = {
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
   return notifications
-    .sort((a, b) => {
-      const weight: Record<NotificationPriority, number> = {
-        high: 3,
-        medium: 2,
-        low: 1,
-      };
-      return weight[b.priority] - weight[a.priority];
+    .sort((left, right) => {
+      const priorityDiff = weight[right.priority] - weight[left.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      return right.date.localeCompare(left.date);
     })
     .slice(0, 20);
 }

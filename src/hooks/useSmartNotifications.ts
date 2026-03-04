@@ -1,12 +1,15 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  clearReadSmartNotifications,
+  markAllSmartNotificationsAsRead,
+  markSmartNotificationAsRead,
   readSmartNotifications,
   SMART_NOTIFICATIONS_EVENT,
 } from "@/lib/analytics/notificationStore";
-import { SmartNotification } from "@/lib/analytics/notifications";
+import type { SmartNotificationState } from "@/lib/analytics/notifications";
 
 export function useSmartNotifications() {
-  const [notifications, setNotifications] = useState<SmartNotification[]>(() => readSmartNotifications());
+  const [notifications, setNotifications] = useState<SmartNotificationState[]>(() => readSmartNotifications());
 
   useEffect(() => {
     const sync = () => setNotifications(readSmartNotifications());
@@ -20,5 +23,16 @@ export function useSmartNotifications() {
     };
   }, []);
 
-  return notifications;
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications],
+  );
+
+  return {
+    notifications,
+    unreadCount,
+    markAsRead: (notificationId: string) => markSmartNotificationAsRead(notificationId),
+    markAllAsRead: () => markAllSmartNotificationsAsRead(),
+    clearRead: () => clearReadSmartNotifications(),
+  };
 }
