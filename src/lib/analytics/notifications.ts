@@ -24,6 +24,7 @@ export interface SmartNotification {
 export interface SmartNotificationState extends SmartNotification {
   read: boolean;
   readAt: string | null;
+  hidden: boolean;
 }
 
 interface InputData {

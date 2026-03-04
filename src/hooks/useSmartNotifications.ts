@@ -9,10 +9,10 @@ import {
 import type { SmartNotificationState } from "@/lib/analytics/notifications";
 
 export function useSmartNotifications() {
-  const [notifications, setNotifications] = useState<SmartNotificationState[]>(() => readSmartNotifications());
+  const [allNotifications, setAllNotifications] = useState<SmartNotificationState[]>(() => readSmartNotifications());
 
   useEffect(() => {
-    const sync = () => setNotifications(readSmartNotifications());
+    const sync = () => setAllNotifications(readSmartNotifications());
 
     window.addEventListener("storage", sync);
     window.addEventListener(SMART_NOTIFICATIONS_EVENT, sync);
@@ -22,6 +22,11 @@ export function useSmartNotifications() {
       window.removeEventListener(SMART_NOTIFICATIONS_EVENT, sync);
     };
   }, []);
+
+  const notifications = useMemo(
+    () => allNotifications.filter((notification) => !notification.hidden),
+    [allNotifications],
+  );
 
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.read).length,

@@ -36,6 +36,7 @@ function normalizeStoredItem(item: Partial<SmartNotificationState>): SmartNotifi
     targetTab: item.targetTab,
     read: Boolean(item.read),
     readAt: item.readAt ?? null,
+    hidden: Boolean(item.hidden),
   };
 }
 
@@ -69,6 +70,7 @@ export function persistSmartNotifications(notifications: SmartNotification[]): v
       ...item,
       read: existing?.read ?? false,
       readAt: existing?.readAt ?? null,
+      hidden: existing?.hidden ?? false,
     };
   });
 
@@ -103,7 +105,14 @@ export function markAllSmartNotificationsAsRead(): void {
 }
 
 export function clearReadSmartNotifications(): void {
-  const next = readSmartNotifications().filter((item) => !item.read);
+  const next = readSmartNotifications().map((item) =>
+    item.read
+      ? {
+          ...item,
+          hidden: true,
+        }
+      : item,
+  );
   writeSmartNotifications(next);
 }
 
