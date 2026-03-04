@@ -4,13 +4,19 @@ import { cn } from "@/lib/utils";
 
 interface InsightsPanelProps {
   insights: InsightItem[];
+  title?: string;
+  emptyHint?: string;
 }
 
-export function InsightsPanel({ insights }: InsightsPanelProps) {
+export function InsightsPanel({
+  insights,
+  title = "Insights de RH",
+  emptyHint = "Sem insights para este periodo. Tente ampliar o intervalo.",
+}: InsightsPanelProps) {
   if (insights.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        Sem insights para este periodo. Tente ampliar o intervalo.
+        {emptyHint}
       </div>
     );
   }
@@ -18,7 +24,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   return (
     <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-4">
       <div>
-        <h3 className="text-base font-semibold text-foreground">Insights de RH</h3>
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
         <p className="text-sm text-muted-foreground">Analise automatica baseada nos dados do periodo</p>
       </div>
       <div className="space-y-3">
@@ -43,6 +49,12 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
               <h4 className="text-sm font-semibold text-foreground">{insight.title}</h4>
             </div>
             <p className="mt-2 text-sm text-slate-700">{insight.description}</p>
+            {insight.suggestedAction ? (
+              <div className="mt-2 rounded-md border border-dashed bg-white/50 px-2.5 py-2">
+                <p className="text-xs font-semibold text-foreground">Acao sugerida</p>
+                <p className="text-xs text-slate-700 mt-0.5">{insight.suggestedAction}</p>
+              </div>
+            ) : null}
           </article>
         ))}
       </div>

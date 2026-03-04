@@ -12,43 +12,37 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { usePagination } from "@/hooks/usePagination";
-import { useColaboradores } from "@/hooks/useColaboradores";
 import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
 import {
-  filterHREvents,
-  persistHREvents,
-  readHREvents,
-  removeHREvent,
-  RH_EVENT_TYPES,
-  summarizeEventsByType,
-  type HREventRecord,
-  type RHEventType,
-  upsertHREvent,
-} from "@/lib/analytics/events";
-import { EventFormModal, type EventEmployeeOption } from "@/features/events/components/EventFormModal";
+  EventRecord,
+  INSTITUTIONAL_EVENT_TYPES,
+  InstitutionalEventType,
+  filterInstitutionalEvents,
+  persistInstitutionalEvents,
+  readInstitutionalEvents,
+  removeInstitutionalEvent,
+  summarizeInstitutionalEventsByType,
+  upsertInstitutionalEvent,
+} from "@/lib/storage/eventsStorage";
+import { EventFormModal } from "@/features/events/components/EventFormModal";
 import { EventsTable } from "@/features/events/components/EventsTable";
 
 interface EventsPageProps {
   filialId?: string;
 }
 
-export function EventsPage({ filialId }: EventsPageProps) {
-  const effectiveFilialId = filialId === "all" ? undefined : filialId;
-  const [events, setEvents] = useState<HREventRecord[]>([]);
+export function EventsPage({ filialId: _filialId }: EventsPageProps) {
+  const [events, setEvents] = useState<EventRecord[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [search, setSearch] = useState("");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sectorFilter, setSectorFilter] = useState<string>("all");
-  const [employeeFilter, setEmployeeFilter] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<HREventRecord | null>(null);
-  const [deletingEvent, setDeletingEvent] = useState<HREventRecord | null>(null);
+  const [editingEvent, setEditingEvent] = useState<EventRecord | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<EventRecord | null>(null);
 
-  const { data: colaboradores = [], isLoading: loadingColaboradores, error: colaboradoresError } = useColaboradores({
-    filialId: effectiveFilialId,
-  });
   const { data: setores = [], isLoading: loadingSetores, error: setoresError } = useSetoresDisponiveis();
 
   const {
@@ -63,39 +57,28 @@ export function EventsPage({ filialId }: EventsPageProps) {
 
   useEffect(() => {
     setIsLoadingLocal(true);
-    setEvents(readHREvents());
+    setEvents(readInstitutionalEvents());
     setIsLoadingLocal(false);
   }, []);
 
-  const employeeOptions = useMemo<EventEmployeeOption[]>(
-    () =>
-      colaboradores.map((colaborador) => ({
-        id: colaborador.id,
-        name: colaborador.nome,
-        sectorName: colaborador.departamento,
-      })),
-    [colaboradores],
-  );
-
   const sectorOptions = useMemo(() => {
-    const dynamicFromEmployees = colaboradores.map((colaborador) => colaborador.departamento).filter(Boolean) as string[];
-    return [...new Set([...dynamicFromEmployees, ...setores])].sort((left, right) => left.localeCompare(right));
-  }, [colaboradores, setores]);
+    const fromEvents = events.flatMap((event) => event.sectors);
+    return [...new Set([...setores, ...fromEvents])].sort((left, right) => left.localeCompare(right));
+  }, [events, setores]);
 
   const filteredEvents = useMemo(
     () =>
-      filterHREvents(events, {
+      filterInstitutionalEvents(events, {
         startDate: periodStart || undefined,
         endDate: periodEnd || undefined,
-        type: typeFilter === "all" ? "all" : (typeFilter as RHEventType),
+        type: typeFilter === "all" ? "all" : (typeFilter as InstitutionalEventType),
         sector: sectorFilter,
-        employeeId: employeeFilter,
         search,
       }),
-    [employeeFilter, events, periodEnd, periodStart, search, sectorFilter, typeFilter],
+    [events, periodEnd, periodStart, search, sectorFilter, typeFilter],
   );
 
-  const summaryByType = useMemo(() => summarizeEventsByType(filteredEvents), [filteredEvents]);
+  const summaryByType = useMemo(() => summarizeInstitutionalEventsByType(filteredEvents), [filteredEvents]);
 
   useEffect(() => {
     setTotalCount(filteredEvents.length);
@@ -107,25 +90,22 @@ export function EventsPage({ filialId }: EventsPageProps) {
     return filteredEvents.slice(from, to);
   }, [filteredEvents, page, pageSize]);
 
-  const hasError = Boolean(colaboradoresError || setoresError);
-  const errorMessage = hasError
-    ? "Falha ao carregar dados auxiliares (colaboradores/setores)."
-    : null;
+  const errorMessage = setoresError ? "Falha ao carregar setores auxiliares." : null;
 
-  const saveEvents = (nextEvents: HREventRecord[]) => {
+  const saveEvents = (nextEvents: EventRecord[]) => {
     setEvents(nextEvents);
-    persistHREvents(nextEvents);
+    persistInstitutionalEvents(nextEvents);
   };
 
-  const handleSaveEvent = (nextEvent: HREventRecord) => {
-    const next = upsertHREvent(events, nextEvent);
+  const handleSaveEvent = (nextEvent: Omit<EventRecord, "auditTrail"> & { id?: string }) => {
+    const next = upsertInstitutionalEvent(events, nextEvent);
     saveEvents(next);
     setEditingEvent(null);
   };
 
   const handleDeleteEvent = () => {
     if (!deletingEvent) return;
-    const next = removeHREvent(events, deletingEvent.id);
+    const next = removeInstitutionalEvent(events, deletingEvent.id);
     saveEvents(next);
     setDeletingEvent(null);
   };
@@ -138,10 +118,10 @@ export function EventsPage({ filialId }: EventsPageProps) {
             <div>
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <CalendarClock className="h-5 w-5" />
-                Registro de ocorrencias de RH
+                Eventos institucionais
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Fonte de verdade para eventos de pessoas.
+                Registro oficial de acoes institucionais de RH.
               </p>
             </div>
             <Button
@@ -158,7 +138,7 @@ export function EventsPage({ filialId }: EventsPageProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-            TODO: conectar este registro de eventos a uma tabela dedicada no backend para auditoria centralizada.
+            TODO: quando o backend de eventos institucionais estiver disponivel, migrar historico, tags e anexos do localStorage.
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
@@ -166,7 +146,7 @@ export function EventsPage({ filialId }: EventsPageProps) {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por colaborador, setor, motivo ou observacao"
+                placeholder="Buscar por titulo, tipo, local, organizador, tags..."
               />
             </div>
 
@@ -179,7 +159,7 @@ export function EventsPage({ filialId }: EventsPageProps) {
               </SelectTrigger>
               <SelectContent className="bg-popover z-50 max-h-[280px]">
                 <SelectItem value="all">Todos os tipos</SelectItem>
-                {RH_EVENT_TYPES.map((type) => (
+                {INSTITUTIONAL_EVENT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>
@@ -193,35 +173,19 @@ export function EventsPage({ filialId }: EventsPageProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Select value={sectorFilter} onValueChange={setSectorFilter}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Setor" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50 max-h-[280px]">
-                <SelectItem value="all">Todos os setores</SelectItem>
-                {sectorOptions.map((sector) => (
-                  <SelectItem key={sector} value={sector}>
-                    {sector}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Colaborador" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50 max-h-[280px]">
-                <SelectItem value="all">Todos os colaboradores</SelectItem>
-                {employeeOptions.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={sectorFilter} onValueChange={setSectorFilter}>
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="Setor" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover z-50 max-h-[280px]">
+              <SelectItem value="all">Todos os setores</SelectItem>
+              {sectorOptions.map((sector) => (
+                <SelectItem key={sector} value={sector}>
+                  {sector}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
@@ -247,7 +211,7 @@ export function EventsPage({ filialId }: EventsPageProps) {
             pageSize={pageSize}
             totalItems={totalCount}
             totalPages={totalPages}
-            isLoading={isLoadingLocal || loadingColaboradores || loadingSetores}
+            isLoading={isLoadingLocal || loadingSetores}
             errorMessage={errorMessage}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
@@ -263,7 +227,6 @@ export function EventsPage({ filialId }: EventsPageProps) {
       <EventFormModal
         open={formOpen}
         onOpenChange={setFormOpen}
-        employees={employeeOptions}
         sectors={sectorOptions}
         initialEvent={editingEvent}
         onSave={handleSaveEvent}
@@ -274,8 +237,8 @@ export function EventsPage({ filialId }: EventsPageProps) {
         onOpenChange={(open) => {
           if (!open) setDeletingEvent(null);
         }}
-        title="Apagar evento de RH?"
-        description="Essa acao remove definitivamente o registro da lista de ocorrencias."
+        title="Apagar evento?"
+        description="Essa acao remove definitivamente o registro institucional."
         confirmLabel="Apagar"
         cancelLabel="Cancelar"
         onConfirm={handleDeleteEvent}

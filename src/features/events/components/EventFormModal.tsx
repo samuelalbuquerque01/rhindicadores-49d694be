@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,165 +17,139 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TagsInput } from "@/components/ui/TagsInput";
+import { AttachmentsListUpload } from "@/components/ui/AttachmentsListUpload";
 import {
-  createEventId,
-  RH_EVENT_TYPES,
-  type HREventRecord,
-  type RHEventType,
-} from "@/lib/analytics/events";
-
-export interface EventEmployeeOption {
-  id: string;
-  name: string;
-  sectorId?: string | null;
-  sectorName?: string | null;
-}
+  EventRecord,
+  INSTITUTIONAL_EVENT_TYPES,
+  InstitutionalEventType,
+  LocalAttachment,
+  createAttachmentId,
+} from "@/lib/storage/eventsStorage";
 
 interface EventFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  employees: EventEmployeeOption[];
   sectors: string[];
-  initialEvent?: HREventRecord | null;
-  onSave: (event: HREventRecord) => void;
+  initialEvent?: EventRecord | null;
+  onSave: (event: Omit<EventRecord, "auditTrail"> & { id?: string }) => void;
 }
 
 interface FormState {
-  type: RHEventType;
-  employeeId: string;
-  sectorName: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  notes: string;
-  attachmentUrl: string;
-  employeeSearch: string;
+  title: string;
+  type: InstitutionalEventType;
+  date: string;
+  location: string;
+  organizer: string;
+  sectors: string[];
+  estimatedParticipants: string;
+  description: string;
+  tags: string[];
+  attachments: LocalAttachment[];
 }
 
 interface FormErrors {
-  startDate?: string;
-  endDate?: string;
-  reason?: string;
+  title?: string;
+  date?: string;
 }
 
-const REASON_REQUIRED_TYPES: RHEventType[] = ["Afastamento", "Desligamento", "Advertência"];
-
-function buildInitialFormState(initialEvent?: HREventRecord | null): FormState {
+function initialState(record?: EventRecord | null): FormState {
   return {
-    type: initialEvent?.type ?? "Afastamento",
-    employeeId: initialEvent?.employeeId ?? "",
-    sectorName: initialEvent?.sectorName ?? "",
-    startDate: initialEvent?.startDate ?? "",
-    endDate: initialEvent?.endDate ?? "",
-    reason: initialEvent?.reason ?? "",
-    notes: initialEvent?.notes ?? "",
-    attachmentUrl: initialEvent?.attachmentUrl ?? "",
-    employeeSearch: "",
+    title: record?.title || "",
+    type: record?.type || "Confraternizacao",
+    date: record?.date || new Date().toISOString().split("T")[0],
+    location: record?.location || "",
+    organizer: record?.organizer || "",
+    sectors: record?.sectors || [],
+    estimatedParticipants: record?.estimatedParticipants?.toString() || "",
+    description: record?.description || "",
+    tags: record?.tags || [],
+    attachments: record?.attachments || [],
   };
 }
 
 export function EventFormModal({
   open,
   onOpenChange,
-  employees,
   sectors,
   initialEvent,
   onSave,
 }: EventFormModalProps) {
-  const [formState, setFormState] = useState<FormState>(() => buildInitialFormState(initialEvent));
+  const [formState, setFormState] = useState<FormState>(() => initialState(initialEvent));
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (open) {
-      setFormState(buildInitialFormState(initialEvent));
+      setFormState(initialState(initialEvent));
       setErrors({});
     }
   }, [initialEvent, open]);
 
-  const filteredEmployees = useMemo(() => {
-    const term = formState.employeeSearch.trim().toLowerCase();
-    if (!term) return employees;
-    return employees.filter((employee) => employee.name.toLowerCase().includes(term));
-  }, [employees, formState.employeeSearch]);
-
-  const selectedEmployee = useMemo(
-    () => employees.find((employee) => employee.id === formState.employeeId),
-    [employees, formState.employeeId],
-  );
-
-  const validate = (): FormErrors => {
+  const save = () => {
     const nextErrors: FormErrors = {};
-
-    if (!formState.startDate) {
-      nextErrors.startDate = "Data inicial obrigatoria.";
+    if (!formState.title.trim()) {
+      nextErrors.title = "Titulo obrigatorio.";
     }
-
-    if (formState.endDate && formState.startDate && formState.endDate < formState.startDate) {
-      nextErrors.endDate = "Data final precisa ser maior ou igual a data inicial.";
+    if (!formState.date) {
+      nextErrors.date = "Data obrigatoria.";
     }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
-    if (REASON_REQUIRED_TYPES.includes(formState.type) && !formState.reason.trim()) {
-      nextErrors.reason = "Motivo obrigatorio para este tipo de evento.";
-    }
+    const estimatedParticipants = Number(formState.estimatedParticipants);
 
-    return nextErrors;
-  };
-
-  const handleSave = () => {
-    const validationErrors = validate();
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const employee = employees.find((item) => item.id === formState.employeeId);
-    const sectorNameFromEmployee = employee?.sectorName?.trim() || "";
-    const sectorName = formState.sectorName.trim() || sectorNameFromEmployee || "Nao informado";
-
-    const nextEvent: HREventRecord = {
-      id: initialEvent?.id ?? createEventId(),
+    onSave({
+      id: initialEvent?.id,
+      title: formState.title.trim(),
       type: formState.type,
-      employeeId: employee?.id ?? null,
-      employeeName: employee?.name || "Nao informado",
-      sectorId: employee?.sectorId ?? null,
-      sectorName,
-      startDate: formState.startDate,
-      endDate: formState.endDate || null,
-      reason: formState.reason.trim() || "Nao informado",
-      notes: formState.notes.trim(),
-      attachmentUrl: formState.attachmentUrl.trim() || null,
-      createdAt: initialEvent?.createdAt ?? now,
-    };
-
-    onSave(nextEvent);
+      date: formState.date,
+      location: formState.location.trim(),
+      organizer: formState.organizer.trim(),
+      sectors: formState.sectors,
+      estimatedParticipants:
+        Number.isNaN(estimatedParticipants) || estimatedParticipants < 0 ? null : estimatedParticipants,
+      description: formState.description.trim(),
+      tags: formState.tags,
+      attachments: formState.attachments,
+    });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] bg-background">
+      <DialogContent className="sm:max-w-[860px] max-h-[88vh] overflow-y-auto bg-background">
         <DialogHeader>
-          <DialogTitle>{initialEvent ? "Editar evento de RH" : "Novo evento de RH"}</DialogTitle>
+          <DialogTitle>{initialEvent ? "Editar evento" : "Novo evento"}</DialogTitle>
           <DialogDescription>
-            Registre ocorrencias de pessoas para manter o historico oficial da area de RH.
+            Registro institucional de eventos de RH.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tipo de evento</Label>
+              <Label>Titulo *</Label>
+              <Input
+                value={formState.title}
+                onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Ex: Semana da Cultura Organizacional"
+              />
+              {errors.title ? <p className="text-xs text-destructive">{errors.title}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo *</Label>
               <Select
                 value={formState.type}
-                onValueChange={(value) => setFormState((current) => ({ ...current, type: value as RHEventType }))}
+                onValueChange={(value) =>
+                  setFormState((current) => ({ ...current, type: value as InstitutionalEventType }))
+                }
               >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Selecione o tipo" />
+                  <SelectValue placeholder="Tipo do evento" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {RH_EVENT_TYPES.map((type) => (
+                <SelectContent>
+                  {INSTITUTIONAL_EVENT_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
                     </SelectItem>
@@ -183,169 +157,97 @@ export function EventFormModal({
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Buscar colaborador</Label>
-              <Input
-                value={formState.employeeSearch}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    employeeSearch: event.target.value,
-                  }))
-                }
-                placeholder="Digite para filtrar nomes"
-              />
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Colaborador</Label>
-              <Select
-                value={formState.employeeId || "none"}
-                onValueChange={(value) => {
-                  if (value === "none") {
-                    setFormState((current) => ({
-                      ...current,
-                      employeeId: "",
-                    }));
-                    return;
-                  }
-
-                  const employee = employees.find((item) => item.id === value);
-                  setFormState((current) => ({
-                    ...current,
-                    employeeId: value,
-                    sectorName: employee?.sectorName?.trim() || current.sectorName,
-                  }));
-                }}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Selecione o colaborador" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50 max-h-[240px]">
-                  <SelectItem value="none">Nao vincular colaborador</SelectItem>
-                  {filteredEmployees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Setor</Label>
-              <Select
-                value={formState.sectorName || "none"}
-                onValueChange={(value) =>
-                  setFormState((current) => ({
-                    ...current,
-                    sectorName: value === "none" ? "" : value,
-                  }))
-                }
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50 max-h-[240px]">
-                  <SelectItem value="none">Sem setor</SelectItem>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector} value={sector}>
-                      {sector}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Data inicial</Label>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-1 space-y-2">
+              <Label>Data *</Label>
               <Input
                 type="date"
-                value={formState.startDate}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    startDate: event.target.value,
-                  }))
-                }
+                value={formState.date}
+                onChange={(event) => setFormState((current) => ({ ...current, date: event.target.value }))}
               />
-              {errors.startDate ? <p className="text-xs text-destructive">{errors.startDate}</p> : null}
+              {errors.date ? <p className="text-xs text-destructive">{errors.date}</p> : null}
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label>Local</Label>
+              <Input
+                value={formState.location}
+                onChange={(event) => setFormState((current) => ({ ...current, location: event.target.value }))}
+                placeholder="Ex: Auditorio Matriz"
+              />
             </div>
             <div className="space-y-2">
-              <Label>Data final</Label>
+              <Label>Participantes estimados</Label>
               <Input
-                type="date"
-                value={formState.endDate}
+                type="number"
+                min={0}
+                value={formState.estimatedParticipants}
                 onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    endDate: event.target.value,
-                  }))
+                  setFormState((current) => ({ ...current, estimatedParticipants: event.target.value }))
                 }
               />
-              {errors.endDate ? <p className="text-xs text-destructive">{errors.endDate}</p> : null}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Motivo</Label>
+            <Label>Organizador</Label>
             <Input
-              value={formState.reason}
-              onChange={(event) =>
-                setFormState((current) => ({
-                  ...current,
-                  reason: event.target.value,
-                }))
-              }
-              placeholder="Ex: Atestado de 7 dias, pedido de desligamento..."
+              value={formState.organizer}
+              onChange={(event) => setFormState((current) => ({ ...current, organizer: event.target.value }))}
+              placeholder="Ex: RH Corporativo"
             />
-            {errors.reason ? <p className="text-xs text-destructive">{errors.reason}</p> : null}
           </div>
 
           <div className="space-y-2">
-            <Label>Observacao</Label>
+            <Label>Setores envolvidos</Label>
+            <TagsInput
+              value={formState.sectors}
+              onChange={(value) => setFormState((current) => ({ ...current, sectors: value }))}
+              suggestions={sectors}
+              placeholder="Adicione setores envolvidos"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagsInput
+              value={formState.tags}
+              onChange={(value) => setFormState((current) => ({ ...current, tags: value }))}
+              suggestions={["Cultura", "Endomarketing", "Compliance", "Lideranca", "Bem-estar", "Engajamento"]}
+              placeholder="Ex: Cultura, Compliance"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Descricao</Label>
             <Textarea
-              value={formState.notes}
-              onChange={(event) =>
-                setFormState((current) => ({
-                  ...current,
-                  notes: event.target.value,
-                }))
-              }
-              placeholder="Detalhes adicionais para auditoria e consulta futura."
-              rows={3}
+              value={formState.description}
+              onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))}
+              placeholder="Resumo do objetivo institucional do evento."
+              rows={4}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Anexo (URL opcional)</Label>
-            <Input
-              value={formState.attachmentUrl}
-              onChange={(event) =>
-                setFormState((current) => ({
-                  ...current,
-                  attachmentUrl: event.target.value,
-                }))
-              }
-              placeholder="https://..."
+            <Label>Anexos (fotos/documentos)</Label>
+            <AttachmentsListUpload
+              items={formState.attachments}
+              onChange={(attachments) => setFormState((current) => ({ ...current, attachments }))}
+              createId={createAttachmentId}
             />
           </div>
 
-          <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-            TODO: persistir os eventos de RH em uma tabela dedicada no backend para trilha de auditoria.
+          <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+            TODO: persistir eventos/tags/anexos no backend para trilha de auditoria centralizada.
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="button" onClick={handleSave}>
-              {initialEvent ? "Salvar alteracoes" : "Cadastrar evento"}
+            <Button type="button" onClick={save}>
+              {initialEvent ? "Salvar alteracoes" : "Registrar evento"}
             </Button>
           </div>
         </div>

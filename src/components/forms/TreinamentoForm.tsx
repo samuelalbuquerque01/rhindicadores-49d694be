@@ -31,6 +31,14 @@ import {
 import { useCreateTreinamento, useUpdateTreinamento } from "@/hooks/useTreinamentos";
 import { useFiliais } from "@/hooks/useFiliais";
 import { Treinamento } from "@/types/database";
+import { TagsInput } from "@/components/ui/TagsInput";
+import { AttachmentsListUpload } from "@/components/ui/AttachmentsListUpload";
+import {
+  createFallbackAttachmentId,
+  readTrainingExtraById,
+  upsertTrainingExtra,
+} from "@/lib/storage/trainingsStorage";
+import { LocalAttachment } from "@/lib/storage/eventsStorage";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(200),
@@ -49,8 +57,20 @@ interface TreinamentoFormProps {
   trigger?: React.ReactNode;
 }
 
+const TAG_SUGGESTIONS = [
+  "Obrigatorio",
+  "Reciclagem",
+  "Lideranca",
+  "Compliance",
+  "Seguranca",
+  "Onboarding",
+  "Comunicacao",
+];
+
 export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) {
   const [open, setOpen] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
   const createTreinamento = useCreateTreinamento();
   const updateTreinamento = useUpdateTreinamento();
   const { data: filiais } = useFiliais();
@@ -70,7 +90,9 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
   });
 
   useEffect(() => {
-    if (treinamento && open) {
+    if (!open) return;
+
+    if (treinamento) {
       form.reset({
         nome: treinamento.nome,
         setor_alvo: treinamento.setor_alvo || "",
@@ -80,23 +102,83 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
         filial_id: treinamento.filial_id || "",
         vagas_totais: treinamento.vagas_totais || 20,
       });
-    }
-  }, [treinamento, open, form]);
 
-  const onSubmit = async (values: FormValues) => {
-    if (isEditing) {
+      const extra = readTrainingExtraById(treinamento.id);
+      setTags(extra?.tags || []);
+      setAttachments(extra?.attachments || []);
+      return;
+    }
+
+    form.reset({
+      nome: "",
+      setor_alvo: "",
+      responsavel: "",
+      data_realizacao: new Date().toISOString().split("T")[0],
+      carga_horaria: 8,
+      filial_id: "",
+      vagas_totais: 20,
+    });
+    setTags([]);
+    setAttachments([]);
+  }, [form, open, treinamento]);
+
+  const submit = async (values: FormValues, keepOpen: boolean) => {
+    const payload: Omit<Treinamento, "id" | "created_at" | "filial"> = {
+      nome: values.nome,
+      descricao: undefined,
+      data_realizacao: values.data_realizacao,
+      carga_horaria: values.carga_horaria,
+      filial_id: values.filial_id || null,
+      tipo: undefined,
+      vagas_totais: values.vagas_totais,
+      setor_alvo: values.setor_alvo,
+      responsavel: values.responsavel,
+      finalizado: false,
+    };
+
+    let trainingId = treinamento?.id || "";
+
+    if (isEditing && treinamento) {
       await updateTreinamento.mutateAsync({
         id: treinamento.id,
-        ...values,
-        filial_id: values.filial_id || null,
-      } as any);
+        ...payload,
+      });
+      trainingId = treinamento.id;
     } else {
-      await createTreinamento.mutateAsync({
-        ...values,
-        filial_id: values.filial_id || null,
-      } as any);
-      form.reset();
+      const created = await createTreinamento.mutateAsync(payload);
+      trainingId = created.id;
     }
+
+    if (trainingId) {
+      upsertTrainingExtra(trainingId, {
+        tags,
+        attachments,
+        snapshot: {
+          nome: values.nome,
+          data_realizacao: values.data_realizacao,
+          setor_alvo: values.setor_alvo,
+          responsavel: values.responsavel,
+          carga_horaria: values.carga_horaria,
+          vagas_totais: values.vagas_totais,
+        },
+      });
+    }
+
+    if (!isEditing && keepOpen) {
+      form.reset({
+        nome: "",
+        setor_alvo: values.setor_alvo,
+        responsavel: values.responsavel,
+        data_realizacao: new Date().toISOString().split("T")[0],
+        carga_horaria: values.carga_horaria,
+        filial_id: values.filial_id || "",
+        vagas_totais: values.vagas_totais,
+      });
+      setTags([]);
+      setAttachments([]);
+      return;
+    }
+
     setOpen(false);
   };
 
@@ -112,7 +194,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-background">
+      <DialogContent className="sm:max-w-[620px] max-h-[88vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Treinamento" : "Novo Treinamento"}</DialogTitle>
           <DialogDescription>
@@ -120,7 +202,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit((values) => submit(values, false))} className="space-y-4">
             <FormField
               control={form.control}
               name="nome"
@@ -225,13 +307,41 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending}
-            >
-              {isPending ? "Salvando..." : isEditing ? "Atualizar Treinamento" : "Salvar Treinamento"}
-            </Button>
+
+            <div className="space-y-2">
+              <FormLabel>Tags do treinamento</FormLabel>
+              <TagsInput value={tags} onChange={setTags} suggestions={TAG_SUGGESTIONS} />
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel>Anexos</FormLabel>
+              <AttachmentsListUpload
+                items={attachments}
+                onChange={setAttachments}
+                createId={createFallbackAttachmentId}
+              />
+            </div>
+
+            <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+              TODO: tags/anexos/historico de treinamentos estao em localStorage ate disponibilizar backend dedicado.
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? "Salvando..." : isEditing ? "Atualizar Treinamento" : "Salvar Treinamento"}
+              </Button>
+              {!isEditing ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isPending}
+                  onClick={form.handleSubmit((values) => submit(values, true))}
+                >
+                  Salvar e registrar outro
+                </Button>
+              ) : null}
+            </div>
           </form>
         </Form>
       </DialogContent>

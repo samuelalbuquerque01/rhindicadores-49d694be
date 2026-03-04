@@ -11,6 +11,7 @@ import {
   Check,
   CheckCheck,
   Trash2,
+  Filter,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -18,6 +19,7 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SmartNotificationState } from "@/lib/analytics/notifications";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,7 @@ export function NotificationPanel({
 }: NotificationPanelProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<"all" | "unread" | "high">("all");
 
   const iconByType = useMemo(
     () => ({
@@ -56,6 +59,18 @@ export function NotificationPanel({
     navigate(`/?tab=${targetTab}`);
     setOpen(false);
   };
+
+  const filteredNotifications = useMemo(() => {
+    if (filter === "unread") {
+      return notifications.filter((item) => !item.read);
+    }
+    if (filter === "high") {
+      return notifications.filter((item) => item.priority === "high");
+    }
+    return notifications;
+  }, [filter, notifications]);
+
+  const readCount = notifications.filter((item) => item.read).length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -80,6 +95,19 @@ export function NotificationPanel({
               </Badge>
             </div>
             <div className="flex items-center gap-2">
+              <div className="inline-flex items-center gap-2">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select value={filter} onValueChange={(value) => setFilter(value as "all" | "unread" | "high")}>
+                  <SelectTrigger className="h-8 w-[140px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="unread">Nao lidas</SelectItem>
+                    <SelectItem value="high">Alta prioridade</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 type="button"
                 size="sm"
@@ -97,7 +125,7 @@ export function NotificationPanel({
                 variant="ghost"
                 className="h-8 text-xs"
                 onClick={onClearRead}
-                disabled={notifications.length === 0}
+                disabled={readCount === 0}
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1" />
                 Limpar lidas
@@ -105,13 +133,13 @@ export function NotificationPanel({
             </div>
           </header>
 
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
               Nenhuma notificacao no momento.
             </div>
           ) : (
             <div className="divide-y divide-border/70">
-              {notifications.map((notification) => (
+              {filteredNotifications.map((notification) => (
                 <article
                   key={notification.id}
                   className={cn(

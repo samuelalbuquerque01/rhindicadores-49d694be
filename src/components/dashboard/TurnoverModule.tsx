@@ -33,6 +33,8 @@ import { useTurnoverAnalytics, useSetoresDisponiveis, type DesligamentoCompleto 
 import { useDeleteDesligamento } from "@/hooks/useDesligamentos";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { buildTurnoverAnalytics } from "@/lib/analytics/turnover";
+import { buildTurnoverActionInsights } from "@/lib/analytics/insightActions";
+import { InsightItem } from "@/lib/analytics/insights";
 
 interface TurnoverModuleProps {
   filialId?: string;
@@ -122,6 +124,71 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
         .map((item) => editedReasons[item.id] || item),
     [analytics.reasons, editedReasons, hiddenReasonIds],
   );
+
+  const turnoverInsights = useMemo<InsightItem[]>(() => {
+    if (analytics.terminationsCount === 0) return [];
+
+    const currentRate = analytics.turnoverRate ?? 0;
+    const previousRate =
+      roundedVariation === -100 ? currentRate : currentRate / (1 + roundedVariation / 100 || 1);
+
+    const topSectorTermination = analytics.sectorTerminations[0];
+    const restTerminations = Math.max(0, analytics.terminationsCount - (topSectorTermination?.terminations ?? 0));
+    const topSectorRate = analytics.terminationsCount > 0
+      ? ((topSectorTermination?.terminations ?? 0) / analytics.terminationsCount) * 100
+      : 0;
+    const restRate = analytics.terminationsCount > 0
+      ? (restTerminations / analytics.terminationsCount) * 100
+      : 0;
+
+    const nowMonthKey = new Date().toISOString().slice(0, 7);
+    const previousMonthDate = new Date();
+    previousMonthDate.setMonth(previousMonthDate.getMonth() - 1);
+    const previousMonthKey = previousMonthDate.toISOString().slice(0, 7);
+    const resignationsCurrent = desligamentos.filter(
+      (item) => item.data_desligamento.startsWith(nowMonthKey) && item.motivo === "Pedido de demissão",
+    ).length;
+    const resignationsPrevious = desligamentos.filter(
+      (item) => item.data_desligamento.startsWith(previousMonthKey) && item.motivo === "Pedido de demissão",
+    ).length;
+    const resignationVariation = resignationsPrevious === 0
+      ? resignationsCurrent > 0 ? 100 : 0
+      : ((resignationsCurrent - resignationsPrevious) / resignationsPrevious) * 100;
+
+    const topReason = analytics.reasons[0];
+    const generated = buildTurnoverActionInsights({
+      currentRate,
+      previousRate,
+      topSector: topSectorTermination
+        ? {
+            sector: topSectorTermination.sector,
+            sectorRate: topSectorRate,
+            restRate,
+          }
+        : undefined,
+      resignationVariationPercent: Number(resignationVariation.toFixed(1)),
+      topReason: topReason
+        ? {
+            label: topReason.label,
+            percent: analytics.terminationsCount > 0 ? (topReason.count / analytics.terminationsCount) * 100 : 0,
+          }
+        : undefined,
+    });
+
+    const next = [...generated];
+    while (next.length < 3) {
+      next.push({
+        id: `turnover-fallback-${next.length}`,
+        area: "turnover",
+        title: "Cobertura de dados",
+        description: "Ainda faltam dados para identificar novos fatores de desligamento.",
+        tone: "neutral",
+        suggestedAction: "Registre motivo e setor em todos os desligamentos para enriquecer a analise.",
+      });
+    }
+
+    return next.slice(0, 4);
+  }, [analytics, desligamentos, roundedVariation]);
 
   const mesesOptions = useMemo(
     () =>
@@ -269,7 +336,11 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           }}
           onDelete={setDeletingReason}
         />
-        <InsightsPanel insights={analytics.insights.slice(0, 3)} />
+        <InsightsPanel
+          title="Insights e Acoes - Turnover"
+          insights={turnoverInsights}
+          emptyHint="Sem dados de turnover para gerar insights. Registre desligamentos para habilitar analises."
+        />
       </div>
 
       <Card>

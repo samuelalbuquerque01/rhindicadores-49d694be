@@ -5,6 +5,8 @@ export interface InsightItem {
   title: string;
   description: string;
   tone: "positive" | "neutral" | "warning";
+  suggestedAction?: string;
+  area?: "overview" | "absenteeism" | "turnover" | "training";
 }
 
 interface InsightsInput {
@@ -41,6 +43,11 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
         ? `O absenteismo aumentou ${absVariation.toFixed(1)}% em relacao ao periodo anterior.`
         : `O absenteismo caiu ${Math.abs(absVariation).toFixed(1)}% em relacao ao periodo anterior.`,
     tone: absVariation > 0 ? "warning" : "positive",
+    suggestedAction:
+      absVariation > 0
+        ? "Revisar escala, ergonomia e acompanhamento de saude ocupacional no setor mais impactado."
+        : "Manter rotinas preventivas aplicadas no periodo.",
+    area: "absenteeism",
   });
 
   const turnoverVariation = variationPercent(input.turnoverRate, input.turnoverRatePrevious);
@@ -52,6 +59,11 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
         ? `O turnover aumentou ${turnoverVariation.toFixed(1)}% em relacao ao periodo anterior.`
         : `O turnover reduziu ${Math.abs(turnoverVariation).toFixed(1)}% em relacao ao periodo anterior.`,
     tone: turnoverVariation > 0 ? "warning" : "positive",
+    suggestedAction:
+      turnoverVariation > 0
+        ? "Validar clima, lideranca e pacote de retencao nas areas com maior concentracao de saidas."
+        : "Consolidar as praticas que reduziram desligamentos.",
+    area: "turnover",
   });
 
   if (input.topTurnoverSector) {
@@ -60,6 +72,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Setor com maior turnover",
       description: `${input.topTurnoverSector.sector} lidera com taxa de ${input.topTurnoverSector.rate.toFixed(1)}%.`,
       tone: "warning",
+      suggestedAction: `Executar pesquisa de clima e plano de permanencia para ${input.topTurnoverSector.sector}.`,
+      area: "turnover",
     });
   }
 
@@ -69,6 +83,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Setor com maior absenteismo",
       description: `${input.topAbsenteeismSector.sector} acumulou ${input.topAbsenteeismSector.days.toFixed(0)} dias perdidos.`,
       tone: "warning",
+      suggestedAction: `Investigar causas recorrentes em ${input.topAbsenteeismSector.sector} e reforcar plano preventivo.`,
+      area: "absenteeism",
     });
   }
 
@@ -78,6 +94,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Motivo de afastamento mais comum",
       description: `${input.topAbsenceReason.reason} foi o principal motivo com ${input.topAbsenceReason.days.toFixed(0)} dias.`,
       tone: "neutral",
+      suggestedAction: "Criar acao educativa e acompanhamento focado no motivo de maior incidencia.",
+      area: "absenteeism",
     });
   }
 
@@ -87,6 +105,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Mes mais critico",
       description: `${input.criticalMonth.label} foi o mes mais critico para ${input.criticalMonth.metric} (${input.criticalMonth.value.toFixed(1)}).`,
       tone: "warning",
+      suggestedAction: "Investigar fatores operacionais e contexto deste pico no mes critico.",
+      area: "overview",
     });
   }
 
@@ -100,6 +120,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Anomalia detectada",
       description: `Foi detectado um pico relevante em ${highest.label} (${highest.value.toFixed(1)}).`,
       tone: "warning",
+      suggestedAction: "Abrir analise de causa raiz para o periodo e setor relacionados ao pico.",
+      area: "overview",
     });
   }
 
@@ -108,6 +130,7 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
     title: "Resumo de volume",
     description: `${input.dismissals} desligamentos e ${input.absences} afastamentos foram registrados no periodo selecionado.`,
     tone: "neutral",
+    area: "overview",
   });
 
   const unique = new Map<string, InsightItem>();
@@ -125,6 +148,8 @@ export function generateInsights(input: InsightsInput): InsightItem[] {
       title: "Cobertura de dados",
       description: "Ainda nao ha historico suficiente para gerar insights mais profundos neste periodo.",
       tone: "neutral",
+      suggestedAction: "Registre mais eventos operacionais e treinamentos para aumentar a assertividade analitica.",
+      area: "overview",
     });
   }
 

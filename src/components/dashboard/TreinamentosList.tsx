@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Flame,
   Star,
+  Paperclip,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
   useTreinamentos,
-  useTreinamentoParticipacoes,
+  useTreinamentosParticipacoesDetalhadas,
   useCreateParticipacao,
   useUpdateParticipacao,
   useFinalizarTreinamento,
@@ -47,12 +48,35 @@ import {
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useParticipacaoAnual } from "@/hooks/useParticipacaoAnual";
 import { TreinamentoForm } from "@/components/forms/TreinamentoForm";
-import { Treinamento } from "@/types/database";
+import { Colaborador, Treinamento } from "@/types/database";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getTrainingStats, type TrainingParticipantLike } from "@/lib/analytics/training";
+import { useTrainingsExtra } from "@/hooks/useTrainingExtras";
+import { AuditTrail } from "@/components/ui/AuditTrail";
+import { buildInitialAuditTrail } from "@/lib/analytics/audit";
+import { TrainingExtraData } from "@/lib/storage/trainingsStorage";
 
 interface TreinamentosListProps {
   filialId?: string;
+}
+
+type ParticipacaoDetalhada = {
+  id: string;
+  colaborador_id: string | null;
+  participou: boolean | null;
+  colaborador?: {
+    id: string;
+    nome: string;
+    departamento?: string | null;
+  } | null;
+  treinamento?: {
+    id: string;
+  } | null;
+};
+
+interface ParticipacaoAnualStats {
+  treinamentos_percentual?: number;
 }
 
 export function TreinamentosList({ filialId }: TreinamentosListProps) {
@@ -62,8 +86,11 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
   const { data: treinamentos, isLoading } = useTreinamentos(
     filialId === "all" ? undefined : filialId
   );
+  const { data: participacoesDetalhadas, isLoading: isLoadingParticipacoes } =
+    useTreinamentosParticipacoesDetalhadas(filialId === "all" ? undefined : filialId);
   const { data: colaboradores } = useColaboradores({ status: "Ativo" });
   const { data: participacaoAnual } = useParticipacaoAnual();
+  const { byTrainingId } = useTrainingsExtra();
   const createParticipacao = useCreateParticipacao();
   const updateParticipacao = useUpdateParticipacao();
   const finalizarTreinamento = useFinalizarTreinamento();
@@ -102,7 +129,22 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
     });
   }, [treinamentos]);
 
-  if (isLoading) {
+  const participacoesPorTreinamento = useMemo(() => {
+    const map = new Map<string, ParticipacaoDetalhada[]>();
+    (participacoesDetalhadas || []).forEach((participacao) => {
+      const typedParticipacao = participacao as ParticipacaoDetalhada;
+      const treinamentoId = typedParticipacao.treinamento?.id;
+      if (!treinamentoId) return;
+
+      const current = map.get(treinamentoId) || [];
+      current.push(typedParticipacao);
+      map.set(treinamentoId, current);
+    });
+
+    return map;
+  }, [participacoesDetalhadas]);
+
+  if (isLoading || isLoadingParticipacoes) {
     return (
       <Card>
         <CardHeader>
@@ -139,14 +181,16 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
               treinamento={treinamento}
               isExpanded={expandedId === treinamento.id}
               onToggle={() => setExpandedId(expandedId === treinamento.id ? null : treinamento.id)}
-              colaboradores={colaboradores || []}
+              colaboradores={(colaboradores || []) as Colaborador[]}
+              participacoes={participacoesPorTreinamento.get(treinamento.id) || []}
               selectedColaborador={selectedColaborador}
               onSelectColaborador={setSelectedColaborador}
               onAddParticipante={handleAddParticipante}
               onToggleParticipou={handleToggleParticipou}
               onFinalizar={handleFinalizar}
               onReabrir={handleReabrir}
-              participacaoAnual={participacaoAnual || {}}
+              participacaoAnual={(participacaoAnual || {}) as Record<string, ParticipacaoAnualStats>}
+              extra={byTrainingId.get(treinamento.id)}
             />
           ))
         )}
@@ -159,14 +203,16 @@ interface TreinamentoItemProps {
   treinamento: Treinamento & { finalizado?: boolean };
   isExpanded: boolean;
   onToggle: () => void;
-  colaboradores: any[];
+  colaboradores: Colaborador[];
+  participacoes: ParticipacaoDetalhada[];
   selectedColaborador: string;
   onSelectColaborador: (id: string) => void;
   onAddParticipante: (treinamentoId: string) => void;
   onToggleParticipou: (id: string, participou: boolean) => void;
   onFinalizar: (id: string) => void;
   onReabrir: (id: string) => void;
-  participacaoAnual: Record<string, any>;
+  participacaoAnual: Record<string, ParticipacaoAnualStats>;
+  extra?: TrainingExtraData;
 }
 
 function TreinamentoItem({
@@ -174,6 +220,7 @@ function TreinamentoItem({
   isExpanded,
   onToggle,
   colaboradores,
+  participacoes,
   selectedColaborador,
   onSelectColaborador,
   onAddParticipante,
@@ -181,44 +228,23 @@ function TreinamentoItem({
   onFinalizar,
   onReabrir,
   participacaoAnual,
+  extra,
 }: TreinamentoItemProps) {
-  const { data: participacoes } = useTreinamentoParticipacoes(
-    isExpanded ? treinamento.id : undefined
+  const trainingStats = useMemo(
+    () =>
+      getTrainingStats({
+        capacity: treinamento.vagas_totais,
+        participants: participacoes as TrainingParticipantLike[],
+      }),
+    [participacoes, treinamento.vagas_totais],
   );
 
-  const totalParticipantes = participacoes?.length || 0;
-  const participaram = participacoes?.filter((p) => p.participou).length || 0;
-  const vagasTotais = treinamento.vagas_totais || totalParticipantes;
-  const participacaoReal = vagasTotais > 0 ? Math.round((participaram / vagasTotais) * 100) : 0;
-  const taxaConclusao = totalParticipantes > 0
-    ? Math.round((participaram / totalParticipantes) * 100)
-    : 0;
-
-  const engajamento =
-    taxaConclusao >= 80 && participacaoReal >= 70
-      ? "Alto"
-      : taxaConclusao >= 50 && participacaoReal >= 50
-      ? "Medio"
-      : "Baixo";
-
-  const setorCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    (participacoes || []).forEach((p: any) => {
-      if (!p.participou) return;
-      const setor = p.colaborador?.departamento || "Sem setor";
-      counts[setor] = (counts[setor] || 0) + 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [participacoes]);
-
-  const setorPrincipal = setorCounts[0]?.[0] || "-";
-  const setorSecundario = setorCounts[1]?.[0];
-
-  const isDestaque = taxaConclusao > 80;
+  const isDestaque = trainingStats.completionRate > 80;
+  const auditTrail = extra?.auditTrail || buildInitialAuditTrail(treinamento.created_at || new Date().toISOString());
 
   // Filter colaboradores that are not already added
   const availableColaboradores = colaboradores.filter(
-    (c) => !participacoes?.some((p) => p.colaborador_id === c.id)
+    (colaborador) => !participacoes.some((participacao) => participacao.colaborador_id === colaborador.id)
   );
 
   return (
@@ -260,16 +286,29 @@ function TreinamentoItem({
                   {treinamento.setor_alvo && <span>Setor: {treinamento.setor_alvo}</span>}
                   {treinamento.responsavel && <span>Resp.: {treinamento.responsavel}</span>}
                 </div>
+                {extra?.tags && extra.tags.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {extra.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px]">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">
-                      {participaram}/{vagasTotais}
+                      {trainingStats.totalParticipantes}/{trainingStats.totalVagas}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{taxaConclusao}% conclusao</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {trainingStats.totalParticipantes > 0
+                      ? `${trainingStats.totalConcluidos}/${trainingStats.totalParticipantes} concluidos`
+                      : "Sem participantes"}
+                  </div>
                 </div>
                 {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
               </div>
@@ -277,27 +316,27 @@ function TreinamentoItem({
 
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Participacao real</span>
+                <span>Ocupacao de vagas</span>
                 <span>
-                  Participantes: {participaram} / {vagasTotais}
+                  Participantes: {trainingStats.totalParticipantes} / {trainingStats.totalVagas}
                 </span>
               </div>
-              <Progress value={participacaoReal} className="h-2" />
+              <Progress value={trainingStats.occupancyRate} className="h-2" />
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-md border border-border/60 p-2 bg-background/60">
                 <p className="text-xs text-muted-foreground">Setor mais participante</p>
-                <p className="font-medium">{setorPrincipal}</p>
-                {setorSecundario && (
-                  <p className="text-xs text-muted-foreground">{setorSecundario}</p>
+                <p className="font-medium">{trainingStats.mostActiveSector}</p>
+                {trainingStats.secondarySector && (
+                  <p className="text-xs text-muted-foreground">{trainingStats.secondarySector}</p>
                 )}
               </div>
               <div className="rounded-md border border-border/60 p-2 bg-background/60">
                 <p className="text-xs text-muted-foreground">Nivel de Engajamento</p>
                 <p className="font-medium flex items-center gap-1">
                   <Flame className="h-4 w-4 text-orange-500" />
-                  {engajamento}
+                  {trainingStats.engagementLevel}
                 </p>
               </div>
             </div>
@@ -375,9 +414,11 @@ function TreinamentoItem({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {participacoes.map((p: any) => {
-                    const stats = participacaoAnual[p.colaborador_id];
-                    const status = p.participou
+                  {participacoes.map((p) => {
+                    const participantId = p.colaborador_id || "";
+                    const stats = participantId ? participacaoAnual[participantId] : undefined;
+                    const concluiu = Boolean(p.participou);
+                    const status = concluiu
                       ? "Concluido"
                       : treinamento.finalizado
                       ? "Nao iniciou"
@@ -404,12 +445,12 @@ function TreinamentoItem({
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
-                            variant={p.participou ? "default" : "outline"}
+                            variant={concluiu ? "default" : "outline"}
                             size="sm"
-                            onClick={() => onToggleParticipou(p.id, p.participou)}
+                            onClick={() => onToggleParticipou(p.id, concluiu)}
                             disabled={treinamento.finalizado}
                           >
-                            {p.participou ? (
+                            {concluiu ? (
                               <>
                                 <Check className="h-4 w-4 mr-1" />
                                 Concluiu
@@ -432,6 +473,30 @@ function TreinamentoItem({
                 Nenhum participante adicionado
               </p>
             )}
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">Anexos</p>
+              {extra?.attachments && extra.attachments.length > 0 ? (
+                <div className="space-y-1">
+                  {extra.attachments.map((attachment) => (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      {attachment.name}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Sem anexos vinculados.</p>
+              )}
+            </div>
+
+            <AuditTrail trail={auditTrail} />
           </div>
         </CollapsibleContent>
       </div>

@@ -27,6 +27,7 @@ import { EditAfastamentoModal } from "@/components/dashboard/EditAfastamentoModa
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { RankingList } from "@/components/dashboard/RankingList";
+import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import type { RankingItemData } from "@/components/dashboard/RankingItem";
 import { useAbsenteismoAnalytics, type AfastamentoCompleto } from "@/hooks/useAbsenteismoAnalytics";
 import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
@@ -36,6 +37,8 @@ import {
   buildAbsenteeismAnalytics,
   deriveMonthVariation,
 } from "@/lib/analytics/absenteeism";
+import { buildAbsenteeismActionInsights } from "@/lib/analytics/insightActions";
+import { InsightItem } from "@/lib/analytics/insights";
 
 interface AbsenteismoModuleProps {
   filialId?: string;
@@ -114,6 +117,57 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
         .map((item) => editedReasons[item.id] || item),
     [analytics.reasons, editedReasons, hiddenReasonIds],
   );
+
+  const absenteeismInsights = useMemo<InsightItem[]>(() => {
+    if (analytics.absencesCount === 0) return [];
+
+    const currentLostDays = analytics.monthlyLostDays[analytics.monthlyLostDays.length - 1]?.lostDays ?? 0;
+    const previousLostDays = analytics.monthlyLostDays[analytics.monthlyLostDays.length - 2]?.lostDays ?? 0;
+    const topReason = analytics.reasons[0];
+    const topSector = analytics.sectorLostDays[0];
+    const criticalMonth = analytics.monthlyLostDays
+      .slice()
+      .sort((left, right) => right.lostDays - left.lostDays)[0];
+
+    const generated = buildAbsenteeismActionInsights({
+      currentRate: analytics.absenteeismRate ?? 0,
+      previousRate:
+        previousLostDays > 0 && currentLostDays >= 0 ? ((analytics.absenteeismRate ?? 0) * previousLostDays) / Math.max(currentLostDays, 1) : 0,
+      topSector: topSector
+        ? {
+            sector: topSector.sector,
+            currentDays: topSector.lostDays,
+            previousDays: 0,
+          }
+        : undefined,
+      topReason: topReason
+        ? {
+            label: topReason.label,
+            percent: analytics.lostDays > 0 ? (topReason.days / analytics.lostDays) * 100 : 0,
+          }
+        : undefined,
+      criticalMonth: criticalMonth
+        ? {
+            label: criticalMonth.monthLabel,
+            lostDays: criticalMonth.lostDays,
+          }
+        : undefined,
+    });
+
+    const next = [...generated];
+    while (next.length < 3) {
+      next.push({
+        id: `abs-fallback-${next.length}`,
+        area: "absenteeism",
+        title: "Cobertura de dados",
+        description: "Ainda faltam dados para detalhar novos padroes no absenteismo.",
+        tone: "neutral",
+        suggestedAction: "Registre afastamentos com setor e motivo para melhorar a assertividade.",
+      });
+    }
+
+    return next.slice(0, 4);
+  }, [analytics]);
 
   const mesesOptions = useMemo(
     () =>
@@ -262,17 +316,24 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
         </ChartCard>
       </div>
 
-      <RankingList
-        title="Ranking de motivos de afastamento"
-        items={rankingReasons}
-        emptyMessage="Sem motivos registrados para os filtros selecionados."
-        onEdit={(item) => {
-          setEditingReason(item);
-          setReasonLabelDraft(item.label);
-          setReasonValueDraft(String(item.value));
-        }}
-        onDelete={setDeletingReason}
-      />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <RankingList
+          title="Ranking de motivos de afastamento"
+          items={rankingReasons}
+          emptyMessage="Sem motivos registrados para os filtros selecionados."
+          onEdit={(item) => {
+            setEditingReason(item);
+            setReasonLabelDraft(item.label);
+            setReasonValueDraft(String(item.value));
+          }}
+          onDelete={setDeletingReason}
+        />
+        <InsightsPanel
+          title="Insights e Acoes - Absenteismo"
+          insights={absenteeismInsights}
+          emptyHint="Sem dados de absenteismo para gerar insights. Registre afastamentos com motivo e setor."
+        />
+      </div>
 
       <Card>
         <CardHeader className="pb-3">

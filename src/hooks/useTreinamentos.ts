@@ -38,6 +38,7 @@ export function useFinalizarTreinamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
       toast.success("Treinamento finalizado!");
     },
@@ -62,6 +63,7 @@ export function useReabrirTreinamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
       toast.success("Treinamento reaberto!");
     },
@@ -186,6 +188,7 @@ export function useCreateTreinamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       toast.success("Treinamento cadastrado com sucesso!");
     },
     onError: (error) => {
@@ -211,6 +214,7 @@ export function useCreateParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       toast.success("Participação registrada!");
     },
     onError: (error) => {
@@ -275,6 +279,7 @@ export function useUpdateParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       toast.success("Participação atualizada!");
     },
     onError: (error) => {
@@ -298,6 +303,7 @@ export function useDeleteParticipacao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
       queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       toast.success("Participação removida!");
     },
     onError: (error) => {
@@ -321,6 +327,7 @@ export function useUpdateTreinamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       toast.success("Treinamento atualizado!");
     },
     onError: (error) => {
@@ -353,6 +360,7 @@ export function useDeleteTreinamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["treinamentos"] });
       queryClient.invalidateQueries({ queryKey: ["treinamentos-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["treinamento-participacoes-detalhadas"] });
       queryClient.invalidateQueries({ queryKey: ["participacao-anual"] });
       toast.success("Treinamento excluído!");
     },
@@ -361,3 +369,5 @@ export function useDeleteTreinamento() {
     },
   });
 }
+
+

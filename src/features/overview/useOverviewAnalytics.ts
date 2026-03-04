@@ -77,6 +77,21 @@ interface OverviewData {
     };
   };
   notifications: ReturnType<typeof generateSmartNotifications>;
+  highlights: {
+    changes: string[];
+    sectorsAttention: Array<{
+      sector: string;
+      absenteeismVariation: number;
+      turnoverVariation: number;
+      status: "attention" | "critical";
+    }>;
+    topAbsenceReasons: Array<{ reason: string; value: number; contributionPercent: number }>;
+    topTurnoverReasons: Array<{ reason: string; value: number; contributionPercent: number }>;
+    absenteeismRateCurrent: number;
+    absenteeismRatePrevious: number;
+    turnoverRateCurrent: number;
+    turnoverRatePrevious: number;
+  };
 }
 
 function toDate(value?: string): Date | null {
@@ -334,6 +349,38 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       topAbsenceReasonMap.set(reason, (topAbsenceReasonMap.get(reason) ?? 0) + (afastamento.dias_afastados || 0));
     });
 
+    const topAbsenceReasons = Array.from(topAbsenceReasonMap.entries())
+      .map(([reason, value]) => ({
+        reason,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+      .map((item) => ({
+        ...item,
+        contributionPercent:
+          totalAbsenceDaysCurrent > 0 ? Number(((item.value / totalAbsenceDaysCurrent) * 100).toFixed(1)) : 0,
+      }));
+
+    const turnoverReasonMap = new Map<string, number>();
+    dismissalsCurrent.forEach((dismissal) => {
+      const reason = dismissal.motivo || "Outro";
+      turnoverReasonMap.set(reason, (turnoverReasonMap.get(reason) ?? 0) + 1);
+    });
+
+    const topTurnoverReasons = Array.from(turnoverReasonMap.entries())
+      .map(([reason, value]) => ({
+        reason,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+      .map((item) => ({
+        ...item,
+        contributionPercent:
+          dismissalCountCurrent > 0 ? Number(((item.value / dismissalCountCurrent) * 100).toFixed(1)) : 0,
+      }));
+
     const topAbsenceReason = Array.from(topAbsenceReasonMap.entries())
       .map(([reason, days]) => ({ reason, days }))
       .sort((a, b) => b.days - a.days)[0];
@@ -407,6 +454,11 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       sectorPreviousAbs.set(sector, (sectorPreviousAbs.get(sector) ?? 0) + (item.dias_afastados || 0));
     });
 
+    const allSectors = new Set<string>([
+      ...Array.from(sectorCurrentAbs.keys()),
+      ...Array.from(sectorPreviousAbs.keys()),
+    ]);
+
     const sectorAbsIncrease = Array.from(sectorCurrentAbs.entries())
       .map(([sector, current]) => {
         const previous = sectorPreviousAbs.get(sector) ?? 0;
@@ -431,6 +483,9 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       sectorPreviousTurn.set(sector, (sectorPreviousTurn.get(sector) ?? 0) + 1);
     });
 
+    sectorCurrentTurn.forEach((_value, sector) => allSectors.add(sector));
+    sectorPreviousTurn.forEach((_value, sector) => allSectors.add(sector));
+
     const sectorTurnIncrease = Array.from(sectorCurrentTurn.entries())
       .map(([sector, current]) => ({
         sector,
@@ -439,6 +494,28 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       .filter((item) => item.variation > 0)
       .sort((a, b) => b.variation - a.variation)
       .slice(0, 2);
+
+    const sectorsAttention = Array.from(allSectors)
+      .map((sector) => {
+        const absVariation = variationPercent(sectorCurrentAbs.get(sector) ?? 0, sectorPreviousAbs.get(sector) ?? 0);
+        const turnoverVariation = variationPercent(
+          sectorCurrentTurn.get(sector) ?? 0,
+          sectorPreviousTurn.get(sector) ?? 0,
+        );
+        const worstVariation = Math.max(absVariation, turnoverVariation);
+
+        return {
+          sector,
+          absenteeismVariation: Number(absVariation.toFixed(1)),
+          turnoverVariation: Number(turnoverVariation.toFixed(1)),
+          status: worstVariation > 20 ? "critical" : "attention",
+          worstVariation,
+        };
+      })
+      .filter((item) => item.worstVariation > 0)
+      .sort((a, b) => b.worstVariation - a.worstVariation)
+      .slice(0, 3)
+      .map(({ worstVariation: _worstVariation, ...item }) => item);
 
     const contractsEndingSoon = colaboradores
       .filter((colaborador) => colaborador.status === "Ativo")
@@ -542,6 +619,48 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       ),
     };
 
+    const changes: string[] = [];
+    const absRateVariation = variationPercent(absenteeismRateCurrent, absenteeismRatePrevious);
+    const turnRateVariation = variationPercent(turnoverRateCurrent, turnoverRatePrevious);
+
+    changes.push(
+      absRateVariation > 0
+        ? `Absenteismo subiu ${absRateVariation.toFixed(1)}% vs periodo anterior.`
+        : absRateVariation < 0
+          ? `Absenteismo caiu ${Math.abs(absRateVariation).toFixed(1)}% e apresentou melhora.`
+          : "Absenteismo permaneceu estavel na comparacao de periodo.",
+    );
+
+    changes.push(
+      turnRateVariation > 0
+        ? `Turnover aumentou ${turnRateVariation.toFixed(1)}% e requer atencao.`
+        : turnRateVariation < 0
+          ? `Turnover reduziu ${Math.abs(turnRateVariation).toFixed(1)}% no periodo.`
+          : "Turnover estavel em relacao ao periodo anterior.",
+    );
+
+    if (sectorsAttention[0]) {
+      const topSector = sectorsAttention[0];
+      changes.push(
+        `Setor ${topSector.sector} entrou em ${topSector.status === "critical" ? "estado critico" : "atencao"} (${Math.max(
+          topSector.absenteeismVariation,
+          topSector.turnoverVariation,
+        ).toFixed(1)}% de piora).`,
+      );
+    }
+
+    if (topAbsenceReasons[0]) {
+      changes.push(
+        `${topAbsenceReasons[0].reason} representa ${topAbsenceReasons[0].contributionPercent.toFixed(1)}% dos dias perdidos.`,
+      );
+    }
+
+    if (topTurnoverReasons[0]) {
+      changes.push(
+        `${topTurnoverReasons[0].reason} representa ${topTurnoverReasons[0].contributionPercent.toFixed(1)}% das saidas.`,
+      );
+    }
+
     return {
       range,
       previousRange,
@@ -575,6 +694,16 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
         },
       },
       notifications,
+      highlights: {
+        changes: changes.slice(0, 5),
+        sectorsAttention,
+        topAbsenceReasons,
+        topTurnoverReasons,
+        absenteeismRateCurrent: Number(absenteeismRateCurrent.toFixed(2)),
+        absenteeismRatePrevious: Number(absenteeismRatePrevious.toFixed(2)),
+        turnoverRateCurrent: Number(turnoverRateCurrent.toFixed(2)),
+        turnoverRatePrevious: Number(turnoverRatePrevious.toFixed(2)),
+      },
     };
   }, [afastamentos, colaboradores, customRange, desligamentos, preset]);
 
