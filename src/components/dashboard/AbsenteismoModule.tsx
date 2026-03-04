@@ -43,6 +43,7 @@ import { useAbsenteismoAnalytics, AfastamentoCompleto } from "@/hooks/useAbsente
 import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
 import { useSetoresDisponiveis } from "@/hooks/useTurnoverAnalytics";
 import { EditAfastamentoModal } from "./EditAfastamentoModal";
+import { RankingMotivosCard } from "./RankingMotivosCard";
 import {
   createAfastamentoSignedUrl,
   downloadAfastamentoAnexo,
@@ -209,30 +210,16 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
 
       {/* Strategic card: top motivos */}
       {(data?.topMotivos?.length || 0) > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Principais Motivos de Afastamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {data!.topMotivos.map((m, i) => (
-                <div key={m.tipo} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-2xl font-bold text-muted-foreground">#{i + 1}</span>
-                  <div>
-                    <p className="font-medium text-sm text-foreground">{m.tipo}</p>
-                    <p className="text-xs text-muted-foreground">{m.dias} dia{m.dias !== 1 ? "s" : ""}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Setor com maior impacto: <span className="font-semibold text-foreground">{data?.setorMaiorAbsenteismo}</span>
-            </p>
-          </CardContent>
-        </Card>
+        <RankingMotivosCard
+          title="Principais Motivos de Afastamento"
+          items={data!.topMotivos.map((m) => ({
+            label: m.tipo,
+            value: m.dias,
+            unit: m.dias !== 1 ? "dias" : "dia",
+          }))}
+          setorDestaque={data?.setorMaiorAbsenteismo}
+          setorLabel="Setor com maior impacto"
+        />
       )}
 
       {/* Filters + Action + Table */}
