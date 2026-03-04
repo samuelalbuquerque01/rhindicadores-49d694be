@@ -532,6 +532,25 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
       .sort((a, b) => a.daysLeft - b.daysLeft)
       .slice(0, 5);
 
+    const experienceEndingSoon = colaboradores
+      .filter((colaborador) => colaborador.status === "Ativo")
+      .map((colaborador) => ({
+        employeeName: colaborador.nome,
+        admissionDate: toDate(colaborador.data_admissao),
+      }))
+      .filter((item) => item.admissionDate)
+      .map((item) => {
+        const daysInExperience = differenceInCalendarDays(now, item.admissionDate as Date);
+        return {
+          employeeName: item.employeeName,
+          daysInExperience,
+          daysLeft: Math.max(0, 90 - daysInExperience),
+        };
+      })
+      .filter((item) => item.daysInExperience >= 80 && item.daysInExperience <= 90)
+      .sort((a, b) => a.daysLeft - b.daysLeft)
+      .slice(0, 8);
+
     const vacationsSoon = afastamentos
       .filter((afastamento) => (afastamento.tipo || "").toLowerCase().includes("fer"))
       .map((afastamento) => ({
@@ -571,6 +590,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
 
     const notifications = generateSmartNotifications({
       contractsEndingSoon,
+      experienceEndingSoon,
       vacationsSoon,
       medicalCertificates,
       absenteeismSectorIncrease: sectorAbsIncrease,

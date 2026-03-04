@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CalendarClock,
   Briefcase,
+  Clock3,
   Activity,
   TrendingUp,
   Stethoscope,
@@ -45,6 +46,7 @@ export function NotificationPanel({
   const iconByType = useMemo(
     () => ({
       contract: <Briefcase className="h-4 w-4" />,
+      experience: <Clock3 className="h-4 w-4" />,
       vacation: <CalendarClock className="h-4 w-4" />,
       medical: <Stethoscope className="h-4 w-4" />,
       absenteeism: <Activity className="h-4 w-4" />,

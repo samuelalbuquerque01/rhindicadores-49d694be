@@ -3,6 +3,7 @@ import type { AnomalyPoint } from "@/lib/analytics/anomaly";
 export type NotificationPriority = "high" | "medium" | "low";
 export type NotificationType =
   | "contract"
+  | "experience"
   | "vacation"
   | "medical"
   | "absenteeism"
@@ -29,6 +30,7 @@ export interface SmartNotificationState extends SmartNotification {
 
 interface InputData {
   contractsEndingSoon: Array<{ employeeName: string; daysLeft: number }>;
+  experienceEndingSoon: Array<{ employeeName: string; daysInExperience: number; daysLeft: number }>;
   vacationsSoon: Array<{ employeeName: string; daysLeft: number }>;
   medicalCertificates: Array<{ employeeName: string; certificates: number }>;
   absenteeismSectorIncrease: Array<{ sector: string; variation: number }>;
@@ -69,6 +71,7 @@ function stableNotificationId(
 export function notificationTitleByType(type: NotificationType): string {
   const titles: Record<NotificationType, string> = {
     contract: "Contrato proximo do vencimento",
+    experience: "Fim do periodo de experiencia",
     vacation: "Ferias proximas",
     medical: "Atestados medicos",
     absenteeism: "Risco de absenteismo",
@@ -95,6 +98,19 @@ export function generateSmartNotifications(data: InputData): SmartNotification[]
       date: isoDate,
       urgencyLabel: `D-${item.daysLeft}`,
       priority: item.daysLeft <= 7 ? "high" : "medium",
+      targetTab: "timeline",
+    });
+  });
+
+  data.experienceEndingSoon.forEach((item) => {
+    notifications.push({
+      id: stableNotificationId("experience", "timeline", item.employeeName),
+      type: "experience",
+      title: notificationTitleByType("experience"),
+      message: `${item.employeeName} esta no fim do periodo de experiencia (${item.daysInExperience} dias).`,
+      date: isoDate,
+      urgencyLabel: `D-${item.daysLeft} para 90 dias`,
+      priority: item.daysLeft <= 2 ? "high" : "medium",
       targetTab: "timeline",
     });
   });
