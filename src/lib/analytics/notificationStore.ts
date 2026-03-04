@@ -1,6 +1,7 @@
 import type { SmartNotification, SmartNotificationState } from "@/lib/analytics/notifications";
 
 const STORAGE_KEY = "rh-smart-notifications";
+const HIDDEN_STORAGE_KEY = "rh-smart-notifications-hidden";
 const EVENT_NAME = "rh-smart-notifications-updated";
 
 function notificationSignature(notification: Pick<SmartNotificationState, "type" | "targetTab" | "title" | "message">): string {
@@ -18,6 +19,42 @@ function writeSmartNotifications(notifications: SmartNotificationState[]): void 
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
   dispatchNotificationUpdate();
+}
+
+interface HiddenNotificationTombstone {
+  id: string;
+  signature: string;
+  hiddenAt: string;
+}
+
+function readHiddenTombstones(): HiddenNotificationTombstone[] {
+  if (typeof window === "undefined") return [];
+  const raw = localStorage.getItem(HIDDEN_STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<HiddenNotificationTombstone>[];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => {
+        if (!item.id || !item.signature) return null;
+        return {
+          id: String(item.id),
+          signature: String(item.signature),
+          hiddenAt: String(item.hiddenAt || new Date().toISOString()),
+        };
+      })
+      .filter((item): item is HiddenNotificationTombstone => item !== null)
+      .slice(0, 800);
+  } catch {
+    return [];
+  }
+}
+
+function writeHiddenTombstones(items: HiddenNotificationTombstone[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify(items.slice(0, 800)));
 }
 
 function normalizeStoredItem(item: Partial<SmartNotificationState>): SmartNotificationState | null {
@@ -61,16 +98,20 @@ export function readSmartNotifications(): SmartNotificationState[] {
 
 export function persistSmartNotifications(notifications: SmartNotification[]): void {
   const previous = readSmartNotifications();
+  const hiddenTombstones = readHiddenTombstones();
   const previousById = new Map(previous.map((item) => [item.id, item]));
   const previousBySignature = new Map(previous.map((item) => [notificationSignature(item), item]));
+  const hiddenIds = new Set(hiddenTombstones.map((item) => item.id));
+  const hiddenSignatures = new Set(hiddenTombstones.map((item) => item.signature));
 
   const merged = notifications.map<SmartNotificationState>((item) => {
-    const existing = previousById.get(item.id) ?? previousBySignature.get(notificationSignature(item));
+    const signature = notificationSignature(item);
+    const existing = previousById.get(item.id) ?? previousBySignature.get(signature);
     return {
       ...item,
       read: existing?.read ?? false,
       readAt: existing?.readAt ?? null,
-      hidden: existing?.hidden ?? false,
+      hidden: existing?.hidden ?? (hiddenIds.has(item.id) || hiddenSignatures.has(signature)),
     };
   });
 
@@ -105,13 +146,38 @@ export function markAllSmartNotificationsAsRead(): void {
 }
 
 export function clearReadSmartNotifications(): void {
-  const next = readSmartNotifications().map((item) =>
+  const current = readSmartNotifications();
+  const currentHidden = readHiddenTombstones();
+  const hiddenMap = new Map(currentHidden.map((item) => [item.id, item]));
+  const hiddenSignatureMap = new Map(currentHidden.map((item) => [item.signature, item]));
+  const nowIso = new Date().toISOString();
+
+  const next = current.map((item) =>
     item.read
       ? {
           ...item,
           hidden: true,
         }
       : item,
+  );
+
+  next
+    .filter((item) => item.read)
+    .forEach((item) => {
+      const signature = notificationSignature(item);
+      if (!hiddenMap.has(item.id) && !hiddenSignatureMap.has(signature)) {
+        const tombstone: HiddenNotificationTombstone = {
+          id: item.id,
+          signature,
+          hiddenAt: nowIso,
+        };
+        hiddenMap.set(item.id, tombstone);
+        hiddenSignatureMap.set(signature, tombstone);
+      }
+    });
+
+  writeHiddenTombstones(
+    Array.from(hiddenMap.values()).sort((left, right) => right.hiddenAt.localeCompare(left.hiddenAt)),
   );
   writeSmartNotifications(next);
 }
