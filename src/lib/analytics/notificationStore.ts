@@ -152,17 +152,13 @@ export function clearReadSmartNotifications(): void {
   const hiddenSignatureMap = new Map(currentHidden.map((item) => [item.signature, item]));
   const nowIso = new Date().toISOString();
 
-  const next = current.map((item) =>
-    item.read
-      ? {
-          ...item,
-          hidden: true,
-        }
-      : item,
-  );
+  const next = current.map((item) => ({
+    ...item,
+    hidden: true,
+  }));
 
   next
-    .filter((item) => item.read)
+    .filter((item) => item.hidden)
     .forEach((item) => {
       const signature = notificationSignature(item);
       if (!hiddenMap.has(item.id) && !hiddenSignatureMap.has(signature)) {
