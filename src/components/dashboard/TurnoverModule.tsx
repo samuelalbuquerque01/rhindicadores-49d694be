@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TurnoverChart } from "./TurnoverChart";
 import { DesligamentoForm } from "@/components/forms/DesligamentoForm";
+import { RankingMotivosCard } from "./RankingMotivosCard";
 import { useTurnoverAnalytics, useSetoresDisponiveis, DesligamentoCompleto } from "@/hooks/useTurnoverAnalytics";
 
 interface TurnoverModuleProps {
@@ -119,30 +120,16 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
 
       {/* Strategic card: top motivos */}
       {(data?.topMotivos?.length || 0) > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Principais Motivos de Saída
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {data!.topMotivos.map((m, i) => (
-                <div key={m.motivo} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-2xl font-bold text-muted-foreground">#{i + 1}</span>
-                  <div>
-                    <p className="font-medium text-sm text-foreground">{m.motivo}</p>
-                    <p className="text-xs text-muted-foreground">{m.count} desligamento{m.count !== 1 ? "s" : ""}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Setor com maior turnover: <span className="font-semibold text-foreground">{data?.setorMaiorTurnover}</span>
-            </p>
-          </CardContent>
-        </Card>
+        <RankingMotivosCard
+          title="Principais Motivos de Saída"
+          items={data!.topMotivos.map((m) => ({
+            label: m.motivo,
+            value: m.count,
+            unit: m.count !== 1 ? "desligamentos" : "desligamento",
+          }))}
+          setorDestaque={data?.setorMaiorTurnover}
+          setorLabel="Setor com maior turnover"
+        />
       )}
 
       {/* Filters + Action */}
