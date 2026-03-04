@@ -132,3 +132,64 @@ export function useCreateDesligamento() {
     },
   });
 }
+
+export function useUpdateDesligamento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: {
+      id: string;
+      data_desligamento?: string;
+      motivo?: string;
+      custo_rescisao?: number | null;
+      observacoes?: string | null;
+    }) => {
+      const { data, error } = await supabase
+        .from("desligamentos")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["desligamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["turnover-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["turnover-analytics"] });
+      toast.success("Desligamento atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar desligamento: " + error.message);
+    },
+  });
+}
+
+export function useDeleteDesligamento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("desligamentos")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["desligamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["turnover-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["turnover-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      toast.success("Desligamento excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir desligamento: " + error.message);
+    },
+  });
+}
