@@ -170,9 +170,10 @@ export async function fetchTrainingsExtraFromBackend(): Promise<TrainingExtraDat
 
 export async function saveTrainingExtraToBackend(item: TrainingExtraData): Promise<boolean> {
   try {
+    const payload = toRemotePayload(item);
     const { error } = await supabase
       .from("training_extras")
-      .upsert(toRemotePayload(item), { onConflict: "training_id" });
+      .upsert(payload as any, { onConflict: "training_id" });
 
     return !error;
   } catch {
@@ -210,7 +211,7 @@ export function upsertTrainingExtra(
     snapshot: updates.snapshot ?? previous.snapshot,
   };
 
-  const changes = buildAuditChanges(previous, next, AUDIT_LABELS, nowIso);
+  const changes = buildAuditChanges(previous as unknown as Record<string, unknown>, next as unknown as Record<string, unknown>, AUDIT_LABELS, nowIso);
 
   const updated: TrainingExtraData = {
     ...next,

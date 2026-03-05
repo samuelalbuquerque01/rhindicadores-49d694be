@@ -159,14 +159,14 @@ function normalizeRemoteRecord(row: InstitutionalEventRow): EventRecord | null {
   return normalizeRecord({
     id: row.id,
     title: row.title,
-    type: row.type,
+    type: row.type as InstitutionalEventType,
     date: row.event_date,
     location: row.location ?? "",
     organizer: row.organizer ?? "",
-    sectors: row.sectors,
+    sectors: row.sectors as string[],
     estimatedParticipants: row.estimated_participants,
     description: row.description ?? "",
-    tags: row.tags,
+    tags: row.tags as string[],
     attachments: row.attachments as unknown as LocalAttachment[],
     auditTrail: row.audit_trail as unknown as AuditTrailData,
   });
@@ -264,7 +264,7 @@ export function upsertInstitutionalEvent(
     id: eventId,
   };
 
-  const changes = buildAuditChanges(found, nextValue, AUDIT_LABELS, nowIso);
+  const changes = buildAuditChanges(found as unknown as Record<string, unknown>, nextValue as unknown as Record<string, unknown>, AUDIT_LABELS, nowIso);
 
   const updated: EventRecord = {
     ...nextValue,
@@ -356,9 +356,10 @@ export async function fetchInstitutionalEventsFromBackend(): Promise<EventRecord
 
 export async function saveInstitutionalEventToBackend(event: EventRecord): Promise<boolean> {
   try {
+    const payload = toRemotePayload(event);
     const { error } = await supabase
       .from("institutional_events")
-      .upsert(toRemotePayload(event), { onConflict: "id" });
+      .upsert(payload as any, { onConflict: "id" });
 
     return !error;
   } catch {

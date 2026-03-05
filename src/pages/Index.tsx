@@ -165,7 +165,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="estagiarios" className="space-y-6">
-            <ColaboradoresList filialId={selectedFilial} tipoFilter="Estagiario" />
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="Estagiário" />
           </TabsContent>
 
           <TabsContent value="pj" className="space-y-6">

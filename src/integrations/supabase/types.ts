@@ -337,6 +337,51 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_events: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          employee_id: string | null
+          employee_name: string
+          end_date: string | null
+          id: string
+          notes: string
+          reason: string
+          sector_id: string | null
+          sector_name: string
+          start_date: string
+          type: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          employee_id?: string | null
+          employee_name?: string
+          end_date?: string | null
+          id?: string
+          notes?: string
+          reason?: string
+          sector_id?: string | null
+          sector_name?: string
+          start_date: string
+          type: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          employee_id?: string | null
+          employee_name?: string
+          end_date?: string | null
+          id?: string
+          notes?: string
+          reason?: string
+          sector_id?: string | null
+          sector_name?: string
+          start_date?: string
+          type?: string
+        }
+        Relationships: []
+      }
       institutional_events: {
         Row: {
           attachments: Json
@@ -345,7 +390,6 @@ export type Database = {
           description: string | null
           estimated_participants: number | null
           event_date: string
-          filial_id: string | null
           id: string
           location: string | null
           organizer: string | null
@@ -362,14 +406,13 @@ export type Database = {
           description?: string | null
           estimated_participants?: number | null
           event_date: string
-          filial_id?: string | null
           id?: string
           location?: string | null
           organizer?: string | null
           sectors?: string[]
           tags?: string[]
           title: string
-          type: string
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -379,7 +422,6 @@ export type Database = {
           description?: string | null
           estimated_participants?: number | null
           event_date?: string
-          filial_id?: string | null
           id?: string
           location?: string | null
           organizer?: string | null
@@ -389,15 +431,7 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "institutional_events_filial_id_fkey"
-            columns: ["filial_id"]
-            isOneToOne: false
-            referencedRelation: "filiais"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lideres_formados: {
         Row: {
@@ -482,39 +516,31 @@ export type Database = {
         Row: {
           absenteeism_target: number
           created_at: string
-          filial_id: string | null
+          id: string
           scope_key: string
           turnover_target: number
           updated_at: string
-          updated_by: string
+          updated_by: string | null
         }
         Insert: {
           absenteeism_target?: number
           created_at?: string
-          filial_id?: string | null
-          scope_key?: string
+          id?: string
+          scope_key: string
           turnover_target?: number
           updated_at?: string
-          updated_by?: string
+          updated_by?: string | null
         }
         Update: {
           absenteeism_target?: number
           created_at?: string
-          filial_id?: string | null
+          id?: string
           scope_key?: string
           turnover_target?: number
           updated_at?: string
-          updated_by?: string
+          updated_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "rh_goals_filial_id_fkey"
-            columns: ["filial_id"]
-            isOneToOne: false
-            referencedRelation: "filiais"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       smart_notification_state: {
         Row: {
@@ -539,7 +565,7 @@ export type Database = {
           read_at?: string | null
           semantic_key: string
           updated_at?: string
-          user_key?: string
+          user_key: string
         }
         Update: {
           created_at?: string
@@ -552,6 +578,39 @@ export type Database = {
           semantic_key?: string
           updated_at?: string
           user_key?: string
+        }
+        Relationships: []
+      }
+      training_extras: {
+        Row: {
+          attachments: Json
+          audit_trail: Json
+          created_at: string
+          id: string
+          snapshot: Json | null
+          tags: string[]
+          training_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          id?: string
+          snapshot?: Json | null
+          tags?: string[]
+          training_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          audit_trail?: Json
+          created_at?: string
+          id?: string
+          snapshot?: Json | null
+          tags?: string[]
+          training_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -595,44 +654,6 @@ export type Database = {
             foreignKeyName: "treinamento_participacoes_treinamento_id_fkey"
             columns: ["treinamento_id"]
             isOneToOne: false
-            referencedRelation: "treinamentos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      training_extras: {
-        Row: {
-          attachments: Json
-          audit_trail: Json
-          created_at: string
-          snapshot: Json | null
-          tags: string[]
-          training_id: string
-          updated_at: string
-        }
-        Insert: {
-          attachments?: Json
-          audit_trail?: Json
-          created_at?: string
-          snapshot?: Json | null
-          tags?: string[]
-          training_id: string
-          updated_at?: string
-        }
-        Update: {
-          attachments?: Json
-          audit_trail?: Json
-          created_at?: string
-          snapshot?: Json | null
-          tags?: string[]
-          training_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "training_extras_training_id_fkey"
-            columns: ["training_id"]
-            isOneToOne: true
             referencedRelation: "treinamentos"
             referencedColumns: ["id"]
           },
