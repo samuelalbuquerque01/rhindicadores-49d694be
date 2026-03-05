@@ -508,7 +508,7 @@ export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverv
           sector,
           absenteeismVariation: Number(absVariation.toFixed(1)),
           turnoverVariation: Number(turnoverVariation.toFixed(1)),
-          status: worstVariation > 20 ? "critical" : "attention",
+          status: (worstVariation > 20 ? "critical" : "attention") as "critical" | "attention",
           worstVariation,
         };
       })

@@ -1,4 +1,5 @@
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 export const RH_EVENT_TYPES = [
   "Afastamento",
@@ -107,7 +108,9 @@ export function readHREvents(): HREventRecord[] {
 
 export function persistHREvents(events: HREventRecord[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sortEventsByDateDesc(events)));
+  const sorted = sortEventsByDateDesc(events);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+  void syncHREventsToBackend(sorted);
 }
 
 export function createEventId(): string {
@@ -214,4 +217,88 @@ export function countDaysBetween(startDate: string, endDate?: string | null): nu
 
   const diff = Math.floor((endOfDay(end).getTime() - startOfDay(start).getTime()) / (1000 * 60 * 60 * 24)) + 1;
   return Math.max(diff, 1);
+}
+
+function toRemotePayload(event: HREventRecord) {
+  return {
+    id: event.id,
+    type: event.type,
+    employee_id: event.employeeId,
+    employee_name: event.employeeName,
+    sector_id: event.sectorId,
+    sector_name: event.sectorName,
+    start_date: event.startDate,
+    end_date: event.endDate,
+    reason: event.reason,
+    notes: event.notes,
+    attachment_url: event.attachmentUrl,
+    created_at: event.createdAt,
+  };
+}
+
+function fromRemoteRow(row: any): HREventRecord | null {
+  return normalizeEvent({
+    id: row.id,
+    type: row.type,
+    employeeId: row.employee_id,
+    employeeName: row.employee_name,
+    sectorId: row.sector_id,
+    sectorName: row.sector_name,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    reason: row.reason,
+    notes: row.notes,
+    attachmentUrl: row.attachment_url,
+    createdAt: row.created_at,
+  });
+}
+
+async function syncHREventsToBackend(events: HREventRecord[]): Promise<void> {
+  try {
+    if (events.length === 0) return;
+    const payloads = events.map(toRemotePayload);
+    await supabase.from("hr_events").upsert(payloads as any, { onConflict: "id" });
+  } catch {
+    // silent fallback
+  }
+}
+
+export async function fetchHREventsFromBackend(): Promise<HREventRecord[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("hr_events")
+      .select("*")
+      .order("start_date", { ascending: false });
+
+    if (error || !data) return null;
+
+    return data
+      .map((row: any) => fromRemoteRow(row))
+      .filter((item): item is HREventRecord => item !== null);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveHREventToBackend(event: HREventRecord): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("hr_events")
+      .upsert(toRemotePayload(event) as any, { onConflict: "id" });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteHREventFromBackend(eventId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("hr_events")
+      .delete()
+      .eq("id", eventId);
+    return !error;
+  } catch {
+    return false;
+  }
 }
