@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       afastamentos: {
         Row: {
+          anexo_url: string | null
           colaborador_id: string | null
           created_at: string
           data_fim: string
@@ -26,6 +27,7 @@ export type Database = {
           tipo: string
         }
         Insert: {
+          anexo_url?: string | null
           colaborador_id?: string | null
           created_at?: string
           data_fim: string
@@ -36,6 +38,7 @@ export type Database = {
           tipo: string
         }
         Update: {
+          anexo_url?: string | null
           colaborador_id?: string | null
           created_at?: string
           data_fim?: string
