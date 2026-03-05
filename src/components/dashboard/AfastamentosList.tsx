@@ -13,6 +13,11 @@ import {
   ChevronDown,
   ChevronUp,
   Paperclip,
+  Download,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,8 +44,12 @@ import {
 import { useAfastamentosPorTipo } from "@/hooks/useAfastamentoAtivo";
 import { useFiliais } from "@/hooks/useFiliais";
 import { useDeleteAfastamento } from "@/hooks/useAfastamentos";
+import { createAfastamentoSignedUrl, downloadAfastamentoAnexo, isHttpUrl } from "@/lib/afastamentosStorage";
 import { AfastamentoBadge } from "./AfastamentoBadge";
 import { EditAfastamentoModal } from "./EditAfastamentoModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface AfastamentosListProps {
   filialId?: string;
@@ -61,6 +70,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
   const [editingAfastamento, setEditingAfastamento] = useState<any>(null);
   const [deleting, setDeleting] = useState<{ id: string; anexo_url?: string | null } | null>(null);
   const [expandedObs, setExpandedObs] = useState<Set<string>>(new Set());
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { data: afastamentos, isLoading } = useAfastamentosPorTipo(
     tipoSelecionado,
@@ -120,6 +130,45 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
     if (deleting) {
       await deleteAfastamento.mutateAsync(deleting);
       setDeleting(null);
+    }
+  };
+
+  const isImageFile = (url: string) => /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url);
+
+  const handlePreview = async (anexoUrl: string) => {
+    try {
+      if (isHttpUrl(anexoUrl)) {
+        setPreviewUrl(anexoUrl);
+      } else {
+        const signedUrl = await createAfastamentoSignedUrl(anexoUrl);
+        if (signedUrl) setPreviewUrl(signedUrl);
+        else toast.error("Não foi possível gerar a URL do anexo.");
+      }
+    } catch {
+      toast.error("Erro ao abrir preview do anexo.");
+    }
+  };
+
+  const handleDownload = async (anexoUrl: string, colaboradorNome?: string) => {
+    try {
+      if (isHttpUrl(anexoUrl)) {
+        window.open(anexoUrl, "_blank");
+        return;
+      }
+      const blob = await downloadAfastamentoAnexo(anexoUrl);
+      if (!blob) { toast.error("Arquivo não encontrado."); return; }
+      const ext = anexoUrl.split(".").pop() || "pdf";
+      const fileName = `atestado-${colaboradorNome?.replace(/\s+/g, "_") || "anexo"}.${ext}`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Erro ao baixar anexo.");
     }
   };
 
@@ -256,11 +305,56 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                               "-"
                             )}
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell>
                             {afastamento.anexo_url ? (
-                              <Paperclip className="h-4 w-4 text-muted-foreground inline" />
+                              <TooltipProvider>
+                                <div className="flex items-center gap-1">
+                                  {isImageFile(afastamento.anexo_url) ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-primary hover:text-primary/80"
+                                          onClick={() => handlePreview(afastamento.anexo_url)}
+                                        >
+                                          <ImageIcon className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Visualizar imagem</TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-primary hover:text-primary/80"
+                                          onClick={() => handlePreview(afastamento.anexo_url)}
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Visualizar anexo</TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                        onClick={() => handleDownload(afastamento.anexo_url, afastamento.colaborador?.nome)}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Baixar anexo</TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </TooltipProvider>
                             ) : (
-                              "-"
+                              <span className="text-muted-foreground text-xs">—</span>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
@@ -291,6 +385,35 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Image/PDF Preview Modal */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] p-0 overflow-hidden bg-background">
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded-full"
+              onClick={() => setPreviewUrl(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {previewUrl && isImageFile(previewUrl) ? (
+              <img
+                src={previewUrl}
+                alt="Preview do atestado"
+                className="w-full h-auto max-h-[85vh] object-contain"
+              />
+            ) : previewUrl ? (
+              <iframe
+                src={previewUrl}
+                title="Preview do anexo"
+                className="w-full h-[85vh] border-0"
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
       <EditAfastamentoModal
