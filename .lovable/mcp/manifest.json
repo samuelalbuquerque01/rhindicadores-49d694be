@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://liqvudyxgceqpqkykgmp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "rh-insights",
+      "version": "0.1.0",
+      "title": "RH Insights"
+    },
+    "tools": [
+      {
+        "name": "hr_summary",
+        "title": "Resumo de indicadores de RH",
+        "description": "Return headcount, hires, terminations, turnover rate and absence days for a period, broken down by department.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data_inicio": {
+              "type": "string",
+              "description": "Period start as YYYY-MM-DD."
+            },
+            "data_fim": {
+              "type": "string",
+              "description": "Period end as YYYY-MM-DD."
+            }
+          },
+          "required": [
+            "data_inicio",
+            "data_fim"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_colaboradores",
+        "title": "Listar colaboradores",
+        "description": "List employees (colaboradores) with optional filters by status, department and name search. Returns role, department, hire date and status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Filter by status, e.g. 'Ativo' or 'Desligado'."
+            },
+            "departamento": {
+              "type": "string",
+              "description": "Filter by department name (exact match)."
+            },
+            "search": {
+              "type": "string",
+              "description": "Case-insensitive partial match on the employee name."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum rows to return (default 50, max 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_afastamentos",
+        "title": "Listar afastamentos",
+        "description": "List employee leaves/absences (afastamentos) in a date range, including type, start and end date and days absent.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data_inicio": {
+              "type": "string",
+              "description": "Start of the range as YYYY-MM-DD (filters on data_inicio)."
+            },
+            "data_fim": {
+              "type": "string",
+              "description": "End of the range as YYYY-MM-DD (filters on data_inicio)."
+            },
+            "tipo": {
+              "type": "string",
+              "description": "Filter by leave type."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum rows to return (default 50, max 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_desligamentos",
+        "title": "Listar desligamentos",
+        "description": "List employee terminations (desligamentos) in a date range, including reason, date and severance cost. Useful for turnover analysis.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data_inicio": {
+              "type": "string",
+              "description": "Start of the range as YYYY-MM-DD."
+            },
+            "data_fim": {
+              "type": "string",
+              "description": "End of the range as YYYY-MM-DD."
+            },
+            "motivo": {
+              "type": "string",
+              "description": "Filter by termination reason."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum rows to return (default 50, max 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_treinamentos_eventos",
+        "title": "Listar treinamentos e eventos",
+        "description": "List trainings (treinamentos) and institutional events (eventos) in a date range, with workload, capacity and completion status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data_inicio": {
+              "type": "string",
+              "description": "Start of the range as YYYY-MM-DD."
+            },
+            "data_fim": {
+              "type": "string",
+              "description": "End of the range as YYYY-MM-DD."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum rows per collection (default 50, max 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
