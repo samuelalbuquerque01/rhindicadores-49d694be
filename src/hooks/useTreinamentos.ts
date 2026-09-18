@@ -178,7 +178,7 @@ export function useCreateTreinamento() {
     mutationFn: async (treinamento: Omit<Treinamento, "id" | "created_at" | "filial">) => {
       const { data, error } = await supabase
         .from("treinamentos")
-        .insert(treinamento)
+        .insert(treinamento as never)
         .select()
         .single();
       
@@ -319,7 +319,7 @@ export function useUpdateTreinamento() {
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Treinamento>) => {
       const { error } = await supabase
         .from("treinamentos")
-        .update(data)
+        .update(data as never)
         .eq("id", id);
       
       if (error) throw error;

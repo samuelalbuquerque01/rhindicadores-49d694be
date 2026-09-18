@@ -178,7 +178,7 @@ export function useUpdateColaborador() {
     mutationFn: async ({ id, ...colaborador }: Partial<Colaborador> & { id: string }) => {
       const { data, error } = await supabase
         .from("colaboradores")
-        .update(colaborador)
+        .update(colaborador as never)
         .eq("id", id)
         .select()
         .single();

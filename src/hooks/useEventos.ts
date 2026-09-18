@@ -152,7 +152,7 @@ export function useCreateEvento() {
     mutationFn: async (evento: Omit<Evento, "id" | "created_at" | "filial">) => {
       const { data, error } = await supabase
         .from("eventos")
-        .insert(evento)
+        .insert(evento as never)
         .select()
         .single();
       
@@ -292,7 +292,7 @@ export function useUpdateEvento() {
     mutationFn: async ({ id, ...data }: { id: string } & Partial<Evento>) => {
       const { error } = await supabase
         .from("eventos")
-        .update(data)
+        .update(data as never)
         .eq("id", id);
       
       if (error) throw error;
