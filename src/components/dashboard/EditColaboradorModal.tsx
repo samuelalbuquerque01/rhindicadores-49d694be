@@ -48,7 +48,7 @@ const formSchema = z.object({
   tipo_colaborador: z.enum(["CLT Administrativo", "CLT Corpo Clínico", "PJ", "Estagiário"]),
   tipo_contratacao: z.enum(["Nova contratação", "Readmissão", "Transferência"]),
   data_admissao: z.string().min(1, "Data de admissão é obrigatória"),
-  status: z.enum(["Ativo", "Inativo"]),
+  status: z.enum(["Ativo", "Inativo", "Em desligamento", "Pendente"]),
   is_lider: z.boolean(),
   salario_base: z.coerce.number().min(0).optional(),
   custo_mensal: z.coerce.number().min(0).optional(),
@@ -336,6 +336,8 @@ export function EditColaboradorModal({
                           <SelectContent className="bg-popover z-50">
                             <SelectItem value="Ativo">Ativo</SelectItem>
                             <SelectItem value="Inativo">Inativo</SelectItem>
+                            <SelectItem value="Em desligamento">Em desligamento</SelectItem>
+                            <SelectItem value="Pendente">Pendente</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

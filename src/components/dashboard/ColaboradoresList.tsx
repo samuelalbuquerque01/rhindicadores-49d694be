@@ -41,13 +41,15 @@ import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
 import { AfastamentoBadge } from "./AfastamentoBadge";
 import { PaginationControls } from "@/components/ui/PaginationControls";
+import { SysteaSyncCard } from "./SysteaSyncCard";
 
 interface ColaboradoresListProps {
   filialId?: string;
   tipoFilter?: "CLT" | "Estagiário" | "PJ";
+  showSysteaSync?: boolean;
 }
 
-export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: ColaboradoresListProps) {
+export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSysteaSync = false }: ColaboradoresListProps) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [subTipoFilter, setSubTipoFilter] = useState<string>("all");
@@ -210,7 +212,9 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
   };
 
   return (
-    <Card className="border-border shadow-sm">
+    <div className="space-y-6">
+      {showSysteaSync && <SysteaSyncCard />}
+      <Card className="border-border shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
@@ -250,6 +254,8 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="Ativo">Ativo</SelectItem>
               <SelectItem value="Inativo">Inativo</SelectItem>
+              <SelectItem value="Em desligamento">Em desligamento</SelectItem>
+              <SelectItem value="Pendente">Pendente</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -385,6 +391,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
           </AlertDialogContent>
         </AlertDialog>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

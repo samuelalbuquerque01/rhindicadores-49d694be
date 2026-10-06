@@ -177,7 +177,7 @@ const Index = () => {
           </div>
 
           <TabsContent value="colaboradores" className="space-y-6">
-            <ColaboradoresList filialId={selectedFilial} tipoFilter="CLT" />
+            <ColaboradoresList filialId={selectedFilial} tipoFilter="CLT" showSysteaSync />
           </TabsContent>
 
           <TabsContent value="estagiarios" className="space-y-6">
