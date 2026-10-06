@@ -102,7 +102,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
           Novo Colaborador
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-[600px] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl">
         <DialogHeader>
           <DialogTitle>Novo Colaborador</DialogTitle>
           <DialogDescription>
@@ -112,7 +112,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs defaultValue="pessoal" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid h-auto w-full grid-cols-2 gap-1">
                 <TabsTrigger value="pessoal">Dados Pessoais</TabsTrigger>
                 <TabsTrigger value="profissional">Profissional</TabsTrigger>
               </TabsList>
@@ -153,7 +153,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="email"
@@ -184,7 +184,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
               </TabsContent>
               
               <TabsContent value="profissional" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="tipo_colaborador"
@@ -272,7 +272,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="cargo"
@@ -300,7 +300,7 @@ export function ColaboradorForm({ defaultTipo }: ColaboradorFormProps) {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="salario_base"

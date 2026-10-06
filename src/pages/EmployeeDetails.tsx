@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { AfastamentoBadge } from "@/components/dashboard/AfastamentoBadge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr + "T00:00:00");
@@ -205,12 +206,12 @@ const EmployeeDetails = () => {
                   {colaborador.status || "Ativo"}
                 </Badge>
                 {isNovaContratacao() && (
-                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+                  <Badge className="border-success-border bg-success-soft text-success-fg">
                     Nova contratação
                   </Badge>
                 )}
                 {colaborador.is_lider && (
-                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                  <Badge className="border-warning-border bg-warning-soft text-warning-fg">
                     Líder
                   </Badge>
                 )}
@@ -259,7 +260,7 @@ const EmployeeDetails = () => {
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList className="bg-card border">
+          <TabsList className="flex-wrap gap-1 border bg-card h-auto">
             <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
             <TabsTrigger value="professional">Dados Profissionais</TabsTrigger>
             <TabsTrigger value="absences">Afastamentos</TabsTrigger>
@@ -446,40 +447,40 @@ const EmployeeDetails = () => {
                 {!afastamentos?.length ? (
                   <p className="text-center py-8 text-muted-foreground">Nenhum afastamento registrado.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Tipo</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Período</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Dias</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Observações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                  <div className="rounded-md border">
+                    <Table className="min-w-[780px]">
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Período</TableHead>
+                          <TableHead>Dias</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Observações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {afastamentos.map((a: any) => {
                           const status = getAfastamentoStatus(a.data_inicio, a.data_fim);
                           return (
-                            <tr key={a.id} className="border-b last:border-0">
-                              <td className="py-3 px-4">
+                            <TableRow key={a.id}>
+                              <TableCell>
                                 <AfastamentoBadge afastamento={a} />
-                              </td>
-                              <td className="py-3 px-4 text-sm">
+                              </TableCell>
+                              <TableCell className="text-sm">
                                 {formatDate(a.data_inicio)} → {formatDate(a.data_fim)}
-                              </td>
-                              <td className="py-3 px-4">{a.dias_afastados || "-"}</td>
-                              <td className="py-3 px-4">
+                              </TableCell>
+                              <TableCell>{a.dias_afastados || "-"}</TableCell>
+                              <TableCell>
                                 <Badge className={getAfastamentoStatusClass(status)}>{status}</Badge>
-                              </td>
-                              <td className="py-3 px-4 text-sm max-w-xs whitespace-pre-wrap break-words">
+                              </TableCell>
+                              <TableCell className="text-sm max-w-xs whitespace-pre-wrap break-words">
                                 {a.observacoes || "-"}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </CardContent>

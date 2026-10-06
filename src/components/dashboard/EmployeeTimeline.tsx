@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { CalendarDays, Filter } from "lucide-react";
+import { CalendarDays, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Modal } from "@/components/ui/Modal";
@@ -89,21 +89,26 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-base font-semibold text-foreground">Filtros da timeline</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Input
-            placeholder="Buscar colaborador ou evento"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="relative sm:col-span-2 lg:col-span-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              placeholder="Buscar colaborador ou evento"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Buscar colaborador ou evento na timeline"
+              className="bg-background pl-10"
+            />
+          </div>
 
           <Select value={sectorFilter} onValueChange={setSectorFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-background">
               <SelectValue placeholder="Setor" />
             </SelectTrigger>
             <SelectContent>
@@ -115,7 +120,7 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
           </Select>
 
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-background">
               <SelectValue placeholder="Periodo" />
             </SelectTrigger>
             <SelectContent>
@@ -128,7 +133,7 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h3 className="text-base font-semibold text-foreground">Timeline de colaboradores</h3>
         {filtered.length === 0 ? (
           <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -140,16 +145,16 @@ export function EmployeeTimeline({ events }: EmployeeTimelineProps) {
               <button
                 key={event.id}
                 type="button"
-                className="w-full text-left rounded-lg border border-border p-4 hover:bg-slate-50 transition"
+                className="w-full rounded-lg border border-border p-4 text-left transition hover:bg-muted/50"
                 onClick={() => setSelectedEvent(event)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 h-9 w-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center">
+                  <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-neutral-soft text-neutral-fg">
                     <CalendarDays className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{event.employeeName}</p>
-                    <p className="text-sm text-slate-700">{event.title}</p>
+                    <p className="text-sm text-foreground">{event.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatDate(event.date)} | {event.sector} | {typeLabel(event.type)}
                     </p>

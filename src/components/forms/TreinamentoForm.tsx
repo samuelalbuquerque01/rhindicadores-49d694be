@@ -194,7 +194,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[620px] max-h-[88vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Treinamento" : "Novo Treinamento"}</DialogTitle>
           <DialogDescription>
@@ -242,7 +242,7 @@ export function TreinamentoForm({ treinamento, trigger }: TreinamentoFormProps) 
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="data_realizacao"

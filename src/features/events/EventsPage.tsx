@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Filter, Plus } from "lucide-react";
+import { CalendarClock, Filter, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -169,17 +169,32 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
             Sincronizacao com backend habilitada. Se indisponivel, o sistema usa fallback localStorage.
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-            <div className="xl:col-span-2">
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="relative sm:col-span-2 xl:col-span-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por titulo, tipo, local, organizador, tags..."
+                aria-label="Buscar eventos"
+                className="bg-background pl-10"
               />
             </div>
 
-            <Input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} />
-            <Input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} />
+            <Input
+              type="date"
+              value={periodStart}
+              onChange={(event) => setPeriodStart(event.target.value)}
+              aria-label="Data inicial do período"
+              className="bg-background"
+            />
+            <Input
+              type="date"
+              value={periodEnd}
+              onChange={(event) => setPeriodEnd(event.target.value)}
+              aria-label="Data final do período"
+              className="bg-background"
+            />
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="bg-background">
@@ -195,31 +210,31 @@ export function EventsPage({ filialId: _filialId }: EventsPageProps) {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 text-xs text-muted-foreground xl:flex">
               <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground">Filtros RH</span>
             </div>
-          </div>
 
-          <Select value={sectorFilter} onValueChange={setSectorFilter}>
-            <SelectTrigger className="bg-background">
-              <SelectValue placeholder="Setor" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover z-50 max-h-[280px]">
-              <SelectItem value="all">Todos os setores</SelectItem>
-              {sectorOptions.map((sector) => (
-                <SelectItem key={sector} value={sector}>
-                  {sector}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={sectorFilter} onValueChange={setSectorFilter}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Setor" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50 max-h-[280px]">
+                <SelectItem value="all">Todos os setores</SelectItem>
+                {sectorOptions.map((sector) => (
+                  <SelectItem key={sector} value={sector}>
+                    {sector}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
         {summaryByType.map((summary) => (
-          <Card key={summary.type} className="bg-white">
+          <Card key={summary.type} className="bg-card">
             <CardContent className="p-3 text-center space-y-1">
               <p className="text-xs text-muted-foreground leading-tight">{summary.type}</p>
               <p className="text-xl font-semibold text-foreground">{summary.total}</p>

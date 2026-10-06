@@ -116,7 +116,7 @@ export function EventosList({ filialId }: EventosListProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
@@ -124,7 +124,7 @@ export function EventosList({ filialId }: EventosListProps) {
         </CardTitle>
         <EventoForm />
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-0">
         {!eventos?.length ? (
           <div className="text-center py-8 text-muted-foreground">
             Nenhum evento cadastrado
@@ -206,13 +206,13 @@ function EventoItem({
 
   const getTipoBadge = (tipo?: string) => {
     const colors: Record<string, string> = {
-      "Confraternização": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-      "Palestra": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      "Workshop": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      "Integração": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      "Treinamento": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-      "Corporativo": "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
-      "Outro": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+      "Confraternização": "bg-primary-soft text-primary-fg",
+      "Palestra": "bg-info-soft text-info-fg",
+      "Workshop": "bg-success-soft text-success-fg",
+      "Integração": "bg-primary-soft text-primary-fg",
+      "Treinamento": "bg-warning-soft text-warning-fg",
+      "Corporativo": "bg-neutral-soft text-neutral-fg",
+      "Outro": "bg-neutral-soft text-neutral-fg",
     };
     return tipo ? (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[tipo] || colors["Outro"]}`}>
@@ -223,7 +223,7 @@ function EventoItem({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
-      <div className={`border rounded-lg ${evento.finalizado ? 'border-green-500/50 bg-green-50/30 dark:bg-green-950/20' : ''}`}>
+      <div className={`border rounded-lg ${evento.finalizado ? 'border-success-border bg-success-soft/30' : ''}`}>
         <CollapsibleTrigger asChild>
           <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
             <div className="flex items-center justify-between">
@@ -233,7 +233,7 @@ function EventoItem({
                       <h4 className="font-medium">{evento.nome}</h4>
                       {getTipoBadge(evento.tipo)}
                       {evento.finalizado && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                        <Badge variant="secondary" className="bg-success-soft text-success-fg">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Finalizado
                         </Badge>
@@ -362,8 +362,8 @@ function EventoItem({
 
             {/* Participants table */}
             {participacoes && participacoes.length > 0 ? (
-              <Table>
-                <TableHeader>
+              <Table className="min-w-[900px]">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead>Colaborador</TableHead>
                     <TableHead className="text-center">Confirmou</TableHead>

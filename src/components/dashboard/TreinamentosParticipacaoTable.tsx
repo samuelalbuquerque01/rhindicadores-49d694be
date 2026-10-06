@@ -94,12 +94,12 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
   }, [participacoes, mesFiltro, setorFiltro, statusFiltro]);
 
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader className="gap-3">
         <CardTitle>Participacao em Treinamentos</CardTitle>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-3">
           <Select value={mesFiltro} onValueChange={setMesFiltro}>
-            <SelectTrigger className="w-[160px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por mes" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -112,7 +112,7 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
             </SelectContent>
           </Select>
           <Select value={setorFiltro} onValueChange={setSetorFiltro}>
-            <SelectTrigger className="w-[180px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por setor" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -125,7 +125,7 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
             </SelectContent>
           </Select>
           <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-            <SelectTrigger className="w-[180px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -137,7 +137,7 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
           </Select>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             Nenhuma participacao encontrada
@@ -146,8 +146,8 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
           <>
             <div className="hidden md:block">
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <Table className="min-w-[800px]">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead>Nome do colaborador</TableHead>
                       <TableHead>Setor</TableHead>
@@ -184,7 +184,7 @@ export function TreinamentosParticipacaoTable({ filialId }: TreinamentosParticip
             </div>
             <div className="md:hidden space-y-3">
               {filtered.map((p) => (
-                <div key={p.id} className="rounded-lg border border-border/60 p-3">
+                <div key={p.id} className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">{p.colaborador?.nome || "-"}</p>

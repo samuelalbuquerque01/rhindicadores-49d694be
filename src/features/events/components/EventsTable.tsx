@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PaginationControls } from "@/components/ui/PaginationControls";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EventRecord } from "@/lib/storage/eventsStorage";
 import { AuditTrail } from "@/components/ui/AuditTrail";
 
@@ -68,8 +69,8 @@ export function EventsTable({
   return (
     <div className="space-y-4">
       <div className="hidden md:block rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
+        <Table className="min-w-[900px]">
+          <TableHeader className="bg-muted/50">
             <TableRow>
               <TableHead className="w-[44px]" />
               <TableHead>Titulo</TableHead>
@@ -114,12 +115,34 @@ export function EventsTable({
                     <TableCell>{event.estimatedParticipants ?? "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(event)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(event)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              aria-label={`Editar ${event.title}`}
+                              onClick={() => onEdit(event)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Editar</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              aria-label={`Excluir ${event.title}`}
+                              onClick={() => onDelete(event)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Excluir</TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -77,10 +77,22 @@ export function NotificationPanel({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-9 w-9 rounded-full"
+          aria-label={
+            unreadCount > 0
+              ? `Notificações (${unreadCount} não lida${unreadCount > 1 ? "s" : ""})`
+              : "Notificações"
+          }
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold flex items-center justify-center">
+            <span
+              aria-hidden="true"
+              className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center tabular-nums ring-2 ring-card"
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : null}

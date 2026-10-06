@@ -32,14 +32,14 @@ export function PaginationControls({
   const end = Math.min(page * pageSize, totalItems);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
-      <div className="text-sm text-muted-foreground">
+    <div className="mt-4 flex flex-col gap-3 rounded-md border border-border bg-muted/30 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="text-center text-sm text-muted-foreground sm:text-left" aria-live="polite">
         Mostrando {start}–{end} de {totalItems}
         {isLoading && <span className="ml-2">Carregando...</span>}
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-          <SelectTrigger className="w-[120px] bg-background">
+          <SelectTrigger className="w-full bg-background sm:w-[132px]">
             <SelectValue placeholder="Itens" />
           </SelectTrigger>
           <SelectContent className="bg-popover z-50">
@@ -50,7 +50,7 @@ export function PaginationControls({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-start">
           <Button
             variant="outline"
             size="sm"
@@ -59,7 +59,7 @@ export function PaginationControls({
           >
             Anterior
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="whitespace-nowrap text-sm text-muted-foreground">
             Página {page} de {totalPages}
           </span>
           <Button

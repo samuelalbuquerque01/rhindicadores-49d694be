@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip as UiTooltip, TooltipContent as UiTooltipContent, TooltipTrigger as UiTooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -343,7 +344,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-3">
             <Select value={mesFilter} onValueChange={setMesFilter}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Mes" />
@@ -394,8 +395,8 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
           ) : (
             <>
               <div className="hidden md:block rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <Table className="min-w-[840px]">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead>Colaborador</TableHead>
                       <TableHead>Setor</TableHead>
@@ -419,12 +420,34 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
                         <TableCell className="text-right">{afastamento.dias_afastados}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setEditingAfastamento(afastamento)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setDeletingAfastamento(afastamento)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <UiTooltip>
+                              <UiTooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  aria-label={`Editar ${afastamento.nome}`}
+                                  onClick={() => setEditingAfastamento(afastamento)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </UiTooltipTrigger>
+                              <UiTooltipContent side="top">Editar</UiTooltipContent>
+                            </UiTooltip>
+                            <UiTooltip>
+                              <UiTooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  aria-label={`Excluir ${afastamento.nome}`}
+                                  onClick={() => setDeletingAfastamento(afastamento)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </UiTooltipTrigger>
+                              <UiTooltipContent side="top">Excluir</UiTooltipContent>
+                            </UiTooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -435,7 +458,7 @@ export function AbsenteismoModule({ filialId }: AbsenteismoModuleProps) {
 
               <div className="md:hidden space-y-3">
                 {afastamentos.map((afastamento) => (
-                  <article key={afastamento.id} className="rounded-lg border p-4 space-y-2">
+                  <article key={afastamento.id} className="rounded-lg border border-border/60 bg-card p-4 shadow-sm space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">{afastamento.nome}</p>
                       <Badge variant="outline" className="text-xs">

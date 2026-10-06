@@ -8,11 +8,11 @@ export function ChartNarrative({ lines }: ChartNarrativeProps) {
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resumo automatico</p>
+    <div className="mt-4 rounded-lg border border-neutral-border bg-neutral-soft p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-fg">Resumo automatico</p>
       <ul className="mt-2 space-y-1">
         {lines.map((line) => (
-          <li key={line} className="text-sm text-slate-700">
+          <li key={line} className="text-sm text-foreground">
             {line}
           </li>
         ))}

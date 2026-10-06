@@ -107,7 +107,7 @@ export function AfastamentoForm() {
           Registrar Afastamento
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-background">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Registrar Afastamento</DialogTitle>
           <DialogDescription>
@@ -165,7 +165,7 @@ export function AfastamentoForm() {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="data_inicio"
@@ -233,6 +233,7 @@ export function AfastamentoForm() {
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
+                    aria-label="Remover anexo"
                     onClick={() => setAnexoFile(null)}
                   >
                     <X className="h-3 w-3" />

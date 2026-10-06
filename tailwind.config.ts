@@ -25,6 +25,9 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          fg: "hsl(var(--primary-fg))",
+          soft: "hsl(var(--primary-soft))",
+          border: "hsl(var(--primary-border))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -37,14 +40,33 @@ export default {
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          fg: "hsl(var(--success-fg))",
+          soft: "hsl(var(--success-soft))",
+          border: "hsl(var(--success-border))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          fg: "hsl(var(--warning-fg))",
+          soft: "hsl(var(--warning-soft))",
+          border: "hsl(var(--warning-border))",
         },
         info: {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
+          fg: "hsl(var(--info-fg))",
+          soft: "hsl(var(--info-soft))",
+          border: "hsl(var(--info-border))",
+        },
+        danger: {
+          fg: "hsl(var(--danger-fg))",
+          soft: "hsl(var(--danger-soft))",
+          border: "hsl(var(--danger-border))",
+        },
+        neutral: {
+          fg: "hsl(var(--neutral-fg))",
+          soft: "hsl(var(--neutral-soft))",
+          border: "hsl(var(--neutral-border))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",

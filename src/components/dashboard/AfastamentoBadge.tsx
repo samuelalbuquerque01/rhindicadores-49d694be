@@ -21,32 +21,32 @@ const tipoConfig: Record<string, {
   "Atestado médico": {
     label: "Atestado",
     icon: Stethoscope,
-    className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-800",
+    className: "bg-danger-soft text-danger-fg border-danger-border",
   },
   "Banco de horas": {
     label: "Banco de horas",
     icon: Clock,
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+    className: "bg-info-soft text-info-fg border-info-border",
   },
   "Férias": {
     label: "Férias",
     icon: Palmtree,
-    className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-800",
+    className: "bg-success-soft text-success-fg border-success-border",
   },
   "Licença maternidade": {
     label: "Licença maternidade",
     icon: Baby,
-    className: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300 border-pink-200 dark:border-pink-800",
+    className: "bg-primary-soft text-primary-fg border-primary-border",
   },
   "Licença paternidade": {
     label: "Licença paternidade",
     icon: Baby,
-    className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+    className: "bg-info-soft text-info-fg border-info-border",
   },
   "Outro": {
     label: "Outro",
     icon: HelpCircle,
-    className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700",
+    className: "bg-neutral-soft text-neutral-fg border-neutral-border",
   },
 };
 

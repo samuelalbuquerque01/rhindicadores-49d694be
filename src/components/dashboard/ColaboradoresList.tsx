@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -144,7 +145,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
     // Auto-show "Nova contratação" if hired within 30 days
     if (isNovaContratacao(colaborador.data_admissao)) {
       return (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">
+        <span className="rounded-full bg-success-soft px-2 py-1 text-xs font-medium text-success-fg">
           Nova contratação
         </span>
       );
@@ -154,9 +155,9 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
     if (!tipo) return <span className="text-muted-foreground text-sm">-</span>;
     
     const colors: Record<string, string> = {
-      "Nova contratação": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
-      "Readmissão": "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
-      "Transferência": "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300",
+      "Nova contratação": "bg-success-soft text-success-fg",
+      "Readmissão": "bg-warning-soft text-warning-fg",
+      "Transferência": "bg-info-soft text-info-fg",
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[tipo] || ""}`}>
@@ -184,10 +185,10 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
 
   const getTipoBadge = (tipo: string) => {
     const colors: Record<string, string> = {
-      "CLT Administrativo": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      "CLT Corpo Clínico": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      "PJ": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      "Estagiário": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      "CLT Administrativo": "bg-info-soft text-info-fg",
+      "CLT Corpo Clínico": "bg-success-soft text-success-fg",
+      "PJ": "bg-primary-soft text-primary-fg",
+      "Estagiário": "bg-warning-soft text-warning-fg",
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[tipo] || ""}`}>
@@ -209,28 +210,29 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
   };
 
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           {getTitle()}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="mb-6 flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="Buscar por nome..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              aria-label="Buscar colaboradores por nome"
+              className="bg-background pl-10"
             />
           </div>
           {propTipoFilter === "CLT" && (
             <Select value={subTipoFilter} onValueChange={setSubTipoFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-background">
+              <SelectTrigger className="w-full bg-background sm:w-48">
                 <SelectValue placeholder="Tipo CLT" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
@@ -241,7 +243,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
             </Select>
           )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 bg-background">
+            <SelectTrigger className="w-full bg-background sm:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-popover">
@@ -261,8 +263,8 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
           </div>
         ) : (
           <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+            <Table className="min-w-[1050px]">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Cargo</TableHead>
@@ -306,21 +308,35 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter }: Cola
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditingColaborador(colaborador)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeletingId(colaborador.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                        <div className="flex justify-end gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                aria-label={`Editar ${colaborador.nome}`}
+                                onClick={() => setEditingColaborador(colaborador)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Editar</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                aria-label={`Excluir ${colaborador.nome}`}
+                                onClick={() => setDeletingId(colaborador.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Excluir</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>

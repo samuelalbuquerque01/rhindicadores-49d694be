@@ -1,11 +1,6 @@
 ﻿import { Info, TrendingDown, TrendingUp } from "lucide-react";
 import { ReactNode } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
@@ -36,33 +31,31 @@ export function MetricCard({
   const trendDown = trend === "down";
 
   const colorClass = trend === "stable"
-    ? "text-slate-500"
+    ? "text-muted-foreground"
     : isPositive
-      ? "text-emerald-600"
-      : "text-red-600";
+      ? "text-success"
+      : "text-destructive";
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-6 min-h-[152px]">
+    <div className="stat-card bg-card p-6 rounded-xl min-h-[152px]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{title}</span>
             {tooltip ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-[220px] text-xs">{tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger aria-label={`Mais informações sobre ${title}`}>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-[220px] text-xs">{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
             ) : null}
           </div>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
         </div>
-        <div className="h-10 w-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-foreground">
           {icon}
         </div>
       </div>

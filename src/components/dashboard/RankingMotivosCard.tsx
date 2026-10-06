@@ -1,4 +1,4 @@
-import { AlertTriangle, Building, Edit2, Trash2, Trophy } from "lucide-react";
+import { AlertTriangle, Building, Edit2, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,6 @@ const medalColors: Record<number, string> = {
   0: "from-amber-400 to-yellow-500",
   1: "from-slate-300 to-slate-400",
   2: "from-orange-400 to-amber-600",
-};
-
-const medalBg: Record<number, string> = {
-  0: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
-  1: "bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700",
-  2: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800",
 };
 
 export function RankingMotivosCard({
@@ -89,7 +83,7 @@ export function RankingMotivosCard({
               {/* Action buttons */}
               {(onEdit || onDelete) && (
                 <TooltipProvider delayDuration={200}>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     {onEdit && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -97,6 +91,7 @@ export function RankingMotivosCard({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            aria-label={`Editar ${item.label}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               onEdit(item, i);
@@ -115,6 +110,7 @@ export function RankingMotivosCard({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            aria-label={`Excluir ${item.label}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               onDelete(item, i);
@@ -123,7 +119,7 @@ export function RankingMotivosCard({
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="top">Apagar</TooltipContent>
+                        <TooltipContent side="top">Excluir</TooltipContent>
                       </Tooltip>
                     )}
                   </div>

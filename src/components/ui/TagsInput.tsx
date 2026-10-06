@@ -82,6 +82,7 @@ export function TagsInput({
           variant="outline"
           onClick={() => addTag(draft)}
           disabled={disabled || !draft.trim() || normalized.length >= maxTags}
+          aria-label="Adicionar tag"
         >
           <Plus className="h-4 w-4" />
         </Button>

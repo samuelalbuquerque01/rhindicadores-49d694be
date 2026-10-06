@@ -69,7 +69,7 @@ export function FilialForm() {
           Nova Filial
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-background">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Nova Filial</DialogTitle>
           <DialogDescription>

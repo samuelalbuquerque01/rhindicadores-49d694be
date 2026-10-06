@@ -3,6 +3,7 @@ import { Building2, UserMinus, Percent, Clock3, Edit2, Trash2 } from "lucide-rea
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip as UiTooltip, TooltipContent as UiTooltipContent, TooltipTrigger as UiTooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -351,7 +352,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-3">
             <Select value={mesFilter} onValueChange={setMesFilter}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Mes" />
@@ -400,8 +401,8 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
           ) : (
             <>
               <div className="hidden md:block rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <Table className="min-w-[780px]">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead>Colaborador</TableHead>
                       <TableHead>Setor</TableHead>
@@ -423,12 +424,34 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
                         <TableCell>{formatDate(desligamento.data_desligamento)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setEditingDesligamento(desligamento)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setDeletingDesligamento(desligamento)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <UiTooltip>
+                              <UiTooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  aria-label={`Editar ${desligamento.nome}`}
+                                  onClick={() => setEditingDesligamento(desligamento)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </UiTooltipTrigger>
+                              <UiTooltipContent side="top">Editar</UiTooltipContent>
+                            </UiTooltip>
+                            <UiTooltip>
+                              <UiTooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  aria-label={`Excluir ${desligamento.nome}`}
+                                  onClick={() => setDeletingDesligamento(desligamento)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </UiTooltipTrigger>
+                              <UiTooltipContent side="top">Excluir</UiTooltipContent>
+                            </UiTooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -439,7 +462,7 @@ export function TurnoverModule({ filialId }: TurnoverModuleProps) {
 
               <div className="md:hidden space-y-3">
                 {desligamentos.map((desligamento) => (
-                  <article key={desligamento.id} className="rounded-lg border p-4 space-y-2">
+                  <article key={desligamento.id} className="rounded-lg border border-border/60 bg-card p-4 shadow-sm space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">{desligamento.nome}</p>
                       <Badge variant="outline" className="text-xs">

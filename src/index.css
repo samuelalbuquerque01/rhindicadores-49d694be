@@ -1,12 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    /* Neutros refinados — escala slate (fundos frios, hierarquia suave) */
+    --background: 210 40% 99%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -15,42 +16,75 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 50%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
+    --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 210 40% 96%;
+    --accent: 210 40% 96.1%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 160 84% 28%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 32 95% 38%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 199 89% 48%;
+    --info: 199 89% 40%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 50%;
+    /* Tríade de status: texto / fundo suave / borda.
+       Usada por Badge e demais componentes para garantir consistência. */
+    --primary-fg: 221 83% 45%;
+    --primary-soft: 214 95% 96%;
+    --primary-border: 214 88% 87%;
 
-    --radius: 0.75rem;
+    --success-fg: 160 84% 26%;
+    --success-soft: 152 76% 96%;
+    --success-border: 152 60% 87%;
 
-    --chart-1: 217 91% 50%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 199 89% 48%;
-    --chart-6: 0 84% 60%;
+    --warning-fg: 32 95% 32%;
+    --warning-soft: 48 100% 96%;
+    --warning-border: 43 92% 84%;
+
+    --info-fg: 199 89% 34%;
+    --info-soft: 199 90% 96%;
+    --info-border: 198 85% 87%;
+
+    --danger-fg: 0 72% 40%;
+    --danger-soft: 0 86% 97%;
+    --danger-border: 0 78% 89%;
+
+    --neutral-fg: 215 16% 40%;
+    --neutral-soft: 210 40% 96.1%;
+    --neutral-border: 214 32% 89%;
+
+    --border: 214 32% 90%;
+    --input: 214 32% 88%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.625rem;
+
+    --shadow-card: 0 1px 2px 0 hsl(222 47% 11% / 0.04),
+      0 1px 3px 0 hsl(222 47% 11% / 0.06);
+    --shadow-pop: 0 4px 6px -1px hsl(222 47% 11% / 0.07),
+      0 10px 15px -3px hsl(222 47% 11% / 0.08);
+
+    --transition-base: 180ms;
+
+    --chart-1: 221 83% 53%;
+    --chart-2: 160 84% 36%;
+    --chart-3: 32 95% 44%;
+    --chart-4: 262 60% 55%;
+    --chart-5: 199 89% 45%;
+    --chart-6: 0 72% 50%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -63,42 +97,80 @@
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 222 47% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 15%;
+    --card: 222 44% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 15%;
+    --popover: 222 44% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 217 91% 65%;
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 68%;
 
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success: 160 84% 40%;
+    --success-foreground: 222 47% 11%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 32 95% 55%;
+    --warning-foreground: 222 47% 11%;
 
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
+    --info: 199 89% 55%;
+    --info-foreground: 222 47% 11%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
+    /* Tríade de status — variantes dark: fundo translúcido escuro,
+       texto saturado claro, borda discreta. */
+    --primary-fg: 217 91% 72%;
+    --primary-soft: 217 60% 15%;
+    --primary-border: 217 45% 28%;
+
+    --success-fg: 152 76% 62%;
+    --success-soft: 160 60% 14%;
+    --success-border: 160 40% 26%;
+
+    --warning-fg: 43 96% 65%;
+    --warning-soft: 32 60% 14%;
+    --warning-border: 32 45% 26%;
+
+    --info-fg: 198 93% 68%;
+    --info-soft: 199 60% 14%;
+    --info-border: 199 45% 28%;
+
+    --danger-fg: 0 85% 72%;
+    --danger-soft: 0 55% 15%;
+    --danger-border: 0 45% 28%;
+
+    --neutral-fg: 215 20% 68%;
+    --neutral-soft: 217 33% 17%;
+    --neutral-border: 217 25% 26%;
+
+    --border: 217 25% 20%;
+    --input: 217 25% 24%;
+    --ring: 217 91% 65%;
+
+    --shadow-card: 0 1px 2px 0 hsl(0 0% 0% / 0.3),
+      0 1px 3px 0 hsl(0 0% 0% / 0.4);
+    --shadow-pop: 0 4px 6px -1px hsl(0 0% 0% / 0.4),
+      0 10px 15px -3px hsl(0 0% 0% / 0.5);
+
+    --chart-1: 217 91% 62%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 32 95% 55%;
+    --chart-4: 262 70% 68%;
+    --chart-5: 199 89% 58%;
+    --chart-6: 0 84% 60%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -119,6 +191,25 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Números tabulares: alinha colunas de números em tabelas e KPIs. */
+  table,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -128,23 +219,14 @@
   }
 
   .stat-card {
-    @apply bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-card rounded-xl border border-border;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 180ms ease-out, border-color 180ms ease-out,
+      background-color 180ms ease-out;
   }
 
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(217 91% 60%) 100%);
-  }
-
-  .gradient-success {
-    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 76% 45%) 100%);
-  }
-
-  .gradient-warning {
-    background: linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(38 92% 60%) 100%);
-  }
-
-  .gradient-info {
-    background: linear-gradient(135deg, hsl(var(--info)) 0%, hsl(199 89% 58%) 100%);
+  .stat-card:hover {
+    box-shadow: var(--shadow-pop);
   }
 
   .text-gradient {

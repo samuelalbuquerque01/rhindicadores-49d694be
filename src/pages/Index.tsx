@@ -80,15 +80,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#conteudo-principal"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        Pular para o conteúdo principal
+      </a>
       <Header />
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard de RH</h1>
-            <p className="text-muted-foreground mt-1">Indicadores e metricas do Departamento Pessoal</p>
+      <main
+        id="conteudo-principal"
+        tabIndex={-1}
+        className="container mx-auto px-4 py-8 sm:px-6 lg:px-8"
+      >
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[28px]">
+              Dashboard de RH
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Indicadores e metricas do Departamento Pessoal
+            </p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <FilialSelector value={selectedFilial} onValueChange={setSelectedFilial} />
             <FilialForm />
             <ColaboradorForm />
@@ -147,18 +161,20 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="mb-6 flex-wrap">
-            <TabsTrigger value="colaboradores">CLT</TabsTrigger>
-            <TabsTrigger value="estagiarios">Estagiarios</TabsTrigger>
-            <TabsTrigger value="pj">PJ</TabsTrigger>
-            <TabsTrigger value="participacao">Participacao</TabsTrigger>
-            <TabsTrigger value="geral">Visao Geral</TabsTrigger>
-            <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
-            <TabsTrigger value="eventos">Eventos</TabsTrigger>
-            <TabsTrigger value="turnover">Turnover</TabsTrigger>
-            <TabsTrigger value="absenteismo">Absenteismo</TabsTrigger>
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          </TabsList>
+          <div className="mb-6 overflow-x-auto">
+            <TabsList className="h-auto min-w-max flex-nowrap gap-1">
+              <TabsTrigger value="colaboradores">CLT</TabsTrigger>
+              <TabsTrigger value="estagiarios">Estagiarios</TabsTrigger>
+              <TabsTrigger value="pj">PJ</TabsTrigger>
+              <TabsTrigger value="participacao">Participacao</TabsTrigger>
+              <TabsTrigger value="geral">Visao Geral</TabsTrigger>
+              <TabsTrigger value="treinamentos">Treinamentos</TabsTrigger>
+              <TabsTrigger value="eventos">Eventos</TabsTrigger>
+              <TabsTrigger value="turnover">Turnover</TabsTrigger>
+              <TabsTrigger value="absenteismo">Absenteismo</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="colaboradores" className="space-y-6">
             <ColaboradoresList filialId={selectedFilial} tipoFilter="CLT" />
@@ -211,9 +227,9 @@ const Index = () => {
         </Tabs>
       </main>
 
-      <footer className="border-t border-border/50 mt-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-muted-foreground">
+      <footer className="mt-12 border-t border-border">
+        <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+          <p className="text-center text-xs text-muted-foreground">
             © 2024 RH Analytics. Sistema de Gestao de Recursos Humanos.
           </p>
         </div>

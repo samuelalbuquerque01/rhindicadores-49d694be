@@ -128,6 +128,7 @@ export function AttachmentsListUpload({
                 size="icon"
                 onClick={() => removeAttachment(item.id)}
                 disabled={disabled}
+                aria-label={`Remover anexo ${item.name}`}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>

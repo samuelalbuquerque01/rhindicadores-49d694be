@@ -91,21 +91,21 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
 
   const statusBadge = (status: string) => {
     if (status === "Presente") {
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      return "bg-success-soft text-success-fg";
     }
     if (status === "Confirmado") {
-      return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+      return "bg-warning-soft text-warning-fg";
     }
-    return "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200";
+    return "bg-neutral-soft text-neutral-fg";
   };
 
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader className="gap-3">
         <CardTitle>Participacao em Eventos</CardTitle>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-3">
           <Select value={eventoFiltro} onValueChange={setEventoFiltro}>
-            <SelectTrigger className="w-[200px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por evento" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -118,7 +118,7 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
             </SelectContent>
           </Select>
           <Select value={setorFiltro} onValueChange={setSetorFiltro}>
-            <SelectTrigger className="w-[180px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por setor" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -131,7 +131,7 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
             </SelectContent>
           </Select>
           <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-            <SelectTrigger className="w-[200px] bg-background">
+            <SelectTrigger className="w-full bg-background">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -143,7 +143,7 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
           </Select>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             Nenhuma participacao encontrada
@@ -152,8 +152,8 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
           <>
             <div className="hidden md:block">
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <Table className="min-w-[720px]">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead>Nome do colaborador</TableHead>
                       <TableHead>Evento</TableHead>
@@ -193,7 +193,7 @@ export function EventosParticipacaoTable({ filialId }: EventosParticipacaoTableP
               {filtered.map((p) => {
                 const status = getStatus(p);
                 return (
-                  <div key={p.id} className="rounded-lg border border-border/60 p-3">
+                  <div key={p.id} className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-medium">{p.colaborador?.nome || "-"}</p>

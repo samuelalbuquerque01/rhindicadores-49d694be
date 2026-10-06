@@ -117,7 +117,7 @@ export function EventFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[860px] max-h-[88vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl sm:max-w-[860px]">
         <DialogHeader>
           <DialogTitle>{initialEvent ? "Editar evento" : "Novo evento"}</DialogTitle>
           <DialogDescription>
@@ -126,7 +126,7 @@ export function EventFormModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Titulo *</Label>
               <Input
@@ -159,8 +159,8 @@ export function EventFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-1 space-y-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
               <Label>Data *</Label>
               <Input
                 type="date"
@@ -169,7 +169,7 @@ export function EventFormModal({
               />
               {errors.date ? <p className="text-xs text-destructive">{errors.date}</p> : null}
             </div>
-            <div className="md:col-span-2 space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <Label>Local</Label>
               <Input
                 value={formState.location}

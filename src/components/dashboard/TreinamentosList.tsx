@@ -161,7 +161,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
   }
 
   return (
-    <Card>
+    <Card className="border-border shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <GraduationCap className="h-5 w-5" />
@@ -169,7 +169,7 @@ export function TreinamentosList({ filialId }: TreinamentosListProps) {
         </CardTitle>
         <TreinamentoForm />
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-0">
         {!sortedTreinamentos.length ? (
           <div className="text-center py-8 text-muted-foreground">
             Nenhum treinamento cadastrado
@@ -263,16 +263,16 @@ function TreinamentoItem({
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-medium truncate">{treinamento.nome}</h4>
                   {treinamento.finalizado ? (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    <Badge variant="secondary" className="bg-success-soft text-success-fg">
                       Finalizado
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                    <Badge variant="secondary" className="bg-warning-soft text-warning-fg">
                       Em andamento
                     </Badge>
                   )}
                   {isDestaque && (
-                    <Badge className="bg-yellow-400/20 text-yellow-700 dark:text-yellow-300">
+                    <Badge className="bg-warning-soft text-warning-fg">
                       <Star className="h-3 w-3 mr-1" />
                       Destaque
                     </Badge>
@@ -335,7 +335,7 @@ function TreinamentoItem({
               <div className="rounded-md border border-border/60 p-2 bg-background/60">
                 <p className="text-xs text-muted-foreground">Nivel de Engajamento</p>
                 <p className="font-medium flex items-center gap-1">
-                  <Flame className="h-4 w-4 text-orange-500" />
+                  <Flame className="h-4 w-4 text-warning-fg" />
                   {trainingStats.engagementLevel}
                 </p>
               </div>
@@ -365,7 +365,7 @@ function TreinamentoItem({
                 <Button
                   variant="default"
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-success text-success-foreground hover:bg-success/90"
                   onClick={(e) => {
                     e.stopPropagation();
                     onFinalizar(treinamento.id);
@@ -403,8 +403,8 @@ function TreinamentoItem({
             )}
 
             {participacoes && participacoes.length > 0 ? (
-              <Table>
-                <TableHeader>
+              <Table className="min-w-[680px]">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead>Participante</TableHead>
                     <TableHead>Setor</TableHead>
@@ -425,10 +425,10 @@ function TreinamentoItem({
                       : "Em andamento";
                     const statusClass =
                       status === "Concluido"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                        ? "bg-success-soft text-success-fg"
                         : status === "Em andamento"
-                        ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                        : "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200";
+                        ? "bg-warning-soft text-warning-fg"
+                        : "bg-neutral-soft text-neutral-fg";
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium">

@@ -25,9 +25,9 @@ export function HeatmapChart({ title = "Heatmap de Absenteismo", data }: Heatmap
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-foreground">{title}</h3>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300" />Baixo</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-300" />Medio</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-300" />Alto</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Baixo</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-warning" />Medio</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-danger-fg" />Alto</span>
         </div>
       </div>
 

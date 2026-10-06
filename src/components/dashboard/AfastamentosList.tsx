@@ -101,7 +101,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
     switch (status) {
       case "ativo":
         return (
-          <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 gap-1">
+          <Badge className="gap-1 bg-success-soft text-success-fg">
             <AlertCircle className="h-3 w-3" /> Ativo
           </Badge>
         );
@@ -113,7 +113,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
         );
       case "futuro":
         return (
-          <Badge className="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300 gap-1">
+          <Badge className="gap-1 bg-info-soft text-info-fg">
             <Clock className="h-3 w-3" /> Futuro
           </Badge>
         );
@@ -174,14 +174,14 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
 
   return (
     <>
-      <Card>
+    <Card className="border-border shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Afastamentos
           </CardTitle>
         </CardHeader>
-        <CardContent>
+      <CardContent className="pt-0">
           <Tabs value={tipoSelecionado} onValueChange={setTipoSelecionado}>
             <TabsList className="mb-4 flex-wrap h-auto gap-1">
               {TIPOS_AFASTAMENTO.map((tipo) => {
@@ -218,8 +218,8 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                 </div>
               ) : (
                 <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
+                  <Table className="min-w-[1100px]">
+                    <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead>Colaborador</TableHead>
                         <TableHead>Tipo</TableHead>
@@ -316,6 +316,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                                           variant="ghost"
                                           size="icon"
                                           className="h-8 w-8 text-primary hover:text-primary/80"
+                                          aria-label="Visualizar imagem do anexo"
                                           onClick={() => handlePreview(afastamento.anexo_url)}
                                         >
                                           <ImageIcon className="h-4 w-4" />
@@ -330,6 +331,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                                           variant="ghost"
                                           size="icon"
                                           className="h-8 w-8 text-primary hover:text-primary/80"
+                                          aria-label="Visualizar anexo"
                                           onClick={() => handlePreview(afastamento.anexo_url)}
                                         >
                                           <Eye className="h-4 w-4" />
@@ -344,6 +346,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                        aria-label="Baixar anexo"
                                         onClick={() => handleDownload(afastamento.anexo_url, afastamento.colaborador?.nome)}
                                       >
                                         <Download className="h-4 w-4" />
@@ -359,20 +362,34 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setEditingAfastamento(afastamento)}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDeleting({ id: afastamento.id, anexo_url: afastamento.anexo_url })}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    aria-label={`Editar afastamento de ${afastamento.colaborador?.nome ?? "colaborador"}`}
+                                    onClick={() => setEditingAfastamento(afastamento)}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Editar</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    aria-label={`Excluir afastamento de ${afastamento.colaborador?.nome ?? "colaborador"}`}
+                                    onClick={() => setDeleting({ id: afastamento.id, anexo_url: afastamento.anexo_url })}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Excluir</TooltipContent>
+                              </Tooltip>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -394,6 +411,7 @@ export function AfastamentosList({ filialId }: AfastamentosListProps) {
               variant="ghost"
               size="icon"
               className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm rounded-full"
+              aria-label="Fechar visualização"
               onClick={() => setPreviewUrl(null)}
             >
               <X className="h-4 w-4" />

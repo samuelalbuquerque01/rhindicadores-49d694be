@@ -36,7 +36,7 @@ export function PredictionCard({
   const trendLabel = trend === "up" ? "Em alta" : trend === "down" ? "Em queda" : "Estavel";
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-6 space-y-4">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-base font-semibold text-foreground">{title}</h3>
@@ -57,14 +57,14 @@ export function PredictionCard({
       <div className="h-[230px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={points}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="label" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip formatter={(value: number | string) => Number(value).toFixed(1)} />
             <Line
               type="monotone"
               dataKey="historical"
-              stroke="#0f766e"
+              stroke="hsl(var(--chart-2))"
               strokeWidth={2}
               dot={{ r: 3 }}
               name="Historico"
@@ -72,7 +72,7 @@ export function PredictionCard({
             <Line
               type="monotone"
               dataKey="projected"
-              stroke="#d97706"
+              stroke="hsl(var(--chart-3))"
               strokeWidth={2}
               strokeDasharray="6 3"
               dot={{ r: 3 }}
@@ -87,7 +87,7 @@ export function PredictionCard({
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border/80 bg-slate-50 p-3">
+    <div className="rounded-lg border border-border/80 bg-muted/50 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground truncate">{value}</p>
     </div>

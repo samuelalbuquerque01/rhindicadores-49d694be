@@ -147,7 +147,7 @@ export function AddEmployeeModal() {
           Novo Colaborador
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto border-border bg-background shadow-xl sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-foreground">
             Cadastrar Novo Colaborador
@@ -160,11 +160,11 @@ export function AddEmployeeModal() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="pessoais">Dados Pessoais</TabsTrigger>
-                <TabsTrigger value="endereco">Endereço</TabsTrigger>
-                <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
-                <TabsTrigger value="bancarios">Bancários</TabsTrigger>
+              <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
+                <TabsTrigger className="text-xs px-2 sm:text-sm sm:px-3" value="pessoais">Dados Pessoais</TabsTrigger>
+                <TabsTrigger className="text-xs px-2 sm:text-sm sm:px-3" value="endereco">Endereço</TabsTrigger>
+                <TabsTrigger className="text-xs px-2 sm:text-sm sm:px-3" value="profissionais">Profissionais</TabsTrigger>
+                <TabsTrigger className="text-xs px-2 sm:text-sm sm:px-3" value="bancarios">Bancários</TabsTrigger>
               </TabsList>
 
               {/* Dados Pessoais */}

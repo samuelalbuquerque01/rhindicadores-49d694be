@@ -102,12 +102,12 @@ export function buildHeatmapData(
 
 export function getHeatmapCellClass(intensity: HeatmapCell["intensity"]): string {
   if (intensity === "high") {
-    return "bg-red-100 text-red-800 border-red-200";
+    return "bg-danger-soft text-danger-fg border-danger-border";
   }
 
   if (intensity === "medium") {
-    return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    return "bg-warning-soft text-warning-fg border-warning-border";
   }
 
-  return "bg-emerald-100 text-emerald-800 border-emerald-200";
+  return "bg-success-soft text-success-fg border-success-border";
 }

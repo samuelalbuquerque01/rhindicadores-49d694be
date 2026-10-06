@@ -33,9 +33,9 @@ export function StatusTrafficLight({ label, value, target, className }: StatusTr
         <Badge
           variant="secondary"
           className={cn(
-            status === "ok" && "bg-emerald-100 text-emerald-700",
-            status === "attention" && "bg-amber-100 text-amber-700",
-            status === "critical" && "bg-red-100 text-red-700",
+            status === "ok" && "bg-success-soft text-success-fg",
+            status === "attention" && "bg-warning-soft text-warning-fg",
+            status === "critical" && "bg-danger-soft text-danger-fg",
           )}
         >
           {status === "ok" ? (

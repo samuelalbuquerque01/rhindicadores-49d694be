@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from "react";
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SectorComparisonRow } from "@/lib/analytics/sector";
@@ -58,18 +58,22 @@ export function SectorComparisonTable({ rows }: SectorComparisonTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm p-6 space-y-4">
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-foreground">Comparacao entre setores</h3>
           <p className="text-sm text-muted-foreground">Comparativo de absenteismo, turnover e desligamentos</p>
         </div>
-        <Input
-          placeholder="Filtrar por setor"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="sm:w-64"
-        />
+        <div className="relative w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            placeholder="Filtrar por setor"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Filtrar comparação por setor"
+            className="bg-background pl-10"
+          />
+        </div>
       </div>
 
       {filteredRows.length === 0 ? (
@@ -106,7 +110,7 @@ export function SectorComparisonTable({ rows }: SectorComparisonTableProps) {
             </thead>
             <tbody>
               {filteredRows.map((row) => (
-                <tr key={row.sector} className="border-b border-border/60 hover:bg-slate-50">
+                <tr key={row.sector} className="border-b border-border/60 transition-colors duration-150 hover:bg-muted/50">
                   <td className="py-3 pr-4 font-medium text-foreground">{row.sector}</td>
                   <td className="py-3 pr-4">{row.absenteeismDays.toFixed(0)}</td>
                   <td className="py-3 pr-4">{row.absenteeismRate.toFixed(2)}%</td>

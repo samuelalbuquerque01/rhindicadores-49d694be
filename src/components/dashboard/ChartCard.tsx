@@ -26,7 +26,7 @@ export function ChartCard({
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border border-border shadow-sm hover:shadow-md transition p-4 sm:p-6 animate-fade-in min-w-0 overflow-hidden",
+        "stat-card rounded-xl bg-card p-4 sm:p-6 animate-fade-in min-w-0 overflow-hidden",
         className,
       )}
     >

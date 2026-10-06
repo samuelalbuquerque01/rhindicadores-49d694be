@@ -211,7 +211,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div className="rounded-xl border border-danger-border bg-danger-soft p-6 text-sm text-danger-fg">
         Falha ao carregar os dados analiticos. Verifique a conexao com o Supabase e tente novamente.
       </div>
     );
@@ -219,7 +219,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Painel BI - Visao Geral</h2>
@@ -231,7 +231,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">Periodo</label>
               <Select value={preset} onValueChange={(value) => setPreset(value as PeriodPreset)}>
-                <SelectTrigger className="w-full sm:w-48">
+                <SelectTrigger className="w-full bg-background sm:w-48" aria-label="Período da visão geral">
                   <SelectValue placeholder="Escolha o periodo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,11 +245,23 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
               <>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Inicio</label>
-                  <Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
+                  <Input
+                    type="date"
+                    value={customStart}
+                    onChange={(event) => setCustomStart(event.target.value)}
+                    aria-label="Início do período personalizado"
+                    className="bg-background"
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Fim</label>
-                  <Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
+                  <Input
+                    type="date"
+                    value={customEnd}
+                    onChange={(event) => setCustomEnd(event.target.value)}
+                    aria-label="Fim do período personalizado"
+                    className="bg-background"
+                  />
                 </div>
               </>
             ) : null}
@@ -306,9 +318,9 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
               />
               <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
                 {absPerformance.trend === "up" ? (
-                  <ArrowUpRight className="h-3.5 w-3.5 text-red-600" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-danger-fg" />
                 ) : absPerformance.trend === "down" ? (
-                  <ArrowDownRight className="h-3.5 w-3.5 text-emerald-600" />
+                  <ArrowDownRight className="h-3.5 w-3.5 text-success-fg" />
                 ) : null}
                 Absenteismo {absPerformance.label} ({Math.abs(absPerformance.variation).toFixed(1)}%).
               </p>
@@ -321,9 +333,9 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
               />
               <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
                 {turnoverPerformance.trend === "up" ? (
-                  <ArrowUpRight className="h-3.5 w-3.5 text-red-600" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-danger-fg" />
                 ) : turnoverPerformance.trend === "down" ? (
-                  <ArrowDownRight className="h-3.5 w-3.5 text-emerald-600" />
+                  <ArrowDownRight className="h-3.5 w-3.5 text-success-fg" />
                 ) : null}
                 Turnover {turnoverPerformance.label} ({Math.abs(turnoverPerformance.variation).toFixed(1)}%).
               </p>
@@ -373,7 +385,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
                 <div key={sector.sector} className="rounded-md border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium text-sm">{sector.sector}</p>
-                    <Badge className={sector.status === "critical" ? "bg-red-600" : "bg-amber-600"}>
+                      <Badge className={sector.status === "critical" ? "bg-destructive" : "bg-warning"}>
                       {sector.status === "critical" ? "Critico" : "Atencao"}
                     </Badge>
                   </div>
@@ -430,7 +442,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
                 Alertas do dia
               </CardTitle>
               <Select value={alertsFilter} onValueChange={(value) => setAlertsFilter(value as "all" | "unread" | "high")}>
-                <SelectTrigger className="h-8 w-[150px]">
+                <SelectTrigger className="h-8 w-[150px] bg-background" aria-label="Filtrar alertas do dia">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -451,7 +463,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
                     <p className="text-sm font-medium">{alert.title}</p>
                     <Badge
                       variant="outline"
-                      className={alert.priority === "high" ? "border-red-300 text-red-700" : ""}
+                      className={alert.priority === "high" ? "border-danger-border text-danger-fg" : ""}
                     >
                       {alert.priority === "high" ? "Alta" : alert.priority === "medium" ? "Media" : "Baixa"}
                     </Badge>
@@ -486,7 +498,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data?.absenteeismMonthly}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(value: number | string) => `${Number(value).toFixed(1)} dias`} />
@@ -494,7 +506,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="#0f766e"
+                  stroke="hsl(var(--chart-2))"
                   strokeWidth={2.2}
                   name="Absenteismo"
                   dot={{ r: 3 }}
@@ -506,7 +518,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
             {(data?.absenteeismMonthly ?? [])
               .filter((point) => point.anomaly)
               .map((point) => (
-                <span key={point.key} className="text-xs rounded-full bg-red-100 text-red-700 px-2 py-1">
+                <span key={point.key} className="rounded-full bg-danger-soft px-2 py-1 text-xs text-danger-fg">
                   Anomalia: {point.label}
                 </span>
               ))}
@@ -518,14 +530,14 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.turnoverMonthly}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(value: number | string) => `${Number(value).toFixed(0)} desligamentos`} />
                 <Legend />
                 <Bar dataKey="value" name="Turnover">
                   {(data?.turnoverMonthly ?? []).map((point) => (
-                    <Cell key={point.key} fill={point.anomaly ? "#dc2626" : "#2563eb"} />
+                    <Cell key={point.key} fill={point.anomaly ? "hsl(var(--destructive))" : "hsl(var(--primary))"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -535,7 +547,7 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
             {(data?.turnoverMonthly ?? [])
               .filter((point) => point.anomaly)
               .map((point) => (
-                <span key={point.key} className="text-xs rounded-full bg-red-100 text-red-700 px-2 py-1">
+                <span key={point.key} className="rounded-full bg-danger-soft px-2 py-1 text-xs text-danger-fg">
                   Anomalia: {point.label}
                 </span>
               ))}
@@ -549,11 +561,11 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.dismissalsBySector} layout="vertical" margin={{ left: 18 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis dataKey="sector" type="category" width={130} fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(value: number | string) => `${Number(value).toFixed(0)} desligamentos`} />
-                <Bar dataKey="value" fill="#0f766e" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -564,11 +576,11 @@ export function OverviewDashboard({ filialId }: OverviewDashboardProps) {
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.absencesBySector} layout="vertical" margin={{ left: 18 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis dataKey="sector" type="category" width={130} fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip formatter={(value: number | string) => `${Number(value).toFixed(1)} dias`} />
-                <Bar dataKey="value" fill="#d97706" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
