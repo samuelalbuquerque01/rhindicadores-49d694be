@@ -40,11 +40,12 @@ export default defineTool({
 
     const rows = employees.data ?? [];
     const active = rows.filter((row) => row.status === "Ativo");
-    const byDepartment: Record<string, number> = {};
+    const byDepartmentMap = new Map<string, number>();
     for (const row of active) {
       const key = row.departamento || "Nao informado";
-      byDepartment[key] = (byDepartment[key] ?? 0) + 1;
+      byDepartmentMap.set(key, (byDepartmentMap.get(key) ?? 0) + 1);
     }
+    const byDepartment = Object.fromEntries(byDepartmentMap);
 
     const hiresCount = hires.data?.length ?? 0;
     const terminationsCount = terminations.data?.length ?? 0;
@@ -52,11 +53,12 @@ export default defineTool({
     const turnoverRate = headcount > 0 ? ((hiresCount + terminationsCount) / 2 / headcount) * 100 : 0;
     const absenceDays = (leaves.data ?? []).reduce((total, row) => total + (row.dias_afastados ?? 0), 0);
 
-    const reasons: Record<string, number> = {};
+    const reasonsMap = new Map<string, number>();
     for (const row of terminations.data ?? []) {
       const key = row.motivo || "Nao informado";
-      reasons[key] = (reasons[key] ?? 0) + 1;
+      reasonsMap.set(key, (reasonsMap.get(key) ?? 0) + 1);
     }
+    const reasons = Object.fromEntries(reasonsMap);
 
     return jsonResult({
       periodo: { data_inicio, data_fim },
