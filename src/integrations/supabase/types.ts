@@ -76,6 +76,21 @@ export type Database = {
           nome: string
           salario_base: number | null
           status: string | null
+          systea_admin_id: number | null
+          systea_area_name: string | null
+          systea_area_operation_id: number | null
+          systea_area_type: string | null
+          systea_carga_horaria_atendimentos: number | null
+          systea_carga_horaria_semanal_total: number | null
+          systea_is_shutdown: boolean
+          systea_local_trabalho: string | null
+          systea_primeiro_dia_trabalho: string | null
+          systea_regime_contratacao: string | null
+          systea_sector_id: number | null
+          systea_status: string | null
+          systea_synced_at: string | null
+          systea_updated_at: string | null
+          systea_user_id: number | null
           telefone: string | null
           tipo_colaborador: string
           updated_at: string
@@ -97,6 +112,21 @@ export type Database = {
           nome: string
           salario_base?: number | null
           status?: string | null
+          systea_admin_id?: number | null
+          systea_area_name?: string | null
+          systea_area_operation_id?: number | null
+          systea_area_type?: string | null
+          systea_carga_horaria_atendimentos?: number | null
+          systea_carga_horaria_semanal_total?: number | null
+          systea_is_shutdown?: boolean
+          systea_local_trabalho?: string | null
+          systea_primeiro_dia_trabalho?: string | null
+          systea_regime_contratacao?: string | null
+          systea_sector_id?: number | null
+          systea_status?: string | null
+          systea_synced_at?: string | null
+          systea_updated_at?: string | null
+          systea_user_id?: number | null
           telefone?: string | null
           tipo_colaborador: string
           updated_at?: string
@@ -118,6 +148,21 @@ export type Database = {
           nome?: string
           salario_base?: number | null
           status?: string | null
+          systea_admin_id?: number | null
+          systea_area_name?: string | null
+          systea_area_operation_id?: number | null
+          systea_area_type?: string | null
+          systea_carga_horaria_atendimentos?: number | null
+          systea_carga_horaria_semanal_total?: number | null
+          systea_is_shutdown?: boolean
+          systea_local_trabalho?: string | null
+          systea_primeiro_dia_trabalho?: string | null
+          systea_regime_contratacao?: string | null
+          systea_sector_id?: number | null
+          systea_status?: string | null
+          systea_synced_at?: string | null
+          systea_updated_at?: string | null
+          systea_user_id?: number | null
           telefone?: string | null
           tipo_colaborador?: string
           updated_at?: string
@@ -584,6 +629,75 @@ export type Database = {
         }
         Relationships: []
       }
+      systea_sync_admins: {
+        Row: {
+          active: boolean
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      systea_sync_runs: {
+        Row: {
+          created: number
+          error_summary: string | null
+          errors: number
+          fetched: number
+          finished_at: string | null
+          id: string
+          mode: string
+          requested_by: string | null
+          skipped: number
+          started_at: string
+          status: string
+          unchanged: number
+          updated: number
+        }
+        Insert: {
+          created?: number
+          error_summary?: string | null
+          errors?: number
+          fetched?: number
+          finished_at?: string | null
+          id?: string
+          mode: string
+          requested_by?: string | null
+          skipped?: number
+          started_at?: string
+          status: string
+          unchanged?: number
+          updated?: number
+        }
+        Update: {
+          created?: number
+          error_summary?: string | null
+          errors?: number
+          fetched?: number
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          requested_by?: string | null
+          skipped?: number
+          started_at?: string
+          status?: string
+          unchanged?: number
+          updated?: number
+        }
+        Relationships: []
+      }
       training_extras: {
         Row: {
           attachments: Json
@@ -714,7 +828,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_systea_colaboradores: {
+        Args: { payloads: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
