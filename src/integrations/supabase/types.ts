@@ -76,21 +76,6 @@ export type Database = {
           nome: string
           salario_base: number | null
           status: string | null
-          systea_admin_id: number | null
-          systea_area_name: string | null
-          systea_area_operation_id: number | null
-          systea_area_type: string | null
-          systea_carga_horaria_atendimentos: number | null
-          systea_carga_horaria_semanal_total: number | null
-          systea_is_shutdown: boolean
-          systea_local_trabalho: string | null
-          systea_primeiro_dia_trabalho: string | null
-          systea_regime_contratacao: string | null
-          systea_sector_id: number | null
-          systea_status: string | null
-          systea_synced_at: string | null
-          systea_updated_at: string | null
-          systea_user_id: number | null
           telefone: string | null
           tipo_colaborador: string
           updated_at: string
@@ -112,21 +97,6 @@ export type Database = {
           nome: string
           salario_base?: number | null
           status?: string | null
-          systea_admin_id?: number | null
-          systea_area_name?: string | null
-          systea_area_operation_id?: number | null
-          systea_area_type?: string | null
-          systea_carga_horaria_atendimentos?: number | null
-          systea_carga_horaria_semanal_total?: number | null
-          systea_is_shutdown?: boolean
-          systea_local_trabalho?: string | null
-          systea_primeiro_dia_trabalho?: string | null
-          systea_regime_contratacao?: string | null
-          systea_sector_id?: number | null
-          systea_status?: string | null
-          systea_synced_at?: string | null
-          systea_updated_at?: string | null
-          systea_user_id?: number | null
           telefone?: string | null
           tipo_colaborador: string
           updated_at?: string
@@ -148,21 +118,6 @@ export type Database = {
           nome?: string
           salario_base?: number | null
           status?: string | null
-          systea_admin_id?: number | null
-          systea_area_name?: string | null
-          systea_area_operation_id?: number | null
-          systea_area_type?: string | null
-          systea_carga_horaria_atendimentos?: number | null
-          systea_carga_horaria_semanal_total?: number | null
-          systea_is_shutdown?: boolean
-          systea_local_trabalho?: string | null
-          systea_primeiro_dia_trabalho?: string | null
-          systea_regime_contratacao?: string | null
-          systea_sector_id?: number | null
-          systea_status?: string | null
-          systea_synced_at?: string | null
-          systea_updated_at?: string | null
-          systea_user_id?: number | null
           telefone?: string | null
           tipo_colaborador?: string
           updated_at?: string

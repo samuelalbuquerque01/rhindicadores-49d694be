@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Colaborador } from "@/types/database";
+import type { Database } from "@/integrations/supabase/types";
+
+type ColaboradorInsert = Database["public"]["Tables"]["colaboradores"]["Insert"];
 import { toast } from "sonner";
 
 interface ColaboradoresFilters {
@@ -133,7 +136,7 @@ export function useCreateColaborador() {
       // Create the collaborator first
       const { data, error } = await supabase
         .from("colaboradores")
-        .insert(colaborador)
+        .insert(colaborador as unknown as ColaboradorInsert)
         .select()
         .single();
       
