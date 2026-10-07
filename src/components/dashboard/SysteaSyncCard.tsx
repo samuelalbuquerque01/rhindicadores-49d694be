@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { RefreshCw, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { type SysteaSyncSummary, useSysteaLastRun, useSysteaSync } from "@/features/systea-sync/useSysteaSync";
+import { SYSTEA_FORBIDDEN_MESSAGE, type SysteaSyncError, type SysteaSyncSummary, useSysteaLastRun, useSysteaSync } from "@/features/systea-sync/useSysteaSync";
 
 function readableDate(value: string | null | undefined): string {
   if (!value) return "Nenhuma sincronização concluída";
@@ -46,8 +49,44 @@ function Summary({ summary, title }: SummaryProps) {
 export function SysteaSyncCard() {
   const [dryRunSummary, setDryRunSummary] = useState<SysteaSyncSummary | null>(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const { data: lastRun } = useSysteaLastRun();
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const { data: lastRun, error: lastRunError } = useSysteaLastRun(!!session);
   const { dryRun, sync, isPending } = useSysteaSync();
+  const forbidden = (lastRunError as SysteaSyncError | null)?.status === 403;
+
+  if (session === null) {
+    return (
+      <Card className="border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><ShieldCheck className="h-5 w-5" />Integração Systea</CardTitle>
+          <CardDescription>Faça login para sincronizar dados do Systea.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild><Link to="/login?next=/">Entrar</Link></Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (forbidden) {
+    return (
+      <Card className="border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><ShieldCheck className="h-5 w-5" />Integração Systea</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive">{SYSTEA_FORBIDDEN_MESSAGE}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleDryRun = async () => {
     try {
