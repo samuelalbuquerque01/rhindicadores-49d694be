@@ -37,7 +37,7 @@ Não são armazenados ou expostos tokens, documentos, credenciais, permissões, 
 - `systea_clinic_filiais` mantém o mapeamento auditável entre clínicas Systea e filiais locais:
   - `1` → Matriz;
   - `2` → Parquelândia;
-  - `3` → Life;
+  - `3` → Life (registro local: `Unidade Life`);
   - `4` → Sul.
 - Quando o Systea retornar apenas uma clínica, ela será a filial principal automaticamente.
 - Para duas ou mais clínicas, a `filial_id` administrativa já escolhida é preservada e não é inferida pelo Systea. Quando essa filial também estiver na lista sincronizada, seu vínculo recebe `is_primary = true`; caso contrário, os vínculos Systea permanecem sem principal, sem apagar a definição administrativa local.
