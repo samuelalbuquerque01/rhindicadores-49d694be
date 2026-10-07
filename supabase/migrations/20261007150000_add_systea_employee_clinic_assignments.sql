@@ -39,7 +39,7 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1
-    FROM (VALUES ('Matriz'::text), ('Parquelândia'::text), ('Unidade Life'::text), ('Sul'::text)) AS expected(nome)
+    FROM (VALUES ('Matriz'::text), ('Parquelândia'::text), ('Unidade Life'::text), ('Unidade Sul'::text)) AS expected(nome)
     WHERE (
       SELECT count(*)
       FROM public.filiais
@@ -47,7 +47,7 @@ BEGIN
     ) <> 1
   ) THEN
     RAISE EXCEPTION
-      'Expected exactly one local filial named Matriz, Parquelândia, Unidade Life, and Sul before enabling Systea clinic mapping';
+      'Expected exactly one local filial named Matriz, Parquelândia, Unidade Life, and Unidade Sul before enabling Systea clinic mapping';
   END IF;
 END;
 $$;
@@ -59,7 +59,7 @@ FROM (
     (1, 'Matriz'::text),
     (2, 'Parquelândia'::text),
     (3, 'Unidade Life'::text),
-    (4, 'Sul'::text)
+    (4, 'Unidade Sul'::text)
 ) AS mapping(systea_clinic_id, filial_nome)
 JOIN public.filiais AS filial ON filial.nome = mapping.filial_nome
 ON CONFLICT (systea_clinic_id) DO UPDATE
