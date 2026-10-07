@@ -85,7 +85,7 @@ const EmployeeDetails = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("colaboradores")
-        .select("*, filial:filiais(*)")
+        .select("*, filial:filiais!colaboradores_filial_id_fkey(*)")
         .eq("id", id!)
         .single();
       if (error) throw error;

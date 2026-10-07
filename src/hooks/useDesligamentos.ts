@@ -9,7 +9,7 @@ export function useDesligamentos(filialId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("desligamentos")
-        .select("*, colaborador:colaboradores(*, filial:filiais(*))")
+        .select("*, colaborador:colaboradores(*, filial:filiais!colaboradores_filial_id_fkey(*))")
         .order("data_desligamento", { ascending: false });
       
       const { data, error } = await query;

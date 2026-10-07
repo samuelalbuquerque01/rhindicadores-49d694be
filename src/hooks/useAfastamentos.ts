@@ -13,7 +13,7 @@ export function useAfastamentos(filialId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("afastamentos")
-        .select("*, colaborador:colaboradores(*, filial:filiais(*))")
+        .select("*, colaborador:colaboradores(*, filial:filiais!colaboradores_filial_id_fkey(*))")
         .order("data_inicio", { ascending: false });
       
       const { data, error } = await query;

@@ -20,7 +20,7 @@ export function useColaboradores(filters?: ColaboradoresFilters) {
     queryFn: async () => {
       let query = supabase
         .from("colaboradores")
-        .select("*, filial:filiais(*)")
+        .select("*, filial:filiais!colaboradores_filial_id_fkey(*)")
         .order("nome");
       
       if (filters?.filialId) {
@@ -57,7 +57,7 @@ export function useColaboradoresPaginados(filters: ColaboradoresPaginadosFilters
     queryFn: async () => {
       let query = supabase
         .from("colaboradores")
-        .select("*, filial:filiais(*)", { count: "exact" })
+        .select("*, filial:filiais!colaboradores_filial_id_fkey(*)", { count: "exact" })
         .order("nome");
 
       if (filters?.filialId) {

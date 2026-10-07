@@ -9,7 +9,7 @@ export function useLideresFormados(filialId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("lideres_formados")
-        .select("*, colaborador:colaboradores(*, filial:filiais(*))")
+        .select("*, colaborador:colaboradores(*, filial:filiais!colaboradores_filial_id_fkey(*))")
         .order("data_formacao", { ascending: false });
       
       const { data, error } = await query;
