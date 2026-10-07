@@ -209,7 +209,9 @@ Deno.serve(async (request) => {
 
     return json({ mode: body.mode, ...summary, runId: run.id, startedAt, finishedAt: new Date().toISOString() }, 200, origin);
   } catch (error) {
-    console.error("Systea employee sync failed");
+    const safeName = error instanceof Error ? error.name : typeof error;
+    const safeMessage = error instanceof Error ? error.message : (error as { message?: string })?.message ?? "";
+    console.error("Systea employee sync failed", safeName, String(safeMessage).replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 200));
     return json({ error: errorMessage(error) }, 502, origin);
   }
 });
