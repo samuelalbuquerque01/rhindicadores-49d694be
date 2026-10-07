@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   fetchAllSysteaEmployees,
   fetchSysteaSectors,
+  fetchSysteaUserClinics,
   normalizeSysteaEmployee,
   planSyncChange,
   type LocalEmployeeForSync,
@@ -16,6 +17,11 @@ interface SyncSummary {
   unchanged: number;
   skipped: number;
   errors: number;
+}
+
+interface ClinicSyncRequest {
+  systeaAdminId: number;
+  clinics: number[];
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -53,7 +59,7 @@ function errorMessage(error: unknown): string {
     return "Systea authentication was rejected. Verify the integration credentials.";
   }
   if (error.message.includes("HTTP 429")) return "Systea rate limited the request. Try again later.";
-  if (/HTTP (4\d\d|5\d\d)|timeout|invalid JSON|pagination/i.test(error.message)) {
+  if (/HTTP (4\d\d|5\d\d)|timeout|invalid JSON|pagination|clinics|admin\.user_id/i.test(error.message)) {
     return "Systea data could not be retrieved safely. No employee changes were applied.";
   }
   return "Synchronization could not be completed safely.";
@@ -142,6 +148,7 @@ Deno.serve(async (request) => {
 
     const summary: SyncSummary = { fetched: remoteEmployees.length, created: 0, updated: 0, unchanged: 0, skipped: 0, errors: 0 };
     const writePayloads: Record<string, unknown>[] = [];
+    const clinicSyncRequests: ClinicSyncRequest[] = [];
     const syncedAt = new Date().toISOString();
 
     for (const remoteEmployee of remoteEmployees) {
@@ -152,6 +159,17 @@ Deno.serve(async (request) => {
         summary.skipped += 1;
         continue;
       }
+
+      const systeaUserId = Number(remoteEmployee.admin?.user_id);
+      if (!Number.isSafeInteger(systeaUserId) || systeaUserId <= 0) {
+        throw new Error("Systea employee is missing the admin.user_id required for clinic synchronization");
+      }
+      const clinics = await fetchSysteaUserClinics(timedFetch, systeaBaseUrl, systeaBearerToken, systeaUserId);
+      clinicSyncRequests.push({
+        systeaAdminId: normalized.data.systea_admin_id,
+        clinics,
+      });
+
       const change = planSyncChange(normalized.data, existing, syncedAt);
       if (change.kind === "create") {
         summary.created += 1;
@@ -174,6 +192,20 @@ Deno.serve(async (request) => {
       }
     }
 
+    const systeaClinicIds = [...new Set(clinicSyncRequests.flatMap((request) => request.clinics))];
+    if (systeaClinicIds.length) {
+      const { data: mappedClinics, error: mappedClinicsError } = await service
+        .from("systea_clinic_filiais")
+        .select("systea_clinic_id")
+        .in("systea_clinic_id", systeaClinicIds);
+      if (mappedClinicsError) throw mappedClinicsError;
+
+      const mappedClinicIds = new Set((mappedClinics ?? []).map((clinic) => clinic.systea_clinic_id));
+      if (systeaClinicIds.some((clinicId) => !mappedClinicIds.has(clinicId))) {
+        throw new Error("Systea returned a clinic without a configured local filial mapping");
+      }
+    }
+
     if (body.mode === "dry-run") return json({ mode: body.mode, ...summary, startedAt, finishedAt: new Date().toISOString() }, 200, origin);
 
     const { data: run, error: runError } = await service.from("systea_sync_runs").insert({
@@ -193,6 +225,26 @@ Deno.serve(async (request) => {
     try {
       if (writePayloads.length) {
         const { error } = await service.rpc("apply_systea_colaboradores", { payloads: writePayloads });
+        if (error) throw error;
+      }
+
+      const localEmployeesByAdminId = new Map<string, { id: string }>();
+      for (const ids of chunk([...new Set(clinicSyncRequests.map((request) => request.systeaAdminId))], BATCH_SIZE)) {
+        const { data, error } = await service.from("colaboradores").select("id, systea_admin_id").in("systea_admin_id", ids);
+        if (error) throw error;
+        for (const employee of data ?? []) localEmployeesByAdminId.set(String(employee.systea_admin_id), employee);
+      }
+
+      const clinicAssignments = clinicSyncRequests.map((request) => {
+        const localEmployee = localEmployeesByAdminId.get(String(request.systeaAdminId));
+        if (!localEmployee) throw new Error("Systea employee was not persisted before clinic synchronization");
+        return { colaborador_id: localEmployee.id, systea_clinic_ids: request.clinics };
+      });
+      if (clinicAssignments.length) {
+        const { error } = await service.rpc("sync_systea_colaborador_filiais_batch", {
+          p_assignments: clinicAssignments,
+          p_synced_at: syncedAt,
+        });
         if (error) throw error;
       }
       const { error: finishError } = await service.from("systea_sync_runs").update({ finished_at: new Date().toISOString() }).eq("id", run.id);

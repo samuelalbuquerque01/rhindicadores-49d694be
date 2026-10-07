@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   classifyEmploymentType,
   fetchAllSysteaEmployees,
+  fetchSysteaUserClinics,
   normalizeStatus,
   normalizeSysteaEmployee,
   planSyncChange,
@@ -251,6 +252,28 @@ describe("fetchAllSysteaEmployees", () => {
 
     await expect(fetchAllSysteaEmployees(fetcher, "https://npc.systea.com.br", "token")).rejects.toThrow(
       "Systea request failed with HTTP 503",
+    );
+  });
+});
+
+describe("fetchSysteaUserClinics", () => {
+  it("busca as clínicas detalhadas do usuário, normaliza IDs e remove duplicados", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      user: { clinics: [1, "3", 1] },
+    }), { status: 200 }));
+
+    await expect(fetchSysteaUserClinics(fetcher, "https://npc.systea.com.br/", "token", 22)).resolves.toEqual([1, 3]);
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://npc.systea.com.br/api/system/user/22",
+      { headers: { Accept: "application/json", Authorization: "Bearer token" } },
+    );
+  });
+
+  it("interrompe a sincronização quando a resposta detalhada não contém clinics válida", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ user: { clinics: [1, 0, "x"] } }), { status: 200 }));
+
+    await expect(fetchSysteaUserClinics(fetcher, "https://npc.systea.com.br", "token", 22)).rejects.toThrow(
+      "Systea user returned an invalid clinics payload",
     );
   });
 });

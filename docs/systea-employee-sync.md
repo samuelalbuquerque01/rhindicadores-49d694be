@@ -11,7 +11,8 @@ O navegador chama somente a Edge Function autenticada `systea-employee-sync`. A 
 3. Validar paginação, resposta JSON e registros; falhas parciais impedem qualquer upsert.
 4. Normalizar somente campos necessários ao RH Insights.
 5. Comparar por `systea_admin_id` e classificar em criar, atualizar, inalterado, ignorado ou erro.
-6. Em `dry-run`, retornar o resumo sem escrever no banco. Em `sync`, fazer upsert em lote e registrar auditoria resumida em `systea_sync_runs`.
+6. Para cada registro elegível, buscar `GET /api/system/user/{admin.user_id}` e validar `user.clinics` antes de qualquer escrita.
+7. Em `dry-run`, retornar o resumo sem escrever no banco. Em `sync`, fazer upsert em lote, sincronizar filiais e registrar auditoria resumida em `systea_sync_runs`.
 
 ## Classificação de vínculo
 
@@ -28,6 +29,20 @@ Em colaboradores existentes, `tipo_colaborador` local é preservado. Só é pree
 São sincronizados identificadores Systea, nome social/nome, e-mail, cargo contratado, setor resolvido, área, regime original, datas de admissão/primeiro dia, local de trabalho, cargas horárias, status, indicadores de desligamento e timestamps Systea.
 
 Não são armazenados ou expostos tokens, documentos, credenciais, permissões, anexos, dados familiares, CPF/RG/PIS/CTPS, JSON bruto ou URLs sensíveis.
+
+## Filiais de atuação e filial principal
+
+- `colaboradores.filial_id` é a **filial principal administrativa** do colaborador.
+- `colaborador_filiais` contém todas as filiais onde ele está autorizado a atuar conforme `user.clinics` no Systea.
+- `systea_clinic_filiais` mantém o mapeamento auditável entre clínicas Systea e filiais locais:
+  - `1` → Matriz;
+  - `2` → Parquelândia;
+  - `3` → Life;
+  - `4` → Sul.
+- Quando o Systea retornar apenas uma clínica, ela será a filial principal automaticamente.
+- Para duas ou mais clínicas, a `filial_id` administrativa já escolhida é preservada e não é inferida pelo Systea. Quando essa filial também estiver na lista sincronizada, seu vínculo recebe `is_primary = true`; caso contrário, os vínculos Systea permanecem sem principal, sem apagar a definição administrativa local.
+- A alteração local de `colaboradores.filial_id` para uma filial já vinculada também atualiza `is_primary`, de forma que a próxima sincronização não reverta a escolha manual.
+- Se o Systea remover uma clínica — ou retornar nenhuma — somente os vínculos correspondentes em `colaborador_filiais` são removidos; não há exclusão do colaborador nem limpeza automática da filial administrativa local.
 
 ## Secrets necessários
 

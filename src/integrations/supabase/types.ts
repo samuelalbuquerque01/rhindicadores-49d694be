@@ -177,6 +177,52 @@ export type Database = {
           },
         ]
       }
+      colaborador_filiais: {
+        Row: {
+          colaborador_id: string
+          filial_id: string
+          is_primary: boolean
+          synced_at: string
+          systea_clinic_id: number
+        }
+        Insert: {
+          colaborador_id: string
+          filial_id: string
+          is_primary?: boolean
+          synced_at?: string
+          systea_clinic_id: number
+        }
+        Update: {
+          colaborador_id?: string
+          filial_id?: string
+          is_primary?: boolean
+          synced_at?: string
+          systea_clinic_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_filiais_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_filiais_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_filiais_systea_clinic_id_fkey"
+            columns: ["systea_clinic_id"]
+            isOneToOne: false
+            referencedRelation: "systea_clinic_filiais"
+            referencedColumns: ["systea_clinic_id"]
+          },
+        ]
+      }
       contratacoes: {
         Row: {
           colaborador_id: string | null
@@ -649,6 +695,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      systea_clinic_filiais: {
+        Row: {
+          created_at: string
+          filial_id: string
+          systea_clinic_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filial_id: string
+          systea_clinic_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filial_id?: string
+          systea_clinic_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "systea_clinic_filiais_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       systea_sync_runs: {
         Row: {

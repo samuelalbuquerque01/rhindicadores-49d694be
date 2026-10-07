@@ -50,6 +50,23 @@ export interface Colaborador {
   filial?: Filial;
 }
 
+export interface ColaboradorFilial {
+  colaborador_id: string;
+  filial_id: string;
+  systea_clinic_id: number;
+  is_primary: boolean;
+  synced_at: string;
+  filial?: Filial;
+}
+
+export interface SysteaClinicFilial {
+  systea_clinic_id: number;
+  filial_id: string;
+  created_at: string;
+  updated_at: string;
+  filial?: Filial;
+}
+
 export interface Desligamento {
   id: string;
   colaborador_id: string;

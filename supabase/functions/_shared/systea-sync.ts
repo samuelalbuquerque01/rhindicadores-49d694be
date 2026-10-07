@@ -10,6 +10,7 @@ export interface SysteaSector {
 
 export interface SysteaAdminRecord {
   id?: number | string | null;
+  user_id?: number | string | null;
   sector_id?: number | string | null;
   area_operation_id?: number | string | null;
   laborite_regime?: string | null;
@@ -39,6 +40,12 @@ export interface SysteaEmployeePage {
   total: number;
   per_page: number;
   data: SysteaEmployeeRecord[];
+}
+
+interface SysteaUserDetail {
+  user?: {
+    clinics?: unknown;
+  } | null;
 }
 
 export interface NormalizedSysteaEmployee {
@@ -269,6 +276,35 @@ export async function fetchAllSysteaEmployees(fetcher: FetchLike, baseUrl: strin
     expectedPage += 1;
   }
   return records;
+}
+
+export async function fetchSysteaUserClinics(
+  fetcher: FetchLike,
+  baseUrl: string,
+  bearerToken: string,
+  systeaUserId: number,
+): Promise<number[]> {
+  const response = await fetcher(`${baseUrl.replace(/\/+$/, "")}/api/system/user/${systeaUserId}`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${bearerToken}` },
+  });
+  if (!response.ok) throw new Error(`Systea user request failed with HTTP ${response.status}`);
+
+  let payload: SysteaUserDetail;
+  try {
+    payload = await response.json() as SysteaUserDetail;
+  } catch {
+    throw new Error("Systea user returned invalid JSON");
+  }
+
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) || !Array.isArray(payload.user?.clinics)) {
+    throw new Error("Systea user returned an invalid clinics payload");
+  }
+
+  const clinics = payload.user.clinics.map(numericId);
+  if (clinics.some((clinicId) => clinicId === null)) {
+    throw new Error("Systea user returned an invalid clinics payload");
+  }
+  return [...new Set(clinics as number[])];
 }
 
 export async function fetchSysteaSectors(fetcher: FetchLike, baseUrl: string, bearerToken: string): Promise<Map<number, string>> {
