@@ -33,10 +33,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useColaboradoresPaginados, useDeleteColaborador } from "@/hooks/useColaboradores";
+import { useColaboradorFiliais } from "@/hooks/useColaboradorFiliais";
 import { useFiliais } from "@/hooks/useFiliais";
 import { useAfastamentosAtivos } from "@/hooks/useAfastamentoAtivo";
 import { usePagination } from "@/hooks/usePagination";
 import { supabase } from "@/integrations/supabase/client";
+import { formatColaboradorFiliais } from "@/lib/employeeFiliais";
 import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
 import { AfastamentoBadge } from "./AfastamentoBadge";
@@ -102,6 +104,8 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
 
   const colaboradores = colaboradoresResponse?.data ?? [];
   const totalCount = colaboradoresResponse?.count ?? 0;
+  const colaboradorIds = colaboradores.map((colaborador) => colaborador.id);
+  const { data: colaboradorFiliais = new Map() } = useColaboradorFiliais(colaboradorIds);
   const { data: filiais } = useFiliais();
   const { data: afastamentosAtivos } = useAfastamentosAtivos(filialId === "all" ? undefined : filialId);
   const deleteColaborador = useDeleteColaborador();
@@ -199,9 +203,16 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
     );
   };
 
-  const getFilialNome = (filialId?: string) => {
-    if (!filialId) return "-";
-    return filiais?.find(f => f.id === filialId)?.nome || "-";
+  const getFilialNome = (colaborador: Colaborador) => {
+    const administrativeFilialName = colaborador.filial_id
+      ? filiais?.find((filial) => filial.id === colaborador.filial_id)?.nome
+      : undefined;
+
+    return formatColaboradorFiliais(
+      colaborador.id,
+      colaboradorFiliais,
+      administrativeFilialName,
+    );
   };
 
   const getTitle = () => {
@@ -300,7 +311,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
                       <TableCell>{getTipoContratacaoBadge(colaborador)}</TableCell>
-                      <TableCell>{getFilialNome(colaborador.filial_id)}</TableCell>
+                      <TableCell>{getFilialNome(colaborador)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
                         {afastamento && afastamento.length > 0 ? (

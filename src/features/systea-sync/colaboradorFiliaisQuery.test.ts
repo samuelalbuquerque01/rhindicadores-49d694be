@@ -12,4 +12,14 @@ describe("consulta de atribuições multiunidade", () => {
     expect(source).toContain('.in("colaborador_id", colaboradorIds)');
     expect(source).toContain("enabled: colaboradorIds.length > 0");
   });
+
+  it("conecta a lista ao mapa de unidades sincronizadas", () => {
+    const source = readFileSync(resolve(process.cwd(), "src/components/dashboard/ColaboradoresList.tsx"), "utf8");
+
+    expect(source).toContain('import { useColaboradorFiliais } from "@/hooks/useColaboradorFiliais";');
+    expect(source).toContain('import { formatColaboradorFiliais } from "@/lib/employeeFiliais";');
+    expect(source).toContain("useColaboradorFiliais(colaboradorIds)");
+    expect(source).toContain("formatColaboradorFiliais(");
+    expect(source).toContain("getFilialNome(colaborador)");
+  });
 });
