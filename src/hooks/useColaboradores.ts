@@ -163,6 +163,8 @@ export function useCreateColaborador() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-paginados"] });
+      queryClient.invalidateQueries({ queryKey: ["colaborador-filiais"] });
       queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
       queryClient.invalidateQueries({ queryKey: ["contratacoes"] });
       queryClient.invalidateQueries({ queryKey: ["contratacao-stats"] });
@@ -191,6 +193,8 @@ export function useUpdateColaborador() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-paginados"] });
+      queryClient.invalidateQueries({ queryKey: ["colaborador-filiais"] });
       queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
       toast.success("Colaborador atualizado com sucesso!");
     },
@@ -214,6 +218,8 @@ export function useDeleteColaborador() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores-paginados"] });
+      queryClient.invalidateQueries({ queryKey: ["colaborador-filiais"] });
       queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
       toast.success("Colaborador excluído com sucesso!");
     },

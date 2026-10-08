@@ -21,6 +21,8 @@ import { generateChartNarrative } from "@/lib/analytics/narrative";
 import { generateSmartNotifications } from "@/lib/analytics/notifications";
 import type { Afastamento, Colaborador, Desligamento } from "@/types/database";
 
+const EMPTY_ARRAY: never[] = [];
+
 interface UseOverviewAnalyticsParams {
   filialId?: string;
   preset: PeriodPreset;
@@ -146,11 +148,11 @@ function employeeNameMap(colaboradores: Colaborador[]): Map<string, string> {
 }
 
 export function useOverviewAnalytics({ filialId, preset, customRange }: UseOverviewAnalyticsParams) {
-  const { data: colaboradores = [], isLoading: loadingColaboradores, error: colaboradoresError } =
+  const { data: colaboradores = EMPTY_ARRAY, isLoading: loadingColaboradores, error: colaboradoresError } =
     useColaboradores({ filialId });
-  const { data: afastamentos = [], isLoading: loadingAfastamentos, error: afastamentosError } =
+  const { data: afastamentos = EMPTY_ARRAY, isLoading: loadingAfastamentos, error: afastamentosError } =
     useAfastamentos(filialId);
-  const { data: desligamentos = [], isLoading: loadingDesligamentos, error: desligamentosError } =
+  const { data: desligamentos = EMPTY_ARRAY, isLoading: loadingDesligamentos, error: desligamentosError } =
     useDesligamentos(filialId);
 
   const isLoading = loadingColaboradores || loadingAfastamentos || loadingDesligamentos;

@@ -105,7 +105,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
   const colaboradores = colaboradoresResponse?.data ?? [];
   const totalCount = colaboradoresResponse?.count ?? 0;
   const colaboradorIds = colaboradores.map((colaborador) => colaborador.id);
-  const { data: colaboradorFiliais = new Map() } = useColaboradorFiliais(colaboradorIds);
+  const { data: colaboradorFiliais = new Map(), isLoading: filiaisLoading, error: filiaisError } = useColaboradorFiliais(colaboradorIds);
   const { data: filiais } = useFiliais();
   const { data: afastamentosAtivos } = useAfastamentosAtivos(filialId === "all" ? undefined : filialId);
   const deleteColaborador = useDeleteColaborador();
@@ -204,9 +204,9 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
   };
 
   const getFilialNome = (colaborador: Colaborador) => {
-    const administrativeFilialName = colaborador.filial_id
+    const administrativeFilialName = colaborador.filial?.nome ?? (colaborador.filial_id
       ? filiais?.find((filial) => filial.id === colaborador.filial_id)?.nome
-      : undefined;
+      : undefined);
 
     return formatColaboradorFiliais(
       colaborador.id,
@@ -311,7 +311,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
                       <TableCell>{getTipoContratacaoBadge(colaborador)}</TableCell>
-                      <TableCell>{getFilialNome(colaborador)}</TableCell>
+                      <TableCell>{filiaisLoading ? "Carregando..." : filiaisError ? "Erro ao consultar filiais" : getFilialNome(colaborador)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
                         {afastamento && afastamento.length > 0 ? (

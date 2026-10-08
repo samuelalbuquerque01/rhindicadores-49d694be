@@ -704,6 +704,24 @@ export type Database = {
           },
         ]
       }
+      rh_data_readers: {
+        Row: {
+          user_id: string
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       systea_sync_admins: {
         Row: {
           active: boolean
@@ -1002,6 +1020,18 @@ export type Database = {
           p_systea_clinic_ids: number[]
         }
         Returns: undefined
+      }
+      is_rh_data_reader: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      reconcile_systea_colaborador_filiais: {
+        Args: {
+          p_colaborador_id: string
+          p_synced_at?: string
+          p_systea_clinic_ids: number[]
+        }
+        Returns: number
       }
       sync_systea_colaborador_filiais_batch: {
         Args: { p_assignments: Json; p_synced_at?: string }

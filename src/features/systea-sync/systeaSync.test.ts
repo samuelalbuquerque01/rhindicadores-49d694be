@@ -7,6 +7,8 @@ import {
   normalizeSysteaEmployee,
   planSyncChange,
   resolveSectorName,
+  resolveSysteaUserId,
+  parseSysteaUserClinics,
 } from "../../../supabase/functions/_shared/systea-sync.ts";
 
 describe("normalizeStatus", () => {
@@ -191,6 +193,19 @@ describe("planSyncChange", () => {
 });
 
 describe("fetchAllSysteaEmployees", () => {
+  it("rejeita paginação que termina antes de entregar o total informado", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      current_page: 1, last_page: 1, total: 2, per_page: 10, data: [{ id: 1 }],
+    })));
+    await expect(fetchAllSysteaEmployees(fetcher, "https://npc.systea.com.br", "token")).rejects.toThrow("incomplete pagination");
+  });
+
+  it("rejeita registros de tipo inválido antes de normalizar", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      current_page: 1, last_page: 1, total: 1, per_page: 10, data: [null],
+    })));
+    await expect(fetchAllSysteaEmployees(fetcher, "https://npc.systea.com.br", "token")).rejects.toThrow("invalid pagination");
+  });
   it("constrói páginas manualmente e não segue next_page_url HTTP", async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({
@@ -257,6 +272,43 @@ describe("fetchAllSysteaEmployees", () => {
 });
 
 describe("fetchSysteaUserClinics", () => {
+  it("rejeita resposta de outro usuário sem gravar suas clínicas", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 23, clinics: [1] })));
+    await expect(fetchSysteaUserClinics(fetcher, "https://npc.systea.com.br", "token", 22)).rejects.toThrow("identifier mismatch");
+  });
+  it("lê a resposta direta real sem exigir encapsulamento user", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: 22, clinics: [{ id: 1 }, { clinic_id: "4" }, 1],
+    })));
+    await expect(fetchSysteaUserClinics(fetcher, "https://npc.systea.com.br", "token", 22)).resolves.toEqual([1, 4]);
+  });
+
+  it("distingue ausência de clínicas de resposta inválida", () => {
+    expect(parseSysteaUserClinics({ clinics: [] })).toEqual([]);
+    expect(parseSysteaUserClinics({ user: { clinics: [] } })).toEqual([]);
+    for (const payload of [null, [], {}, { clinics: null }, { clinics: [true] }, { clinics: [{}] }, { clinics: [[1]] }]) {
+      expect(() => parseSysteaUserClinics(payload)).toThrow("invalid clinics payload");
+    }
+  });
+
+  it("não oculta lista direta inválida usando dados encapsulados", () => {
+    expect(() => parseSysteaUserClinics({ clinics: null, user: { clinics: [1] } })).toThrow();
+    expect(parseSysteaUserClinics({ clinics: [4], user: { clinics: [1] } })).toEqual([4]);
+  });
+
+  it("valida identificador antes de fazer requisição", async () => {
+    const fetcher = vi.fn();
+    await expect(fetchSysteaUserClinics(fetcher, "https://npc.systea.com.br", "token", 0)).rejects.toThrow("identifier");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("usa admin.user_id tanto para persistência quanto para o endpoint de clínicas", () => {
+    expect(resolveSysteaUserId({ id: 100, admin: { user_id: "22" } })).toBe(22);
+    expect(resolveSysteaUserId({ id: 22, admin: {} })).toBe(22);
+    expect(resolveSysteaUserId({ id: 0, admin: { user_id: "x" } })).toBeNull();
+    expect(normalizeSysteaEmployee({ id: 100, admin: { id: 5, user_id: 22, laborite_regime: "PJ" } }, new Map(), { id: "local" }))
+      .toMatchObject({ kind: "normalized", data: { systea_user_id: 22 } });
+  });
   it("busca as clínicas detalhadas do usuário, normaliza IDs e remove duplicados", async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       user: { clinics: [1, "3", 1] },

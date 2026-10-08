@@ -38,10 +38,26 @@ export class SysteaSyncError extends Error {
   }
 }
 
-async function invokeSysteaSync<T>(mode: "dry-run" | "sync" | "last-run"): Promise<T> {
+export interface ClinicReconciliationBatch {
+  mode: "reconcile-clinics";
+  total: number;
+  offset: number;
+  nextOffset: number;
+  done: boolean;
+  analyzed: number;
+  corrected: number;
+  withClinics: number;
+  withoutClinics: number;
+  mappingFailures: number;
+  persistenceFailures: number;
+  fetchFailures: number;
+  manualReview: { systea_admin_id: number | null; reason: string }[];
+}
+
+async function invokeSysteaSync<T>(mode: "dry-run" | "sync" | "last-run" | "reconcile-clinics", offset?: number): Promise<T> {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) throw new SysteaSyncError(SYSTEA_UNAUTHENTICATED_MESSAGE, 401);
-  const { data, error } = await supabase.functions.invoke<T>("systea-employee-sync", { body: { mode } });
+  const { data, error } = await supabase.functions.invoke<T>("systea-employee-sync", { body: { mode, ...(offset === undefined ? {} : { offset }) } });
   if (error) {
     const status = (error as { context?: Response }).context?.status;
     if (status === 401) throw new SysteaSyncError(SYSTEA_UNAUTHENTICATED_MESSAGE, 401);
@@ -69,12 +85,14 @@ export function useSysteaSync() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (mode: "dry-run" | "sync") => invokeSysteaSync<SysteaSyncSummary>(mode),
-    onSuccess: (_result, mode) => {
+    onSettled: (_result, _error, mode) => {
       queryClient.invalidateQueries({ queryKey: ["systea-sync-last-run"] });
       if (mode === "sync") {
         queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
         queryClient.invalidateQueries({ queryKey: ["colaboradores-paginados"] });
         queryClient.invalidateQueries({ queryKey: ["colaboradores-stats"] });
+        queryClient.invalidateQueries({ queryKey: ["colaborador-filiais"] });
+        queryClient.invalidateQueries({ queryKey: ["colaborador-detail"] });
       }
     },
   });
@@ -84,4 +102,26 @@ export function useSysteaSync() {
     sync: () => mutation.mutateAsync("sync"),
     isPending: mutation.isPending,
   };
+}
+
+export function useSysteaClinicReconciliation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (onBatch: (batch: ClinicReconciliationBatch) => void) => {
+      let offset = 0;
+      for (;;) {
+        const batch = await invokeSysteaSync<ClinicReconciliationBatch>("reconcile-clinics", offset);
+        if (!Number.isSafeInteger(batch.nextOffset) || (!batch.done && batch.nextOffset <= offset)) {
+          throw new Error("A recuperação não avançou. Execute novamente para tentar os registros pendentes.");
+        }
+        onBatch(batch);
+        if (batch.done) return;
+        offset = batch.nextOffset;
+      }
+    },
+    onSettled: async () => {
+      await Promise.all(["colaboradores", "colaboradores-paginados", "colaboradores-stats", "colaborador-filiais", "colaborador-detail"]
+        .map((key) => queryClient.invalidateQueries({ queryKey: [key] })));
+    },
+  });
 }

@@ -42,10 +42,9 @@ export interface SysteaEmployeePage {
   data: SysteaEmployeeRecord[];
 }
 
-interface SysteaUserDetail {
-  user?: {
-    clinics?: unknown;
-  } | null;
+export function resolveSysteaUserId(employee: SysteaEmployeeRecord): number | null {
+  // admin.user_id is the identifier used by the user detail endpoint.
+  return numericId(employee.admin?.user_id) ?? numericId(employee.id);
 }
 
 export interface NormalizedSysteaEmployee {
@@ -196,7 +195,7 @@ export function normalizeSysteaEmployee(
   local?: LocalEmployeeForSync,
 ): NormalizationResult {
   const admin = employee.admin;
-  const systeaUserId = numericId(employee.id);
+  const systeaUserId = resolveSysteaUserId(employee);
   const systeaAdminId = numericId(admin?.id);
   if (systeaUserId === null || systeaAdminId === null) {
     return { kind: "skipped", reason: "missing_integration_identifier" };
@@ -258,6 +257,11 @@ async function readPage(response: Response): Promise<SysteaEmployeePage> {
     !Number.isInteger(page.current_page) || !Number.isInteger(page.last_page) ||
     !Number.isInteger(page.total) || !Number.isInteger(page.per_page) || !Array.isArray(page.data)
   ) throw new Error("Systea returned an invalid pagination payload");
+  if (page.total! < 0 || page.per_page! <= 0 || page.current_page! <= 0 ||
+    page.data.length > page.per_page! || page.data.some((record) =>
+      !record || typeof record !== "object" || Array.isArray(record))) {
+    throw new Error("Systea returned an invalid pagination payload");
+  }
   return page as SysteaEmployeePage;
 }
 
@@ -267,6 +271,7 @@ export async function fetchAllSysteaEmployees(fetcher: FetchLike, baseUrl: strin
   let expectedPage = 1;
   let lastPage: number | undefined;
   const seenPages = new Set<number>();
+  let expectedTotal: number | undefined;
 
   while (lastPage === undefined || expectedPage <= lastPage) {
     if (expectedPage > SYSTEA_MAX_PAGES || seenPages.has(expectedPage)) {
@@ -280,11 +285,14 @@ export async function fetchAllSysteaEmployees(fetcher: FetchLike, baseUrl: strin
       throw new Error("Systea returned a repeated or unexpected page");
     }
     if (lastPage !== undefined && page.last_page !== lastPage) throw new Error("Systea returned inconsistent pagination metadata");
+    if (expectedTotal !== undefined && page.total !== expectedTotal) throw new Error("Systea returned inconsistent pagination metadata");
+    expectedTotal = page.total;
     seenPages.add(page.current_page);
     lastPage = page.last_page;
     records.push(...page.data);
     expectedPage += 1;
   }
+  if (records.length !== expectedTotal) throw new Error("Systea returned incomplete pagination data");
   return records;
 }
 
@@ -294,18 +302,25 @@ export async function fetchSysteaUserClinics(
   bearerToken: string,
   systeaUserId: number,
 ): Promise<number[]> {
+  if (numericId(systeaUserId) === null) throw new Error("Systea user identifier is invalid");
   const response = await fetcher(`${baseUrl.replace(/\/+$/, "")}/api/system/user/${systeaUserId}`, {
     headers: { Accept: "application/json", Authorization: `Bearer ${bearerToken}` },
   });
   if (!response.ok) throw new Error(`Systea user request failed with HTTP ${response.status}`);
 
-  let payload: SysteaUserDetail;
+  let payload: unknown;
   try {
-    payload = await response.json() as SysteaUserDetail;
+    payload = await response.json();
   } catch {
     throw new Error("Systea user returned invalid JSON");
   }
 
+  const detail = payload && typeof payload === "object" && !Array.isArray(payload)
+    ? payload as { id?: unknown; user?: { id?: unknown } } : undefined;
+  const returnedId = detail?.id ?? detail?.user?.id;
+  if (returnedId !== undefined && numericId(returnedId) !== systeaUserId) {
+    throw new Error("Systea user returned an invalid clinics payload: user identifier mismatch");
+  }
   return parseSysteaUserClinics(payload);
 }
 
@@ -316,7 +331,9 @@ export function parseSysteaUserClinics(payload: unknown): number[] {
     throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`);
   }
   const root = payload as { user?: { clinics?: unknown } | null; clinics?: unknown };
-  const rawClinics = Array.isArray(root.user?.clinics) ? root.user!.clinics : root.clinics;
+  // Prefer the actual direct response; a malformed direct list must not be
+  // silently replaced by an unrelated nested list.
+  const rawClinics = Object.prototype.hasOwnProperty.call(root, "clinics") ? root.clinics : root.user?.clinics;
   if (!Array.isArray(rawClinics)) {
     const keys = Object.keys(root).filter((k) => /clinic/i.test(k));
     throw new Error(`Systea user returned an invalid clinics payload shape=no-clinics-array keys=${keys.join("|") || "none"}`);

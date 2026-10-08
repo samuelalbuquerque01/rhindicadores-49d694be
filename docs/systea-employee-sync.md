@@ -11,7 +11,7 @@ O navegador chama somente a Edge Function autenticada `systea-employee-sync`. A 
 3. Validar paginação, resposta JSON e registros; falhas parciais impedem qualquer upsert.
 4. Normalizar somente campos necessários ao RH Insights.
 5. Comparar por `systea_admin_id` e classificar em criar, atualizar, inalterado, ignorado ou erro.
-6. Para cada registro elegível, buscar `GET /api/system/user/{admin.user_id}` e validar `user.clinics` antes de qualquer escrita.
+6. Para cada registro elegível, buscar `GET /api/system/user/{admin.user_id}` (fallback validado para `employee.id`) e validar `clinics` no usuário retornado diretamente; o formato legado `user.clinics` também é aceito. Uma resposta inválida não é interpretada como lista vazia.
 7. Em `dry-run`, retornar o resumo sem escrever no banco. Em `sync`, fazer upsert em lote, sincronizar filiais e registrar auditoria resumida em `systea_sync_runs`.
 
 ## Classificação de vínculo
@@ -33,7 +33,7 @@ Não são armazenados ou expostos tokens, documentos, credenciais, permissões, 
 ## Filiais de atuação e filial principal
 
 - `colaboradores.filial_id` é a **filial principal administrativa** do colaborador.
-- `colaborador_filiais` contém todas as filiais onde ele está autorizado a atuar conforme `user.clinics` no Systea.
+- `colaborador_filiais` contém todas as filiais onde ele está autorizado a atuar conforme `clinics` no usuário retornado pelo Systea.
 - `systea_clinic_filiais` mantém o mapeamento auditável entre clínicas Systea e filiais locais:
   - `1` → Matriz;
   - `2` → Parquelândia;
@@ -56,6 +56,8 @@ Os secrets devem ser configurados no ambiente Supabase; nunca em arquivos rastre
 ## Operação
 
 No painel de colaboradores, um administrador autorizado executa primeiro o dry-run e, após revisar o resumo, confirma a sincronização real. A função aceita `mode: "dry-run"` ou `mode: "sync"`; chamadas diretas exigem JWT de um usuário incluído em `systea_sync_admins`.
+
+Para recuperar vínculos interrompidos, **Recuperar filiais** executa `mode: "reconcile-clinics"` em lotes pequenos, usando `offset` e `nextOffset` até `done`. Essa recuperação é aditiva: preserva vínculos e filial administrativa existentes, informa colaboradores sem clínicas e separa falhas de consulta, mapeamento e persistência. Veja [auditoria e comandos de validação](systea-clinic-recovery-audit.md) antes de publicar alterações.
 
 ## Limitações
 

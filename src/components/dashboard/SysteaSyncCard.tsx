@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SYSTEA_FORBIDDEN_MESSAGE, type SysteaSyncError, type SysteaSyncSummary, useSysteaLastRun, useSysteaSync } from "@/features/systea-sync/useSysteaSync";
+import { useSysteaClinicReconciliation, type ClinicReconciliationBatch } from "@/features/systea-sync/useSysteaSync";
 
 function readableDate(value: string | null | undefined): string {
   if (!value) return "Nenhuma sincronização concluída";
@@ -47,6 +48,8 @@ function Summary({ summary, title }: SummaryProps) {
 }
 
 export function SysteaSyncCard() {
+  const reconciliation = useSysteaClinicReconciliation();
+  const [reconciliationBatches, setReconciliationBatches] = useState<ClinicReconciliationBatch[]>([]);
   const [dryRunSummary, setDryRunSummary] = useState<SysteaSyncSummary | null>(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -58,7 +61,8 @@ export function SysteaSyncCard() {
   }, []);
 
   const { data: lastRun, error: lastRunError } = useSysteaLastRun(!!session);
-  const { dryRun, sync, isPending } = useSysteaSync();
+  const { dryRun, sync, isPending: syncPending } = useSysteaSync();
+  const isPending = syncPending || reconciliation.isPending;
   const forbidden = (lastRunError as SysteaSyncError | null)?.status === 403;
 
   if (session === null) {
@@ -109,6 +113,16 @@ export function SysteaSyncCard() {
     }
   };
 
+  const handleReconcile = async () => {
+    setReconciliationBatches([]);
+    try {
+      await reconciliation.mutateAsync((batch) => setReconciliationBatches((previous) => [...previous, batch]));
+      toast.success("Recuperação processada. Confira os resultados e as pendências abaixo.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha na recuperação. Os lotes concluídos foram preservados.");
+    }
+  };
+
   return (
     <Card className="border-border shadow-sm">
       <CardHeader>
@@ -127,6 +141,26 @@ export function SysteaSyncCard() {
           </div>
         )}
         {dryRunSummary && <Summary summary={dryRunSummary} title={dryRunSummary.mode === "dry-run" ? "Resultado da prévia" : "Resultado da sincronização"} />}
+        {reconciliationBatches.length > 0 && (
+          <div className="rounded-md border p-3 text-sm" aria-live="polite">
+            <p>{reconciliationBatches.reduce((sum, batch) => sum + batch.analyzed, 0)} analisados; {reconciliationBatches.reduce((sum, batch) => sum + batch.corrected, 0)} colaboradores com vínculos recuperados.</p>
+            <p>{reconciliationBatches.reduce((sum, batch) => sum + batch.withoutClinics, 0)} sem clínicas informadas pelo Systea.</p>
+            {reconciliationBatches.some((batch) => batch.manualReview.length > 0) && (
+              <details className="mt-2">
+                <summary>Registros que exigem revisão</summary>
+                <ul className="mt-2 space-y-1">
+                  {reconciliationBatches.flatMap((batch) => batch.manualReview).map((item, index) => (
+                    <li key={index}>Systea {item.systea_admin_id ?? "sem identificador administrativo"}: {({
+                      no_clinics_in_systea: "Nenhuma clínica informada pelo Systea; vínculos locais preservados.",
+                      unmapped_clinic: "Clínica sem mapeamento local.",
+                      persistence_failed: "Falha ao persistir os vínculos.",
+                    } as Record<string, string>)[item.reason] ?? "Falha ao consultar ou validar a resposta do Systea."}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" onClick={handleDryRun} disabled={isPending}>
             <RefreshCw className="h-4 w-4" />
@@ -135,6 +169,9 @@ export function SysteaSyncCard() {
           <Button onClick={() => setConfirmationOpen(true)} disabled={isPending}>
             <RefreshCw className="h-4 w-4" />
             Sincronizar com Systea
+          </Button>
+          <Button variant="outline" onClick={handleReconcile} disabled={isPending || !session}>
+            <RefreshCw className="h-4 w-4" />Recuperar filiais
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">

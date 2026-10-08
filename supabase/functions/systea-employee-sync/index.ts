@@ -9,7 +9,7 @@ import {
 } from "../_shared/systea-sync.ts";
 
 type Mode = "dry-run" | "sync" | "last-run" | "reconcile-clinics";
-const RECONCILE_BATCH_SIZE = 25;
+const RECONCILE_BATCH_SIZE = 5;
 
 interface SyncSummary {
   fetched: number;
@@ -61,7 +61,7 @@ function errorMessage(error: unknown): string {
   }
   if (error.message.includes("HTTP 429")) return "Systea rate limited the request. Try again later.";
   if (/HTTP (4\d\d|5\d\d)|timeout|invalid JSON|pagination|clinics|admin\.user_id/i.test(error.message)) {
-    return "Systea data could not be retrieved safely. No employee changes were applied.";
+    return "Systea data could not be retrieved safely. Review the completed batches before retrying.";
   }
   return "Synchronization could not be completed safely.";
 }
@@ -99,7 +99,11 @@ Deno.serve(async (request) => {
   } catch {
     return json({ error: "Invalid JSON body" }, 400, origin);
   }
-  if (!isMode(body.mode)) return json({ error: "Invalid sync mode" }, 422, origin);
+  if (!body || typeof body !== "object" || Array.isArray(body) || !isMode(body.mode)) return json({ error: "Invalid sync mode" }, 422, origin);
+  if (body.mode === "reconcile-clinics" && body.offset !== undefined &&
+    (!Number.isSafeInteger(body.offset) || (body.offset as number) < 0)) {
+    return json({ error: "Invalid reconciliation offset" }, 422, origin);
+  }
 
   let service;
   try {
@@ -136,7 +140,7 @@ Deno.serve(async (request) => {
 
     if (body.mode === "reconcile-clinics") {
       // Idempotent recovery: re-reads clinics from Systea for already-synced employees
-      // (by systea_user_id) and rewrites only their colaborador_filiais links.
+      // (by systea_user_id), adding missing links without deleting valid data.
       const offset = Number.isSafeInteger(body.offset) && (body.offset as number) >= 0 ? body.offset as number : 0;
       const limit = RECONCILE_BATCH_SIZE;
       const baseUrl = requiredEnv("SYSTEA_BASE_URL");
@@ -146,13 +150,13 @@ Deno.serve(async (request) => {
       if (countError) throw countError;
       const { data: employees, error: listError } = await service
         .from("colaboradores").select("id, systea_admin_id, systea_user_id")
-        .not("systea_user_id", "is", null).order("systea_admin_id").range(offset, offset + limit - 1);
+        .not("systea_user_id", "is", null).order("id").range(offset, offset + limit - 1);
       if (listError) throw listError;
       const { data: mapping, error: mappingError } = await service.from("systea_clinic_filiais").select("systea_clinic_id");
       if (mappingError) throw mappingError;
       const mapped = new Set((mapping ?? []).map((row) => row.systea_clinic_id));
 
-      const diag = { analyzed: 0, withClinics: 0, withoutClinics: 0, mappingFailures: 0, persistenceFailures: 0, fetchFailures: 0 };
+      const diag = { analyzed: 0, withClinics: 0, corrected: 0, withoutClinics: 0, mappingFailures: 0, persistenceFailures: 0, fetchFailures: 0 };
       const manualReview: { systea_admin_id: number | null; reason: string }[] = [];
       const assignments: { colaborador_id: string; systea_clinic_ids: number[]; systea_admin_id: number | null }[] = [];
       for (const employee of employees ?? []) {
@@ -181,8 +185,9 @@ Deno.serve(async (request) => {
       }
       const syncedAt = new Date().toISOString();
       for (const assignment of assignments) {
-        const { error } = await service.rpc("sync_systea_colaborador_filiais_batch", {
-          p_assignments: [{ colaborador_id: assignment.colaborador_id, systea_clinic_ids: assignment.systea_clinic_ids }],
+        const { data: inserted, error } = await service.rpc("reconcile_systea_colaborador_filiais", {
+          p_colaborador_id: assignment.colaborador_id,
+          p_systea_clinic_ids: assignment.systea_clinic_ids,
           p_synced_at: syncedAt,
         });
         if (error) {
@@ -190,6 +195,7 @@ Deno.serve(async (request) => {
           manualReview.push({ systea_admin_id: assignment.systea_admin_id, reason: "persistence_failed" });
         } else {
           diag.withClinics += 1;
+          if (Number(inserted) > 0) diag.corrected += 1;
         }
       }
       const nextOffset = offset + (employees?.length ?? 0);
@@ -227,7 +233,7 @@ Deno.serve(async (request) => {
         continue;
       }
 
-      const systeaUserId = Number(remoteEmployee.admin?.user_id);
+      const systeaUserId = normalized.data.systea_user_id;
       if (!Number.isSafeInteger(systeaUserId) || systeaUserId <= 0) {
         throw new Error("Systea employee is missing the admin.user_id required for clinic synchronization");
       }
@@ -329,8 +335,7 @@ Deno.serve(async (request) => {
     return json({ mode: body.mode, ...summary, runId: run.id, startedAt, finishedAt: new Date().toISOString() }, 200, origin);
   } catch (error) {
     const safeName = error instanceof Error ? error.name : typeof error;
-    const safeMessage = error instanceof Error ? error.message : (error as { message?: string })?.message ?? "";
-    console.error("Systea employee sync failed", safeName, String(safeMessage).replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 200));
+    console.error("Systea employee sync failed", safeName);
     return json({ error: errorMessage(error) }, 502, origin);
   }
 });
