@@ -8,7 +8,8 @@ import {
   type LocalEmployeeForSync,
 } from "../_shared/systea-sync.ts";
 
-type Mode = "dry-run" | "sync" | "last-run";
+type Mode = "dry-run" | "sync" | "last-run" | "reconcile-clinics";
+const RECONCILE_BATCH_SIZE = 25;
 
 interface SyncSummary {
   fetched: number;
@@ -66,7 +67,7 @@ function errorMessage(error: unknown): string {
 }
 
 function isMode(value: unknown): value is Mode {
-  return value === "dry-run" || value === "sync" || value === "last-run";
+  return value === "dry-run" || value === "sync" || value === "last-run" || value === "reconcile-clinics";
 }
 
 function timedFetch(input: string, init?: RequestInit): Promise<Response> {
@@ -92,7 +93,7 @@ Deno.serve(async (request) => {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401, origin);
 
-  let body: { mode?: unknown };
+  let body: { mode?: unknown; offset?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -131,6 +132,71 @@ Deno.serve(async (request) => {
         .maybeSingle();
       if (error) throw error;
       return json({ run: data ?? null }, 200, origin);
+    }
+
+    if (body.mode === "reconcile-clinics") {
+      // Idempotent recovery: re-reads clinics from Systea for already-synced employees
+      // (by systea_user_id) and rewrites only their colaborador_filiais links.
+      const offset = Number.isSafeInteger(body.offset) && (body.offset as number) >= 0 ? body.offset as number : 0;
+      const limit = RECONCILE_BATCH_SIZE;
+      const baseUrl = requiredEnv("SYSTEA_BASE_URL");
+      const token = requiredEnv("SYSTEA_BEARER_TOKEN");
+      const { count: total, error: countError } = await service
+        .from("colaboradores").select("id", { count: "exact", head: true }).not("systea_user_id", "is", null);
+      if (countError) throw countError;
+      const { data: employees, error: listError } = await service
+        .from("colaboradores").select("id, systea_admin_id, systea_user_id")
+        .not("systea_user_id", "is", null).order("systea_admin_id").range(offset, offset + limit - 1);
+      if (listError) throw listError;
+      const { data: mapping, error: mappingError } = await service.from("systea_clinic_filiais").select("systea_clinic_id");
+      if (mappingError) throw mappingError;
+      const mapped = new Set((mapping ?? []).map((row) => row.systea_clinic_id));
+
+      const diag = { analyzed: 0, withClinics: 0, withoutClinics: 0, mappingFailures: 0, persistenceFailures: 0, fetchFailures: 0 };
+      const manualReview: { systea_admin_id: number | null; reason: string }[] = [];
+      const assignments: { colaborador_id: string; systea_clinic_ids: number[]; systea_admin_id: number | null }[] = [];
+      for (const employee of employees ?? []) {
+        diag.analyzed += 1;
+        let clinics: number[];
+        try {
+          clinics = await fetchSysteaUserClinics(timedFetch, baseUrl, token, Number(employee.systea_user_id));
+        } catch (error) {
+          if (error instanceof Error && /HTTP (401|403)/.test(error.message)) throw error;
+          diag.fetchFailures += 1;
+          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: "fetch_failed" });
+          continue;
+        }
+        if (clinics.length === 0) {
+          diag.withoutClinics += 1;
+          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: "no_clinics_in_systea" });
+          continue;
+        }
+        if (clinics.some((id) => !mapped.has(id))) {
+          diag.mappingFailures += 1;
+          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: "unmapped_clinic" });
+          continue;
+        }
+        assignments.push({ colaborador_id: employee.id, systea_clinic_ids: clinics, systea_admin_id: employee.systea_admin_id });
+      }
+      const syncedAt = new Date().toISOString();
+      for (const assignment of assignments) {
+        const { error } = await service.rpc("sync_systea_colaborador_filiais_batch", {
+          p_assignments: [{ colaborador_id: assignment.colaborador_id, systea_clinic_ids: assignment.systea_clinic_ids }],
+          p_synced_at: syncedAt,
+        });
+        if (error) {
+          diag.persistenceFailures += 1;
+          manualReview.push({ systea_admin_id: assignment.systea_admin_id, reason: "persistence_failed" });
+        } else {
+          diag.withClinics += 1;
+        }
+      }
+      const nextOffset = offset + (employees?.length ?? 0);
+      return json({
+        mode: "reconcile-clinics", total: total ?? 0, offset, nextOffset,
+        done: nextOffset >= (total ?? 0) || (employees?.length ?? 0) === 0,
+        ...diag, manualReview,
+      }, 200, origin);
     }
 
     const startedAt = new Date().toISOString();
