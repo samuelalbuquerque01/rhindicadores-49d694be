@@ -104,6 +104,16 @@ function normalizedKey(value: unknown): string | undefined {
   return text(value)?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
 }
 
+// Structure only (keys and types), never values — safe for diagnostics.
+export function describeShape(value: unknown, depth = 0): string {
+  if (Array.isArray(value)) return `array(${value.length})[${value.length && depth < 2 ? describeShape(value[0], depth + 1) : ""}]`;
+  if (value && typeof value === "object") {
+    if (depth >= 2) return "object";
+    return `{${Object.keys(value).slice(0, 15).map((k) => `${k}:${describeShape((value as Record<string, unknown>)[k], depth + 1)}`).join(",")}}`;
+  }
+  return value === null ? "null" : typeof value;
+}
+
 function numericId(value: unknown): number | null {
   if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return value;
   if (typeof value === "string" && /^\d+$/.test(value.trim())) {
@@ -297,7 +307,7 @@ export async function fetchSysteaUserClinics(
   }
 
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || !Array.isArray(payload.user?.clinics)) {
-    throw new Error("Systea user returned an invalid clinics payload");
+    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`);
   }
 
   const clinics = payload.user.clinics.map(numericId);

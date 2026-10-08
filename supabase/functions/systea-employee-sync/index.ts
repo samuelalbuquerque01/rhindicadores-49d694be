@@ -163,7 +163,7 @@ Deno.serve(async (request) => {
         } catch (error) {
           if (error instanceof Error && /HTTP (401|403)/.test(error.message)) throw error;
           diag.fetchFailures += 1; // reason is a safe category, never the raw message
-          const detail = error instanceof Error ? (error.message.match(/HTTP \d+|invalid JSON|invalid clinics payload|abort/i)?.[0] ?? error.name) : "unknown";
+          const detail = error instanceof Error ? (error.message.match(/HTTP \d+|invalid JSON|invalid clinics payload( shape=.{0,400})?|abort/i)?.[0] ?? error.name) : "unknown";
           manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: `fetch_failed: ${detail}` });
           continue;
         }
