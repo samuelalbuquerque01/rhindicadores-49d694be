@@ -58,6 +58,52 @@ export type Database = {
           },
         ]
       }
+      colaborador_filiais: {
+        Row: {
+          colaborador_id: string
+          filial_id: string
+          is_primary: boolean
+          synced_at: string
+          systea_clinic_id: number
+        }
+        Insert: {
+          colaborador_id: string
+          filial_id: string
+          is_primary?: boolean
+          synced_at?: string
+          systea_clinic_id: number
+        }
+        Update: {
+          colaborador_id?: string
+          filial_id?: string
+          is_primary?: boolean
+          synced_at?: string
+          systea_clinic_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_filiais_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_filiais_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_filiais_systea_clinic_id_fkey"
+            columns: ["systea_clinic_id"]
+            isOneToOne: false
+            referencedRelation: "systea_clinic_filiais"
+            referencedColumns: ["systea_clinic_id"]
+          },
+        ]
+      }
       colaboradores: {
         Row: {
           cargo: string
@@ -174,52 +220,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "filiais"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      colaborador_filiais: {
-        Row: {
-          colaborador_id: string
-          filial_id: string
-          is_primary: boolean
-          synced_at: string
-          systea_clinic_id: number
-        }
-        Insert: {
-          colaborador_id: string
-          filial_id: string
-          is_primary?: boolean
-          synced_at?: string
-          systea_clinic_id: number
-        }
-        Update: {
-          colaborador_id?: string
-          filial_id?: string
-          is_primary?: boolean
-          synced_at?: string
-          systea_clinic_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "colaborador_filiais_colaborador_id_fkey"
-            columns: ["colaborador_id"]
-            isOneToOne: false
-            referencedRelation: "colaboradores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "colaborador_filiais_filial_id_fkey"
-            columns: ["filial_id"]
-            isOneToOne: false
-            referencedRelation: "filiais"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "colaborador_filiais_systea_clinic_id_fkey"
-            columns: ["systea_clinic_id"]
-            isOneToOne: false
-            referencedRelation: "systea_clinic_filiais"
-            referencedColumns: ["systea_clinic_id"]
           },
         ]
       }
@@ -675,27 +675,6 @@ export type Database = {
         }
         Relationships: []
       }
-      systea_sync_admins: {
-        Row: {
-          active: boolean
-          created_at: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       systea_clinic_filiais: {
         Row: {
           created_at: string
@@ -719,11 +698,32 @@ export type Database = {
           {
             foreignKeyName: "systea_clinic_filiais_filial_id_fkey"
             columns: ["filial_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "filiais"
             referencedColumns: ["id"]
           },
         ]
+      }
+      systea_sync_admins: {
+        Row: {
+          active: boolean
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       systea_sync_runs: {
         Row: {
@@ -733,11 +733,18 @@ export type Database = {
           fetched: number
           finished_at: string | null
           id: string
+          last_page: number | null
+          lock_token: string | null
+          locked_at: string | null
           mode: string
+          next_page: number
+          processed: number
           requested_by: string | null
+          resumable: boolean
           skipped: number
           started_at: string
           status: string
+          total: number
           unchanged: number
           updated: number
         }
@@ -748,11 +755,18 @@ export type Database = {
           fetched?: number
           finished_at?: string | null
           id?: string
+          last_page?: number | null
+          lock_token?: string | null
+          locked_at?: string | null
           mode: string
+          next_page?: number
+          processed?: number
           requested_by?: string | null
+          resumable?: boolean
           skipped?: number
           started_at?: string
           status: string
+          total?: number
           unchanged?: number
           updated?: number
         }
@@ -763,11 +777,18 @@ export type Database = {
           fetched?: number
           finished_at?: string | null
           id?: string
+          last_page?: number | null
+          lock_token?: string | null
+          locked_at?: string | null
           mode?: string
+          next_page?: number
+          processed?: number
           requested_by?: string | null
+          resumable?: boolean
           skipped?: number
           started_at?: string
           status?: string
+          total?: number
           unchanged?: number
           updated?: number
         }
@@ -905,6 +926,85 @@ export type Database = {
     Functions: {
       apply_systea_colaboradores: {
         Args: { payloads: Json }
+        Returns: undefined
+      }
+      claim_systea_sync_batch: {
+        Args: { p_mode: string; p_requested_by: string }
+        Returns: {
+          busy: boolean
+          created: number
+          errors: number
+          fetched: number
+          id: string
+          last_page: number
+          lock_token: string
+          next_page: number
+          processed: number
+          skipped: number
+          total: number
+          unchanged: number
+          updated: number
+        }[]
+      }
+      fail_systea_sync_batch: {
+        Args: {
+          p_error_summary: string
+          p_lock_token: string
+          p_run_id: string
+        }
+        Returns: undefined
+      }
+      finish_systea_sync_batch: {
+        Args: {
+          p_created_increment: number
+          p_last_page: number
+          p_lock_token: string
+          p_processed_increment: number
+          p_run_id: string
+          p_skipped_increment: number
+          p_total: number
+          p_unchanged_increment: number
+          p_updated_increment: number
+        }
+        Returns: {
+          created: number
+          error_summary: string | null
+          errors: number
+          fetched: number
+          finished_at: string | null
+          id: string
+          last_page: number | null
+          lock_token: string | null
+          locked_at: string | null
+          mode: string
+          next_page: number
+          processed: number
+          requested_by: string | null
+          resumable: boolean
+          skipped: number
+          started_at: string
+          status: string
+          total: number
+          unchanged: number
+          updated: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "systea_sync_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      sync_systea_colaborador_filiais: {
+        Args: {
+          p_colaborador_id: string
+          p_synced_at?: string
+          p_systea_clinic_ids: number[]
+        }
+        Returns: undefined
+      }
+      sync_systea_colaborador_filiais_batch: {
+        Args: { p_assignments: Json; p_synced_at?: string }
         Returns: undefined
       }
     }
