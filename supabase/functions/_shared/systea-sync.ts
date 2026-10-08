@@ -306,13 +306,30 @@ export async function fetchSysteaUserClinics(
     throw new Error("Systea user returned invalid JSON");
   }
 
-  if (!payload || typeof payload !== "object" || Array.isArray(payload) || !Array.isArray(payload.user?.clinics)) {
-    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`); // keys/types only
-  }
+  return parseSysteaUserClinics(payload);
+}
 
-  const clinics = payload.user.clinics.map(numericId);
+/** Accepts `{ user: { clinics } }` or the user object directly `{ id, ..., clinics }`.
+ *  Clinic entries may be numeric ids or objects with `id` / `clinic_id`. */
+export function parseSysteaUserClinics(payload: unknown): number[] {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`);
+  }
+  const root = payload as { user?: { clinics?: unknown } | null; clinics?: unknown };
+  const rawClinics = Array.isArray(root.user?.clinics) ? root.user!.clinics : root.clinics;
+  if (!Array.isArray(rawClinics)) {
+    const keys = Object.keys(root).filter((k) => /clinic/i.test(k));
+    throw new Error(`Systea user returned an invalid clinics payload shape=no-clinics-array keys=${keys.join("|") || "none"}`);
+  }
+  const clinics = (rawClinics as unknown[]).map((entry) => {
+    if (entry && typeof entry === "object") {
+      const obj = entry as Record<string, unknown>;
+      return numericId(obj.clinic_id) ?? numericId(obj.id);
+    }
+    return numericId(entry);
+  });
   if (clinics.some((clinicId) => clinicId === null)) {
-    throw new Error("Systea user returned an invalid clinics payload");
+    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(rawClinics)}`);
   }
   return [...new Set(clinics as number[])];
 }
