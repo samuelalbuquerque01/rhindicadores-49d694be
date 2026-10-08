@@ -307,7 +307,7 @@ export async function fetchSysteaUserClinics(
   }
 
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || !Array.isArray(payload.user?.clinics)) {
-    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`);
+    throw new Error(`Systea user returned an invalid clinics payload shape=${describeShape(payload)}`); // keys/types only
   }
 
   const clinics = payload.user.clinics.map(numericId);
