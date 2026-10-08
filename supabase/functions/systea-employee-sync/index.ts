@@ -162,8 +162,9 @@ Deno.serve(async (request) => {
           clinics = await fetchSysteaUserClinics(timedFetch, baseUrl, token, Number(employee.systea_user_id));
         } catch (error) {
           if (error instanceof Error && /HTTP (401|403)/.test(error.message)) throw error;
-          diag.fetchFailures += 1;
-          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: "fetch_failed" });
+          diag.fetchFailures += 1; // safe category or structure-only shape, never values
+          const detail = error instanceof Error ? (error.message.match(/HTTP \d+|invalid JSON|invalid clinics payload( shape=.{0,400})?|abort/i)?.[0] ?? error.name) : "unknown";
+          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: `fetch_failed: ${detail}` });
           continue;
         }
         if (clinics.length === 0) {
