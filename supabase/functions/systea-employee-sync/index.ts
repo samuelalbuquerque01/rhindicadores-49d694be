@@ -163,7 +163,8 @@ Deno.serve(async (request) => {
         } catch (error) {
           if (error instanceof Error && /HTTP (401|403)/.test(error.message)) throw error;
           diag.fetchFailures += 1;
-          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: "fetch_failed" });
+          const detail = error instanceof Error ? (error.message.match(/HTTP \d+|invalid JSON|invalid clinics payload|abort/i)?.[0] ?? error.name) : "unknown";
+          manualReview.push({ systea_admin_id: employee.systea_admin_id, reason: `fetch_failed: ${detail}` });
           continue;
         }
         if (clinics.length === 0) {
