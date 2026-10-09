@@ -204,7 +204,7 @@ Deno.serve(async (request) => {
       return json({
         mode: "reconcile-clinics", total: total ?? 0, offset, nextOffset,
         done: nextOffset >= (total ?? 0) || (employees?.length ?? 0) === 0,
-        ...diag, manualReview,
+        ...diag, linksInserted, manualReview,
       }, 200, origin);
     }
 
