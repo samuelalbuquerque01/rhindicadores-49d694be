@@ -93,7 +93,7 @@ Deno.serve(async (request) => {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401, origin);
 
-  let body: { mode?: unknown; offset?: unknown };
+  let body: { mode?: unknown; offset?: unknown; limit?: unknown };
   try {
     body = await request.json();
   } catch {
