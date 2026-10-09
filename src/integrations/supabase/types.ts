@@ -995,6 +995,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reconcile_systea_colaborador_filiais: {
+        Args: {
+          p_colaborador_id: string
+          p_synced_at?: string
+          p_systea_clinic_ids: number[]
+        }
+        Returns: number
+      }
       sync_systea_colaborador_filiais: {
         Args: {
           p_colaborador_id: string

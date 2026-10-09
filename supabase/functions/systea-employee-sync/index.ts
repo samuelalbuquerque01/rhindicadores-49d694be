@@ -93,7 +93,7 @@ Deno.serve(async (request) => {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401, origin);
 
-  let body: { mode?: unknown; offset?: unknown };
+  let body: { mode?: unknown; offset?: unknown; limit?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -142,7 +142,7 @@ Deno.serve(async (request) => {
       // Idempotent recovery: re-reads clinics from Systea for already-synced employees
       // (by systea_user_id), adding missing links without deleting valid data.
       const offset = Number.isSafeInteger(body.offset) && (body.offset as number) >= 0 ? body.offset as number : 0;
-      const limit = RECONCILE_BATCH_SIZE;
+      const limit = Number.isSafeInteger(body.limit) && (body.limit as number) >= 1 && (body.limit as number) <= RECONCILE_BATCH_SIZE ? body.limit as number : RECONCILE_BATCH_SIZE;
       const baseUrl = requiredEnv("SYSTEA_BASE_URL");
       const token = requiredEnv("SYSTEA_BEARER_TOKEN");
       const { count: total, error: countError } = await service
@@ -184,6 +184,7 @@ Deno.serve(async (request) => {
         assignments.push({ colaborador_id: employee.id, systea_clinic_ids: clinics, systea_admin_id: employee.systea_admin_id });
       }
       const syncedAt = new Date().toISOString();
+      let linksInserted = 0;
       for (const assignment of assignments) {
         const { data: inserted, error } = await service.rpc("reconcile_systea_colaborador_filiais", {
           p_colaborador_id: assignment.colaborador_id,
@@ -196,13 +197,14 @@ Deno.serve(async (request) => {
         } else {
           diag.withClinics += 1;
           if (Number(inserted) > 0) diag.corrected += 1;
+          linksInserted += Number(inserted) || 0;
         }
       }
       const nextOffset = offset + (employees?.length ?? 0);
       return json({
         mode: "reconcile-clinics", total: total ?? 0, offset, nextOffset,
         done: nextOffset >= (total ?? 0) || (employees?.length ?? 0) === 0,
-        ...diag, manualReview,
+        ...diag, linksInserted, manualReview,
       }, 200, origin);
     }
 
