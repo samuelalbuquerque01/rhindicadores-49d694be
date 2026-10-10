@@ -61,7 +61,15 @@ export function useColaboradoresPaginados(filters: ColaboradoresPaginadosFilters
         .order("nome");
 
       if (filters?.filialId) {
-        query = query.eq("filial_id", filters.filialId);
+        // Include employees linked to the branch via Systea assignments (read-only; falls back if not permitted).
+        const { data: links } = await supabase
+          .from("colaborador_filiais")
+          .select("colaborador_id")
+          .eq("filial_id", filters.filialId);
+        const linkedIds = (links ?? []).map((row) => row.colaborador_id);
+        query = linkedIds.length > 0
+          ? query.or(`filial_id.eq.${filters.filialId},id.in.(${linkedIds.join(",")})`)
+          : query.eq("filial_id", filters.filialId);
       }
       if (filters?.tipoColaboradorIn && filters.tipoColaboradorIn.length > 0) {
         query = query.in("tipo_colaborador", filters.tipoColaboradorIn);
