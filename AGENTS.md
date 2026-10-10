@@ -1,0 +1,1 @@
+- Employee Filial display prefers Systea links (colaborador_filiais) and falls back to colaboradores.filial_id; reconciliation only inserts links and never writes colaboradores — keeps admin branch data authoritative.
