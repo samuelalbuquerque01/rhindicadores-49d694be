@@ -38,7 +38,7 @@ import { useFiliais } from "@/hooks/useFiliais";
 import { useAfastamentosAtivos } from "@/hooks/useAfastamentoAtivo";
 import { usePagination } from "@/hooks/usePagination";
 import { supabase } from "@/integrations/supabase/client";
-import { formatColaboradorFiliais } from "@/lib/employeeFiliais";
+import { getColaboradorFilialNames } from "@/lib/employeeFiliais";
 import { Colaborador } from "@/types/database";
 import { EditColaboradorModal } from "./EditColaboradorModal";
 import { AfastamentoBadge } from "./AfastamentoBadge";
@@ -203,16 +203,33 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
     );
   };
 
-  const getFilialNome = (colaborador: Colaborador) => {
+  const renderFilial = (colaborador: Colaborador) => {
     const administrativeFilialName = colaborador.filial?.nome ?? (colaborador.filial_id
       ? filiais?.find((filial) => filial.id === colaborador.filial_id)?.nome
       : undefined);
-
-    return formatColaboradorFiliais(
-      colaborador.id,
-      colaboradorFiliais,
-      administrativeFilialName,
-    );
+    if (filiaisLoading) return <span className="text-xs text-muted-foreground">Carregando...</span>;
+    const systeaNames = filiaisError ? [] : getColaboradorFilialNames(colaborador.id, colaboradorFiliais);
+    if (systeaNames.length > 0) {
+      return (
+        <div className="flex flex-wrap gap-1 max-w-[220px]">
+          {systeaNames.map((nome) => (
+            <Badge key={nome} variant="secondary" className="font-normal whitespace-nowrap">{nome}</Badge>
+          ))}
+        </div>
+      );
+    }
+    if (administrativeFilialName) return <span>{administrativeFilialName}</span>;
+    if (filiaisError) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs text-destructive cursor-help">Unidades indisponíveis</span>
+          </TooltipTrigger>
+          <TooltipContent>Não foi possível consultar as unidades do Systea (entre com sua conta ou verifique a permissão).</TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <span className="text-muted-foreground">Sem filial</span>;
   };
 
   const getTitle = () => {
@@ -311,7 +328,7 @@ export function ColaboradoresList({ filialId, tipoFilter: propTipoFilter, showSy
                       <TableCell>{colaborador.departamento}</TableCell>
                       <TableCell>{getTipoBadge(colaborador.tipo_colaborador)}</TableCell>
                       <TableCell>{getTipoContratacaoBadge(colaborador)}</TableCell>
-                      <TableCell>{filiaisLoading ? "Carregando..." : filiaisError ? "Erro ao consultar filiais" : getFilialNome(colaborador)}</TableCell>
+                      <TableCell>{renderFilial(colaborador)}</TableCell>
                       <TableCell>{getStatusBadge(colaborador.status)}</TableCell>
                       <TableCell>
                         {afastamento && afastamento.length > 0 ? (

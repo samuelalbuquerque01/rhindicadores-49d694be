@@ -22,6 +22,19 @@ export function buildColaboradorFiliaisMap(
   return assignmentsByColaborador;
 }
 
+export function getColaboradorFilialNames(
+  colaboradorId: string,
+  assignmentsByColaborador: Map<string, ColaboradorFilialAssignment[]>,
+): string[] {
+  return (assignmentsByColaborador.get(colaboradorId) ?? [])
+    .filter((assignment) => assignment.filial?.nome)
+    .sort((left, right) => {
+      if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
+      return left.filial!.nome.localeCompare(right.filial!.nome, "pt-BR");
+    })
+    .map((assignment) => assignment.filial!.nome);
+}
+
 export function formatColaboradorFiliais(
   colaboradorId: string,
   assignmentsByColaborador: Map<string, ColaboradorFilialAssignment[]>,

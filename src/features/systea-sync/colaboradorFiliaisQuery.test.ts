@@ -17,9 +17,9 @@ describe("consulta de atribuições multiunidade", () => {
     const source = readFileSync(resolve(process.cwd(), "src/components/dashboard/ColaboradoresList.tsx"), "utf8");
 
     expect(source).toContain('import { useColaboradorFiliais } from "@/hooks/useColaboradorFiliais";');
-    expect(source).toContain('import { formatColaboradorFiliais } from "@/lib/employeeFiliais";');
+    expect(source).toContain('import { getColaboradorFilialNames } from "@/lib/employeeFiliais";');
     expect(source).toContain("useColaboradorFiliais(colaboradorIds)");
-    expect(source).toContain("formatColaboradorFiliais(");
-    expect(source).toContain("getFilialNome(colaborador)");
+    expect(source).toContain("getColaboradorFilialNames(");
+    expect(source).toContain("renderFilial(colaborador)");
   });
 });
