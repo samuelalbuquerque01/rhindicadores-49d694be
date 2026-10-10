@@ -1,5 +1,16 @@
 import { useEffect } from "react";
-import { Search, User } from "lucide-react";
+import { LogOut, Search, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -10,6 +21,12 @@ import { persistSmartNotifications } from "@/lib/analytics/notificationStore";
 export function Header() {
   const { data: overviewData } = useOverviewAnalytics({ preset: "30d", customRange: null });
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearRead } = useSmartNotifications();
+  const { session, signOut } = useAuth();
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
 
   useEffect(() => {
     if (overviewData) {
@@ -67,17 +84,24 @@ export function Header() {
               onMarkAllAsRead={markAllAsRead}
               onClearRead={clearRead}
             />
-            {/* Avatar decorativo: sem rota/menu de perfil neste fluxo, portanto
-                permanece como elemento estático (aria-hidden), sem falsa
-                affordance de botão acionável. */}
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-full"
-              aria-hidden="true"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-                <User className="h-4 w-4 text-primary" />
-              </span>
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu da conta">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
+                    <User className="h-4 w-4 text-primary" />
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">
+                  {session?.user.email ?? "Conta"}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" /> Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
