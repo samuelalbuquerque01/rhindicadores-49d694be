@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 
 function safeNext(value: string | null): string {
   if (!value) return "/";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/";
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/login")) return "/";
   return value;
 }
 
@@ -24,15 +25,12 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
+  const { session, loading } = useAuth();
+
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) navigate(next, { replace: true });
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate(next, { replace: true });
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [navigate, next]);
+    // Authorization is enforced by ProtectedRoute at the destination (shows access denied, no loop).
+    if (!loading && session) navigate(next, { replace: true });
+  }, [loading, session, navigate, next]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
